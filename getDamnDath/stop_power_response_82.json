@@ -1,0 +1,9 @@
+{
+  "requestBody": {
+    "type": "電",
+    "timeMin": 1749457800000,
+    "timeMax": 1749459600000,
+    "data": "{\"type\":\"FeatureCollection\",\"name\":\"object-58NTWB5\",\"crs\":{\"type\":\"name\",\"properties\":{\"name\":\"urn:ogc:def:crs:OGC:1.3:CRS84\"}},\"features\":[{\"type\":\"Feature\",\"properties\":{\"route_name\":\"台北市信義區吳興街524巷\",\"authority_name\":\"null\",\"city\":\"台北市\",\"town\":\"null\",\"road_section_start\":\"和平西路二段104巷\",\"road_section_end\":\"和平西路二段98巷\",\"direction\":\"雙向\",\"cycling_type\":\"null\",\"cycling_length\":267,\"finished_time\":\"2013-12-31\",\"update_time\":\"2025-03-14 00:02:31.000 +0800\"},\"geometry\":{\"type\":\"MultiLineString\",\"coordinates\":[[[121.5675962,25.0226245],[121.5675911,25.0225483],[121.5675972,25.0224939],[121.5676139,25.0224359],[121.5676459,25.0223716],[121.5676904,25.0223016],[121.5677279,25.0222591],[121.5677922,25.0222116],[121.5678584,25.022181],[121.5678875,25.0221795],[121.5679573,25.0221983],[121.5680101,25.0221997],[121.5680619,25.0221864],[121.5681319,25.0221451],[121.5681551,25.0221376],[121.5682812,25.022131]]]}}]}"
+  },
+  "response": "{\"data\":{\"id\":513},\"message\":\"Event created successfully\",\"status\":\"success\"}"
+}

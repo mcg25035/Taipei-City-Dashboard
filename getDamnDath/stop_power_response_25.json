@@ -1,0 +1,9 @@
+{
+  "requestBody": {
+    "type": "電",
+    "timeMin": 1748871000000,
+    "timeMax": 1748872800000,
+    "data": "{\"type\":\"FeatureCollection\",\"name\":\"object-KN26PBK\",\"crs\":{\"type\":\"name\",\"properties\":{\"name\":\"urn:ogc:def:crs:OGC:1.3:CRS84\"}},\"features\":[{\"type\":\"Feature\",\"properties\":{\"route_name\":\"台北市萬華區西園路一段34巷\",\"authority_name\":\"null\",\"city\":\"台北市\",\"town\":\"null\",\"road_section_start\":\"和平西路二段104巷\",\"road_section_end\":\"和平西路二段98巷\",\"direction\":\"雙向\",\"cycling_type\":\"null\",\"cycling_length\":267,\"finished_time\":\"2013-12-31\",\"update_time\":\"2025-03-14 00:02:31.000 +0800\"},\"geometry\":{\"type\":\"MultiLineString\",\"coordinates\":[[[121.4999261,25.0407402],[121.4998639,25.0407607],[121.49964,25.0408057],[121.4991308,25.0407698],[121.4988473,25.0406939],[121.498727,25.0406677],[121.4986453,25.0406944],[121.4985778,25.0407358]]]}},{\"type\":\"Feature\",\"properties\":{\"route_name\":\"台北市萬華區環河南路二段\",\"authority_name\":\"null\",\"city\":\"台北市\",\"town\":\"null\",\"road_section_start\":\"和平西路二段104巷\",\"road_section_end\":\"和平西路二段98巷\",\"direction\":\"雙向\",\"cycling_type\":\"null\",\"cycling_length\":267,\"finished_time\":\"2013-12-31\",\"update_time\":\"2025-03-14 00:02:31.000 +0800\"},\"geometry\":{\"type\":\"MultiLineString\",\"coordinates\":[[[121.494602,25.0373668],[121.4949948,25.0370871],[121.4954904,25.0367543]]]}}]}"
+  },
+  "response": "{\"data\":{\"id\":398},\"message\":\"Event created successfully\",\"status\":\"success\"}"
+}

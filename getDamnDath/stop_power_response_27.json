@@ -1,0 +1,9 @@
+{
+  "requestBody": {
+    "type": "電",
+    "timeMin": 1748871000000,
+    "timeMax": 1748880000000,
+    "data": "{\"type\":\"FeatureCollection\",\"name\":\"object-Y1GK7ZY\",\"crs\":{\"type\":\"name\",\"properties\":{\"name\":\"urn:ogc:def:crs:OGC:1.3:CRS84\"}},\"features\":[{\"type\":\"Feature\",\"properties\":{\"route_name\":\"台北市萬華區貴陽街二段\",\"authority_name\":\"null\",\"city\":\"台北市\",\"town\":\"null\",\"road_section_start\":\"和平西路二段104巷\",\"road_section_end\":\"和平西路二段98巷\",\"direction\":\"雙向\",\"cycling_type\":\"null\",\"cycling_length\":267,\"finished_time\":\"2013-12-31\",\"update_time\":\"2025-03-14 00:02:31.000 +0800\"},\"geometry\":{\"type\":\"MultiLineString\",\"coordinates\":[[[121.4978399,25.0400893],[121.4979634,25.0400678],[121.4981372,25.0400438],[121.4985488,25.0400156],[121.4991217,25.0400735],[121.4993546,25.0400867],[121.4998816,25.0401489],[121.5002532,25.0401728],[121.500688,25.0402005],[121.5010108,25.0402073],[121.501169,25.0402106],[121.5017119,25.0402221],[121.5018127,25.0401465],[121.5019063,25.0401121],[121.502,25.0400727]]]}}]}"
+  },
+  "response": "{\"data\":{\"id\":403},\"message\":\"Event created successfully\",\"status\":\"success\"}"
+}

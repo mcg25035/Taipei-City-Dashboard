@@ -49,8 +49,8 @@ async function getWayPosition(wayName) {
         const node = data.elements.find(el => el.type === "node" && el.id === nodeId);
         if (node) {
           points.push([
-            node.lat,
-            node.lon
+            node.lon,
+            node.lat
           ]);
         }
       });

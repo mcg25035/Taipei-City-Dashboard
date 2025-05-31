@@ -1,0 +1,9 @@
+{
+  "requestBody": {
+    "type": "電",
+    "timeMin": 1749517200000,
+    "timeMax": 1749518400000,
+    "data": "{\"type\":\"FeatureCollection\",\"name\":\"object-VYDK9ZV\",\"crs\":{\"type\":\"name\",\"properties\":{\"name\":\"urn:ogc:def:crs:OGC:1.3:CRS84\"}},\"features\":[{\"type\":\"Feature\",\"properties\":{\"route_name\":\"台北市中山區松江路\",\"authority_name\":\"null\",\"city\":\"台北市\",\"town\":\"null\",\"road_section_start\":\"和平西路二段104巷\",\"road_section_end\":\"和平西路二段98巷\",\"direction\":\"雙向\",\"cycling_type\":\"null\",\"cycling_length\":267,\"finished_time\":\"2013-12-31\",\"update_time\":\"2025-03-14 00:02:31.000 +0800\"},\"geometry\":{\"type\":\"MultiLineString\",\"coordinates\":[[[121.5315365,25.0722431],[121.5318085,25.0720832],[121.5318645,25.0720285]]]}},{\"type\":\"Feature\",\"properties\":{\"route_name\":\"台北市中山區長安東路二段\",\"authority_name\":\"null\",\"city\":\"台北市\",\"town\":\"null\",\"road_section_start\":\"和平西路二段104巷\",\"road_section_end\":\"和平西路二段98巷\",\"direction\":\"雙向\",\"cycling_type\":\"null\",\"cycling_length\":267,\"finished_time\":\"2013-12-31\",\"update_time\":\"2025-03-14 00:02:31.000 +0800\"},\"geometry\":{\"type\":\"MultiLineString\",\"coordinates\":[[[121.5390976,25.0500012],[121.539103,25.0498611],[121.5391135,25.0495895],[121.5391156,25.0492016],[121.5391157,25.0488094],[121.5391159,25.0484084],[121.53911,25.048374]]]}}]}"
+  },
+  "response": "{\"data\":{\"id\":540},\"message\":\"Event created successfully\",\"status\":\"success\"}"
+}
