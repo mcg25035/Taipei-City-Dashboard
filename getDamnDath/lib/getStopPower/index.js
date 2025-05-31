@@ -225,29 +225,8 @@ async function getStopPowerWays() {
       const packages = [];
 
       stopWaterDays.each((index, element) => {
-        const string = "";
-        const number = 0;
-
-
-
-        let GeoJson = {
-          type: "FeatureCollection",
-          name: string,
-          crs: {
-            type: "name",
-            properties: {
-              name: "urn:ogc:def:crs:OGC:1.3:CRS84",
-            },
-          },
-          features: undefined,
-        }
-
-        let packageJson = {
-          type: "電",
-          timeMin: number,
-          timeMax: number,
-          data: GeoJson,
-        }
+        const string_ = "";
+        const number_ = 0;
 
         const trs = $(element).find("tr");
         const dateText = $(element).find("caption").text().trim();
@@ -258,6 +237,25 @@ async function getStopPowerWays() {
 
         // trs.each((i, tr) => {
         for (const tr of trs) {
+          let geoJson = {
+            type: "FeatureCollection",
+            name: string_,
+            crs: {
+              type: "name",
+              properties: {
+                name: "urn:ogc:def:crs:OGC:1.3:CRS84",
+              },
+            },
+            features: undefined,
+          }
+  
+          let packageJson = {
+            type: "電",
+            timeMin: number_,
+            timeMax: number_,
+            data: geoJson,
+          }
+
           const tds = $(tr).find("td");
           const time = $(tds[0]).text();
           // '自 0 時 0 分至 3 時 0 分' use regex to extract time
@@ -277,12 +275,10 @@ async function getStopPowerWays() {
           }
 
           packageJson.timeMin = new Date(date.getFullYear(), date.getMonth(), date.getDate(), parseInt(timeMatch[1]), parseInt(timeMatch[2]));
-
           packageJson.timeMax = new Date(date.getFullYear(), date.getMonth(), date.getDate(), parseInt(timeMatch[3]), parseInt(timeMatch[4]));
 
-          GeoJson.name = `object-${genId()}`;
-
-          GeoJson.features = handleAddressText(area)
+          geoJson.name = `object-${genId()}`;
+          geoJson.features = handleAddressText(area)
 
 
           packages.push(packageJson);
