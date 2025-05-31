@@ -9,7 +9,7 @@ import { useDialogStore } from "../store/dialogStore";
 import { useContentStore } from "../store/contentStore";
 
 const http = axios.create({
-	baseURL: import.meta.env.VITE_API_URL,
+	baseURL: "http://23.146.248.105:8080/api/v1",
 	headers: {
 		"Content-Type": "application/json",
 	},
