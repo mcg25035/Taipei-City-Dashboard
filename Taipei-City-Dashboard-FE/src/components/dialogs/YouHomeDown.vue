@@ -16,6 +16,12 @@ function handleClose() {
 			<h2>你家掛了嗎</h2>
 			<div class="youhomedown-control">
 				<button
+					class="youhomedown-control-cancel"
+					@click="dialogStore.hideAllDialogs()"
+				>
+					沒有
+				</button>
+				<button
 					class="youhomedown-control-confirm"
 					@click="handleClose"
 				>
@@ -34,7 +40,19 @@ function handleClose() {
 	&-control {
 		display: flex;
 		justify-content: center;
+		gap: 1rem;
 		margin-top: 1.5rem;
+
+		&-cancel {
+			padding: 6px 18px;
+			border-radius: 5px;
+			background-color: var(--color-border);
+			transition: opacity 0.2s;
+			font-size: 1.1rem;
+			&:hover {
+				opacity: 0.8;
+			}
+		}
 
 		&-confirm {
 			padding: 6px 18px;
