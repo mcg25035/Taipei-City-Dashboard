@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"time"
 
-	"Taipei-City-Dashboard-BE/app/models"
-	"Taipei-City-Dashboard-BE/app/util"
-	"Taipei-City-Dashboard-BE/global"
+	"TaipeiCityDashboardBE/app/models"
+	"TaipeiCityDashboardBE/app/util"
+	"TaipeiCityDashboardBE/global"
 
 	"github.com/gin-gonic/gin"
 	"github.com/lib/pq" // For pq.StringArray if used for JSONB

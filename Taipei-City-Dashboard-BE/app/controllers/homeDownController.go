@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"Taipei-City-Dashboard-BE/app/models"
-	"Taipei-City-Dashboard-BE/app/util" // Assuming 'util' contains common response functions
-	"Taipei-City-Dashboard-BE/global"    // Assuming 'global' contains the DB instance
+	"TaipeiCityDashboardBE/app/models"
+	"TaipeiCityDashboardBE/app/util" // Assuming 'util' contains common response functions
+	"TaipeiCityDashboardBE/global"   // Assuming 'global' contains the DB instance
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -42,10 +42,13 @@ func CreateHomeDownEvent(c *gin.Context) {
 		Name:      input.Name,
 	}
 
+	// logs.FInfo("Attempting to create HomeDownEvent. global.DB: %v, event: %+v", global.DB, event)
 	if err := global.DB.Create(&event).Error; err != nil {
+		// logs.FError("Failed to create HomeDownEvent. Error: %v", err)
 		util.ResponseError(c, http.StatusInternalServerError, "Failed to create event: "+err.Error())
 		return
 	}
+	// logs.FInfo("HomeDownEvent created successfully. Event ID: %d", event.ID)
 
 	util.ResponseSuccess(c, http.StatusCreated, "Event created successfully", event)
 }
@@ -106,7 +109,6 @@ func GetHomeDownEvents(c *gin.Context) {
 	}
 
 	query = query.Order("reported_at DESC")
-
 
 	if err := query.Find(&events).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
