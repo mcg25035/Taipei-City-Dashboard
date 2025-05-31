@@ -43,6 +43,45 @@ import { voronoi } from "../assets/utilityFunctions/voronoi.js";
 import { calculateHaversineDistance } from "../assets/utilityFunctions/calculateHaversineDistance";
 import { AnimatedArcLayer } from "../assets/configs/mapbox/arcAnimate.js";
 
+//test function
+function createPolygonsFromPoints(geojson) {
+	const groupMap = {};
+
+	// 分組收集點的座標
+	for (const feature of geojson.features) {
+		if (feature.geometry.type === 'Point') {
+			const group = feature.properties.group;
+			if (!groupMap[group]) groupMap[group] = [];
+			groupMap[group].push(feature.geometry.coordinates);
+		}
+	}
+
+	const polygonFeatures = [];
+
+	for (const group in groupMap) {
+		const coords = groupMap[group];
+		if (coords.length >= 3) {
+			// 必須有至少3個點才能組成多邊形，且需封閉（回到起點）
+			const closedCoords = [...coords, coords[0]];
+			polygonFeatures.push({
+				type: 'Feature',
+				properties: { group, name: `區域${group}` },
+				geometry: {
+					type: 'Polygon',
+					coordinates: [closedCoords]
+				}
+			});
+		}
+	}
+
+	return {
+		type: 'FeatureCollection',
+		features: [...geojson.features, ...polygonFeatures]
+	};
+}
+
+
+
 export const useMapStore = defineStore("map", {
 	state: () => ({
 		// Array of layer IDs that are in the map
@@ -141,6 +180,190 @@ export const useMapStore = defineStore("map", {
 						})
 						.addLayer(metroTaipeiTown);
 				});
+			//test
+			fetch('/mapData/test.geojson')
+				.then(response => response.json())
+				.then(data => {
+					this.map.addSource('test-points', {
+						type: 'geojson',
+						data: data
+					});
+
+					this.map.addLayer({
+						id: 'test-points-layer',
+						type: 'circle',
+						source: 'test-points',
+						paint: {
+							'circle-radius': 6,
+							'circle-color': '#007cbf'
+						}
+					});
+
+					const groupMap = {};
+					data.features.forEach(feature => {
+						if (feature.geometry.type !== 'Point') return;
+						const group = feature.properties.group;
+						if (!groupMap[group]) groupMap[group] = [];
+						groupMap[group].push(feature.geometry.coordinates);
+					});
+
+					const polygonFeatures = [];
+					const lineFeatures = [];
+
+					Object.entries(groupMap).forEach(([group, coords]) => {
+						if (coords.length < 2) return;
+
+						if (coords.length === 2) {
+							// 畫線
+							lineFeatures.push({
+								type: 'Feature',
+								properties: { group },
+								geometry: {
+									type: 'LineString',
+									coordinates: coords
+								}
+							});
+						} else {
+							// 嘗試畫多邊形（凸包）
+							const turfPoints = coords.map(coord => turf.point(coord));
+							const fc = turf.featureCollection(turfPoints);
+							const hull = turf.convex(fc);
+
+							if (hull) {
+								hull.properties = { group };
+								polygonFeatures.push(hull);
+							} else {
+								// 如果凸包失敗，改畫線
+								lineFeatures.push({
+									type: 'Feature',
+									properties: { group },
+									geometry: {
+										type: 'LineString',
+										coordinates: coords
+									}
+								});
+							}
+						}
+					});
+
+					// 多邊形圖層
+					const polygonGeoJSON = {
+						type: 'FeatureCollection',
+						features: polygonFeatures
+					};
+
+					this.map.addSource('test-polygons', {
+						type: 'geojson',
+						data: polygonGeoJSON
+					});
+
+					this.map.addLayer({
+						id: 'test-polygons-layer',
+						type: 'fill',
+						source: 'test-polygons',
+						paint: {
+							'fill-color': '#FFA500',
+							'fill-opacity': 0.3
+						}
+					});
+
+					// 多邊形邊框
+					this.map.addLayer({
+						id: 'test-polygons-outline',
+						type: 'line',
+						source: 'test-polygons',
+						paint: {
+							'line-color': '#FF8C00',
+							'line-width': 2
+						}
+					});
+
+					// 額外畫出的線圖層（2 點或 fallback）
+					const lineGeoJSON = {
+						type: 'FeatureCollection',
+						features: lineFeatures
+					};
+
+					this.map.addSource('test-lines', {
+						type: 'geojson',
+						data: lineGeoJSON
+					});
+
+					this.map.addLayer({
+						id: 'test-lines-layer',
+						type: 'line',
+						source: 'test-lines',
+						paint: {
+							'line-color': '#FF8C00',
+							'line-width': 2
+						}
+					});
+				});
+
+			///getapi
+			async function loadApiPoints(queryParams = {}) {
+				try {
+					const response = await http.get('/homeDown', { params: queryParams });
+					console.log('response.data =', response.data);
+
+					// 確保 data 屬性存在且是陣列
+					const dataArray = response.data && Array.isArray(response.data.data) ? response.data.data : [];
+					console.log('data = ', dataArray)
+
+					const apiFeatures = dataArray.map(item => ({
+						type: 'Feature',
+						properties: {
+							group: item.id,
+							name: item.name,
+						},
+						geometry: {
+							type: 'Point',
+							coordinates: [Number(item.longitude), Number(item.latitude)],
+						},
+					}));
+					console.log('apiFeatures= ', apiFeatures)
+
+					const apiGeoJSON = {
+						type: 'FeatureCollection',
+						features: apiFeatures,
+					};
+
+					console.log(this);
+
+					if (this.map.getSource('api-points')) {
+						this.map.getSource('api-points').setData(apiGeoJSON);
+					} else {
+						this.map.addSource('api-points', {
+							type: 'geojson',
+							data: apiGeoJSON,
+						});
+
+						this.map.addLayer({
+							id: 'api-points-layer',
+							type: 'circle',
+							source: 'api-points',
+							paint: {
+								'circle-radius': 6,
+								'circle-color': '#FF0000',
+							},
+						});
+					}
+				} catch (err) {
+					console.error('錯誤:', err);
+				}
+			}
+
+			loadApiPoints.bind(this)();
+
+
+
+
+
+
+
+
+
+
 			// metroTaipei Village Labels
 			fetch(`/mapData/metrotaipei_village.geojson`)
 				.then((response) => response.json())
@@ -354,7 +577,7 @@ export const useMapStore = defineStore("map", {
 							`https://citydashboard.taipei/geo_server/gwc/service/tms/1.0.0/taipei_vioc:${map_config.index}@EPSG:900913@pbf/{z}/{x}/{y}.pbf`,
 						],
 					});
-		
+
 					// 監聽錯誤
 					this.map.on('error', (e) => {
 						if (e.sourceId === `${map_config.layerId}-source`) {
@@ -370,7 +593,7 @@ export const useMapStore = defineStore("map", {
 							);
 						}
 					});
-		
+
 					// 監聽源加載完成
 					const sourceLoaded = new Promise((resolve, reject) => {
 						const checkSource = (e) => {
@@ -386,22 +609,22 @@ export const useMapStore = defineStore("map", {
 								}
 							}
 						};
-						
+
 						this.map.on('sourcedata', checkSource);
-						
+
 						// 設置超時
 						setTimeout(() => {
 							this.map.off('sourcedata', checkSource);
 							reject(new Error('Source load timeout'));
 						}, 10000);
 					});
-		
+
 					// 等待源加載完成後添加圖層
 					await sourceLoaded;
 					this.addMapLayer(map_config);
 
 
-		
+
 				} catch (error) {
 					console.error('Failed to add source:', error);
 					// 清理已添加的源（如果存在）
@@ -423,12 +646,12 @@ export const useMapStore = defineStore("map", {
 			if (map_config.icon) {
 				extra_paint_configs = {
 					...maplayerCommonPaint[
-						`${map_config.type}-${map_config.icon}`
+					`${map_config.type}-${map_config.icon}`
 					],
 				};
 				extra_layout_configs = {
 					...maplayerCommonLayout[
-						`${map_config.type}-${map_config.icon}`
+					`${map_config.type}-${map_config.icon}`
 					],
 				};
 			}
@@ -436,13 +659,13 @@ export const useMapStore = defineStore("map", {
 				extra_paint_configs = {
 					...extra_paint_configs,
 					...maplayerCommonPaint[
-						`${map_config.type}-${map_config.size}`
+					`${map_config.type}-${map_config.size}`
 					],
 				};
 				extra_layout_configs = {
 					...extra_layout_configs,
 					...maplayerCommonLayout[
-						`${map_config.type}-${map_config.size}`
+					`${map_config.type}-${map_config.size}`
 					],
 				};
 			}
@@ -501,7 +724,7 @@ export const useMapStore = defineStore("map", {
 				getTargetColor: () => {
 					const color = hexToRGB(
 						paintSettings["arc-color"][1] ||
-							paintSettings["arc-color"][0]
+						paintSettings["arc-color"][0]
 					);
 					return [
 						parseInt(color.r, 16),
@@ -540,15 +763,15 @@ export const useMapStore = defineStore("map", {
 			const layers = Object.keys(this.deckGlLayer).map((index) => {
 				const l = this.deckGlLayer[index];
 				switch (l.type) {
-				case "ArcLayer":
-					return new ArcLayer(l.config);
-				case "AnimatedArcLayer":
-					return new AnimatedArcLayer({
-						...l.config,
-						coef: this.step / 1000,
-					});
-				default:
-					break;
+					case "ArcLayer":
+						return new ArcLayer(l.config);
+					case "AnimatedArcLayer":
+						return new AnimatedArcLayer({
+							...l.config,
+							coef: this.step / 1000,
+						});
+					default:
+						break;
 				}
 			});
 			this.overlay.setProps({
@@ -827,8 +1050,8 @@ export const useMapStore = defineStore("map", {
 					continue;
 
 				// format properties
-				const feature = {...clickFeatureDatas[i]};
-				feature.properties = {...feature.properties};
+				const feature = { ...clickFeatureDatas[i] };
+				feature.properties = { ...feature.properties };
 				Object.keys(feature.properties).forEach(key => {
 					feature.properties[key] = formatValue(feature.properties[key], key);
 				});
@@ -1069,9 +1292,9 @@ export const useMapStore = defineStore("map", {
 						) {
 							return (
 								d.properties[map_filter.byParam.xParam] ===
-									xParam &&
+								xParam &&
 								d.properties[map_filter.byParam.yParam] ===
-									yParam
+								yParam
 							);
 						} else if (map_filter.byParam.yParam && yParam) {
 							return (
@@ -1262,11 +1485,9 @@ export const useMapStore = defineStore("map", {
 				);
 			} else {
 				const res = await axios.get(
-					`${
-						location.origin
-					}/geo_server/taipei_vioc/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=taipei_vioc%3A${
-						this.mapConfigs[this.currentVisibleLayers[targetLayer]]
-							.index
+					`${location.origin
+					}/geo_server/taipei_vioc/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=taipei_vioc%3A${this.mapConfigs[this.currentVisibleLayers[targetLayer]]
+						.index
 					}&maxFeatures=1000000&outputFormat=application%2Fjson`
 				);
 

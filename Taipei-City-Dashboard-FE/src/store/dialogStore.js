@@ -44,6 +44,7 @@ export const useDialogStore = defineStore("dialog", {
 			addPin: false,
 			addViewPoint: false,
 			findClosestPoint: false,
+			youHomeDown: false,
 		},
 		// Stores the content for notifications
 		notification: {
@@ -58,6 +59,8 @@ export const useDialogStore = defineStore("dialog", {
 		},
 		// Stores the content for more info dialogs
 		moreInfoContent: null,
+		// Stores the form data for homeDown multi-step dialog
+		homeDownForm: {},
 		// Stores Edit or Add mode for addeditdashboards dialog
 		addEdit: "",
 		// Stores the current timeout for notifications
@@ -108,6 +111,9 @@ export const useDialogStore = defineStore("dialog", {
 				index: index,
 				name: name,
 			};
+		},
+		setHomeDownForm(form) {
+			this.homeDownForm = form;
 		},
 	},
 });

@@ -45,6 +45,7 @@ func ConnectToDatabases(dbNames ...interface{}) {
 			case "DASHBOARD":
 				logs.FInfo("DASHBOARD Hostname: %s", global.PostgresDashboard.Host)
 				DBDashboard = ConnectToDatabase(global.PostgresDashboard)
+				global.DB = DBDashboard // Assign DBDashboard to global.DB
 			case "MANAGER":
 				logs.FInfo("MANAGER Hostname: %s", global.PostgresManager.Host)
 				DBManager = ConnectToDatabase(global.PostgresManager)
