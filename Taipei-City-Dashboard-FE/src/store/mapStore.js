@@ -180,6 +180,37 @@ export const useMapStore = defineStore("map", {
 						})
 						.addLayer(metroTaipeiTown);
 				});
+
+			// 北水停水圖
+			fetch('/mapData/water.geojson')
+				.then(response => response.json())
+				.then(data => {
+					this.map.addSource('water-areas', {
+						type: 'geojson',
+						data: data
+					});
+
+					this.map.addLayer({
+						id: 'water-fill-layer',
+						type: 'fill',
+						source: 'water-areas',
+						paint: {
+							'fill-color': '#3399ff',
+							'fill-opacity': 0.4
+						}
+					});
+
+					this.map.addLayer({
+						id: 'water-outline-layer',
+						type: 'line',
+						source: 'water-areas',
+						paint: {
+							'line-color': '#0066cc',
+							'line-width': 1.5
+						}
+					});
+				});
+
 			//test
 			fetch('/mapData/test.geojson')
 				.then(response => response.json())
@@ -207,6 +238,8 @@ export const useMapStore = defineStore("map", {
 						groupMap[group].push(feature.geometry.coordinates);
 					});
 
+					const polygonFeatures = [];
+					const lineFeatures = [];
 					const polygonFeatures = [];
 					const lineFeatures = [];
 
@@ -299,69 +332,6 @@ export const useMapStore = defineStore("map", {
 						}
 					});
 				});
-
-			///getapi
-			async function loadApiPoints(queryParams = {}) {
-				try {
-					const response = await http.get('/homeDown', { params: queryParams });
-					console.log('response.data =', response.data);
-
-					// 確保 data 屬性存在且是陣列
-					const dataArray = response.data && Array.isArray(response.data.data) ? response.data.data : [];
-					console.log('data = ', dataArray)
-
-					const apiFeatures = dataArray.map(item => ({
-						type: 'Feature',
-						properties: {
-							group: item.id,
-							name: item.name,
-						},
-						geometry: {
-							type: 'Point',
-							coordinates: [Number(item.longitude), Number(item.latitude)],
-						},
-					}));
-					console.log('apiFeatures= ', apiFeatures)
-
-					const apiGeoJSON = {
-						type: 'FeatureCollection',
-						features: apiFeatures,
-					};
-
-					console.log(this);
-
-					if (this.map.getSource('api-points')) {
-						this.map.getSource('api-points').setData(apiGeoJSON);
-					} else {
-						this.map.addSource('api-points', {
-							type: 'geojson',
-							data: apiGeoJSON,
-						});
-
-						this.map.addLayer({
-							id: 'api-points-layer',
-							type: 'circle',
-							source: 'api-points',
-							paint: {
-								'circle-radius': 6,
-								'circle-color': '#FF0000',
-							},
-						});
-					}
-				} catch (err) {
-					console.error('錯誤:', err);
-				}
-			}
-
-			loadApiPoints.bind(this)();
-
-
-
-
-
-
-
-
 
 
 			// metroTaipei Village Labels
