@@ -1,0 +1,38 @@
+{
+  "type": "FeatureCollection",
+  "name": "命名空間(隨機給 遵守一般程式的namespace規範)",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "features": "Array<路object",
+},
+"路object:"{
+  "type": "Feature",
+  "properties": "路的metadata",
+  "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+      "緯度",
+      "經度"
+    ]
+  }
+}
+
+
+路的metadata
+{
+route_name: 路線段的名稱或識別碼 (文字),
+authority_name: 負責該路線段的權責單位名稱 (文字 或 null),
+city: 路線段所在的城市 (文字)
+town: 路線段所在的鄉鎮市區 (文字 或 null),
+road_section_start: 路線段的起點描述 (文字),
+road_section_end: 路線段的終點描述 (文字),
+direction: 路線段的行進方向 (文字，例如：雙向, 單向),
+cycling_type: 自行車道或自行車設施的類型 (文字 或 null),
+cycling_length: 路線段的長度 (通常單位為公尺) (數字),
+finished_time: 路線段的完工日期 (日期字串),
+update_time: 此資料記錄的最後更新時間戳記 (時間戳記字串)
+}
