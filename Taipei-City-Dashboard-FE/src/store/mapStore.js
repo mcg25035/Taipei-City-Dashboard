@@ -43,6 +43,32 @@ import { voronoi } from "../assets/utilityFunctions/voronoi.js";
 import { calculateHaversineDistance } from "../assets/utilityFunctions/calculateHaversineDistance";
 import { AnimatedArcLayer } from "../assets/configs/mapbox/arcAnimate.js";
 
+function convertToGeoJSON(input) {
+	return {
+		type: "FeatureCollection",
+		crs: {
+			type: "name",
+			properties: {
+				name: "urn:ogc:def:crs:OGC:1.3:CRS84"
+			}
+		},
+		features: input.data.map((event) => ({
+			type: "Feature",
+			properties: {
+				id: event.id,
+				type: event.type,
+				name: event.name,
+				reported_at: event.reported_at
+			},
+			geometry: {
+				type: "Point",
+				coordinates: [event.longitude, event.latitude]
+			}
+		}))
+	};
+}
+
+
 //test function
 function createPolygonsFromPoints(geojson) {
 	const groupMap = {};
@@ -80,7 +106,64 @@ function createPolygonsFromPoints(geojson) {
 	};
 }
 
+function mergeAreaDataFeatures(dataList) {
+	const merged = {
+		type: "FeatureCollection",
+		features: []
+	};
 
+	for (const entry of dataList) {
+		try {
+			const parsed = JSON.parse(entry.area_data);
+			if (parsed.type === "FeatureCollection" && Array.isArray(parsed.features)) {
+				for (const feature of parsed.features) {
+					// 過濾掉空幾何（避免渲染錯誤）
+					const coords = feature.geometry?.coordinates;
+					const hasGeometry = coords && Array.isArray(coords) && coords.flat(Infinity).length > 0;
+					if (hasGeometry) {
+						merged.features.push(feature);
+					}
+				}
+			}
+		} catch (e) {
+			console.error(`解析 area_data id=${entry.id} 時失敗`, e);
+		}
+	}
+
+	return merged;
+}
+
+
+function drawWater(map) {
+	fetch('/mapData/water_outage.geojson')
+		.then(response => response.json())
+		.then(data => {
+			map.addSource('water-areas', {
+				type: 'geojson',
+				data: data
+			});
+
+			map.addLayer({
+				id: 'water-fill-layer',
+				type: 'fill',
+				source: 'water-areas',
+				paint: {
+					'fill-color': '#3399ff',
+					'fill-opacity': 0.4
+				}
+			});
+
+			map.addLayer({
+				id: 'water-outline-layer',
+				type: 'line',
+				source: 'water-areas',
+				paint: {
+					'line-color': '#0066cc',
+					'line-width': 1.5
+				}
+			});
+		});
+}
 
 export const useMapStore = defineStore("map", {
 	state: () => ({
@@ -212,124 +295,124 @@ export const useMapStore = defineStore("map", {
 			// 	});
 
 			//test
-			fetch('/mapData/test.geojson')
-				.then(response => response.json())
-				.then(data => {
-					this.map.addSource('test-points', {
-						type: 'geojson',
-						data: data
-					});
+			// fetch('/mapData/test.geojson')
+			// 	.then(response => response.json())
+			// 	.then(data => {
+			// 		this.map.addSource('test-points', {
+			// 			type: 'geojson',
+			// 			data: data
+			// 		});
 
-					this.map.addLayer({
-						id: 'test-points-layer',
-						type: 'circle',
-						source: 'test-points',
-						paint: {
-							'circle-radius': 6,
-							'circle-color': '#007cbf'
-						}
-					});
+			// 		this.map.addLayer({
+			// 			id: 'test-points-layer',
+			// 			type: 'circle',
+			// 			source: 'test-points',
+			// 			paint: {
+			// 				'circle-radius': 6,
+			// 				'circle-color': '#007cbf'
+			// 			}
+			// 		});
 
-					const groupMap = {};
-					data.features.forEach(feature => {
-						if (feature.geometry.type !== 'Point') return;
-						const group = feature.properties.group;
-						if (!groupMap[group]) groupMap[group] = [];
-						groupMap[group].push(feature.geometry.coordinates);
-					});
+			// 		const groupMap = {};
+			// 		data.features.forEach(feature => {
+			// 			if (feature.geometry.type !== 'Point') return;
+			// 			const group = feature.properties.group;
+			// 			if (!groupMap[group]) groupMap[group] = [];
+			// 			groupMap[group].push(feature.geometry.coordinates);
+			// 		});
 
-					const polygonFeatures = [];
-					const lineFeatures = [];
+			// 		const polygonFeatures = [];
+			// 		const lineFeatures = [];
 
-					Object.entries(groupMap).forEach(([group, coords]) => {
-						if (coords.length < 2) return;
+			// 		Object.entries(groupMap).forEach(([group, coords]) => {
+			// 			if (coords.length < 2) return;
 
-						if (coords.length === 2) {
-							// 畫線
-							lineFeatures.push({
-								type: 'Feature',
-								properties: { group },
-								geometry: {
-									type: 'LineString',
-									coordinates: coords
-								}
-							});
-						} else {
-							// 嘗試畫多邊形（凸包）
-							const turfPoints = coords.map(coord => turf.point(coord));
-							const fc = turf.featureCollection(turfPoints);
-							const hull = turf.convex(fc);
+			// 			if (coords.length === 2) {
+			// 				// 畫線
+			// 				lineFeatures.push({
+			// 					type: 'Feature',
+			// 					properties: { group },
+			// 					geometry: {
+			// 						type: 'LineString',
+			// 						coordinates: coords
+			// 					}
+			// 				});
+			// 			} else {
+			// 				// 嘗試畫多邊形（凸包）
+			// 				const turfPoints = coords.map(coord => turf.point(coord));
+			// 				const fc = turf.featureCollection(turfPoints);
+			// 				const hull = turf.convex(fc);
 
-							if (hull) {
-								hull.properties = { group };
-								polygonFeatures.push(hull);
-							} else {
-								// 如果凸包失敗，改畫線
-								lineFeatures.push({
-									type: 'Feature',
-									properties: { group },
-									geometry: {
-										type: 'LineString',
-										coordinates: coords
-									}
-								});
-							}
-						}
-					});
+			// 				if (hull) {
+			// 					hull.properties = { group };
+			// 					polygonFeatures.push(hull);
+			// 				} else {
+			// 					// 如果凸包失敗，改畫線
+			// 					lineFeatures.push({
+			// 						type: 'Feature',
+			// 						properties: { group },
+			// 						geometry: {
+			// 							type: 'LineString',
+			// 							coordinates: coords
+			// 						}
+			// 					});
+			// 				}
+			// 			}
+			// 		});
 
-					// 多邊形圖層
-					const polygonGeoJSON = {
-						type: 'FeatureCollection',
-						features: polygonFeatures
-					};
+			// 		// 多邊形圖層
+			// 		const polygonGeoJSON = {
+			// 			type: 'FeatureCollection',
+			// 			features: polygonFeatures
+			// 		};
 
-					this.map.addSource('test-polygons', {
-						type: 'geojson',
-						data: polygonGeoJSON
-					});
+			// 		this.map.addSource('test-polygons', {
+			// 			type: 'geojson',
+			// 			data: polygonGeoJSON
+			// 		});
 
-					this.map.addLayer({
-						id: 'test-polygons-layer',
-						type: 'fill',
-						source: 'test-polygons',
-						paint: {
-							'fill-color': '#FFA500',
-							'fill-opacity': 0.3
-						}
-					});
+			// 		this.map.addLayer({
+			// 			id: 'test-polygons-layer',
+			// 			type: 'fill',
+			// 			source: 'test-polygons',
+			// 			paint: {
+			// 				'fill-color': '#FFA500',
+			// 				'fill-opacity': 0.3
+			// 			}
+			// 		});
 
-					// 多邊形邊框
-					this.map.addLayer({
-						id: 'test-polygons-outline',
-						type: 'line',
-						source: 'test-polygons',
-						paint: {
-							'line-color': '#FF8C00',
-							'line-width': 2
-						}
-					});
+			// 		// 多邊形邊框
+			// 		this.map.addLayer({
+			// 			id: 'test-polygons-outline',
+			// 			type: 'line',
+			// 			source: 'test-polygons',
+			// 			paint: {
+			// 				'line-color': '#FF8C00',
+			// 				'line-width': 2
+			// 			}
+			// 		});
 
-					// 額外畫出的線圖層（2 點或 fallback）
-					const lineGeoJSON = {
-						type: 'FeatureCollection',
-						features: lineFeatures
-					};
+			// 		// 額外畫出的線圖層（2 點或 fallback）
+			// 		const lineGeoJSON = {
+			// 			type: 'FeatureCollection',
+			// 			features: lineFeatures
+			// 		};
 
-					this.map.addSource('test-lines', {
-						type: 'geojson',
-						data: lineGeoJSON
-					});
+			// 		this.map.addSource('test-lines', {
+			// 			type: 'geojson',
+			// 			data: lineGeoJSON
+			// 		});
 
-					this.map.addLayer({
-						id: 'test-lines-layer',
-						type: 'line',
-						source: 'test-lines',
-						paint: {
-							'line-color': '#FF8C00',
-							'line-width': 2
-						}
-					});
-				});
+			// 		this.map.addLayer({
+			// 			id: 'test-lines-layer',
+			// 			type: 'line',
+			// 			source: 'test-lines',
+			// 			paint: {
+			// 				'line-color': '#FF8C00',
+			// 				'line-width': 2
+			// 			}
+			// 		});
+			// 	});
 
 			///getapi
 			async function loadApiPoints(queryParams = {}) {
@@ -546,12 +629,33 @@ export const useMapStore = defineStore("map", {
 		},
 		// 2. Call an API to get the layer data
 		fetchLocalGeoJson(map_config) {
-			axios
-				.get(`/mapData/${map_config.index}.geojson`)
-				.then((rs) => {
-					this.addGeojsonSource(map_config, rs.data);
-				})
-				.catch((e) => console.error(e));
+			const whitelist = ["water_outage", "test", "home_down"]
+			console.log(map_config.index)
+			if (whitelist.includes(map_config.index)) {
+				if (map_config.index === "test") {
+					http.get(`/infraDown`).then(rs => {
+						console.log(rs.data.data)
+						const mergedData = mergeAreaDataFeatures(rs.data.data);
+						this.addGeojsonSource(map_config, mergedData);
+						// this.addGeojsonSource(map_config, JSON.parse(rs.data.data[0].area_data));
+					}).catch(e => console.error(e));
+				} else if (map_config.index === "home_down") {
+					http.get(`/homeDown`).then(rs => {
+						console.log(rs.data.data)
+						const mergedData = convertToGeoJSON(rs.data);
+						this.addGeojsonSource(map_config, mergedData);
+						// this.addGeojsonSource(map_config, JSON.parse(rs.data.data[0].area_data));
+					}).catch(e => console.error(e));
+				}
+			} else {
+				axios
+					.get(`/mapData/${map_config.index}.geojson`)
+					.then((rs) => {
+						this.addGeojsonSource(map_config, rs.data);
+
+					})
+					.catch((e) => console.error(e));
+			}
 		},
 		// 3-1. Add a local geojson as a source in mapbox
 		addGeojsonSource(map_config, data) {

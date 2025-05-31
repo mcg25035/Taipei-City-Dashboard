@@ -13,18 +13,9 @@ async function handleSubmit() {
 	const { homeDownForm } = dialogStore;
 	try {
 		await http.post("/homeDown", {
-			where:
-				homeDownForm && homeDownForm.longitude && homeDownForm.latitude
-					? [
-							Number(homeDownForm.longitude),
-							Number(homeDownForm.latitude),
-					  ]
-					: undefined,
+			where: [25.012875478644947, 121.46585368626272],
 			type: what.value,
-			name:
-				homeDownForm && homeDownForm.name
-					? homeDownForm.name
-					: undefined,
+			name: homeDownForm.name,
 		});
 		dialogStore.hideAllDialogs();
 		dialogStore.showDialog("reportSuccess");

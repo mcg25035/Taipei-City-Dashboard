@@ -27,26 +27,13 @@ function handleClose() {
 	<DialogContainer dialog="whereDown" @on-close="handleClose">
 		<div class="wheredown">
 			<h2>哪裡掛的？</h2>
-			<input
-				v-model="location"
-				placeholder="輸入鄰里"
-				class="wheredown-input"
-			/>
+			<br />
+			你目前位在 <br /><br />
+			<pre>(25.012875478644947, 121.46585368626272)</pre>
+			<br />
 			<input
 				v-model="name"
 				placeholder="輸入你的代稱"
-				class="wheredown-input"
-				style="margin-top: 0.5rem"
-			/>
-			<input
-				v-model="longitude"
-				placeholder="經度(可選)"
-				class="wheredown-input"
-				style="margin-top: 0.5rem"
-			/>
-			<input
-				v-model="latitude"
-				placeholder="緯度(可選)"
 				class="wheredown-input"
 				style="margin-top: 0.5rem"
 			/>
