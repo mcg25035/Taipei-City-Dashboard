@@ -10,7 +10,6 @@ import (
 	"TaipeiCityDashboardBE/global"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lib/pq" // For pq.StringArray if used for JSONB
 	"gorm.io/gorm"
 )
 
@@ -20,17 +19,17 @@ import (
 // @Tags infraDown
 // @Accept  json
 // @Produce  json
-// @Param   event_data body models.InfraDownEvent true "Infra Down Event Data (timeMin, timeMax as Unix timestamps)"
+// @Param   event_data body models.InfraDownEvent true "Infra Down Event Data (timeMin, timeMax will be set to current time and current time + 1 hour)"
 // @Success 201 {object} util.Response{data=map[string]uint} "Successfully created, returns id"
 // @Failure 400 {object} util.Response "Invalid input"
 // @Failure 500 {object} util.Response "Internal server error"
 // @Router /api/v1/infraDown [post]
 func CreateInfraDownEvent(c *gin.Context) {
 	var input struct {
-		Type     string   `json:"type" binding:"required"`
-		TimeMin  int64    `json:"timeMin" binding:"required"` // Unix timestamp
-		TimeMax  int64    `json:"timeMax" binding:"required"` // Unix timestamp
-		AreaData []string `json:"data"`                       // Assuming JSON array of strings for simplicity
+		Type     string `json:"type" binding:"required"`
+		TimeMin  int64  `json:"timeMin"` // Unix timestamp, no longer required
+		TimeMax  int64  `json:"timeMax"` // Unix timestamp, no longer required
+		AreaData string `json:"data"`    // AreaData is now directly a string
 	}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -38,15 +37,15 @@ func CreateInfraDownEvent(c *gin.Context) {
 		return
 	}
 
-	// Convert Unix timestamps to time.Time
-	startTime := time.Unix(input.TimeMin, 0)
-	endTime := time.Unix(input.TimeMax, 0)
+	// Set startTime and endTime to current time and current time + 1 hour
+	startTime := time.Now()
+	endTime := time.Now().Add(time.Hour)
 
 	event := models.InfraDownEvent{
 		Type:      input.Type,
 		StartTime: startTime,
 		EndTime:   endTime,
-		AreaData:  pq.StringArray(input.AreaData), // Ensure this matches the model's AreaData type
+		AreaData:  input.AreaData, // Directly assign string
 	}
 
 	if err := global.DB.Create(&event).Error; err != nil {
@@ -59,70 +58,17 @@ func CreateInfraDownEvent(c *gin.Context) {
 
 // GetInfraDownEvents godoc
 // @Summary Get all infra down events
-// @Description Get a list of infra down events with optional filters and pagination
+// @Description Get a list of all infra down events without pagination or filters
 // @Tags infraDown
 // @Accept  json
 // @Produce  json
-// @Param   tab query int false "Page number (default 1, 50 items per page)"
-// @Param   type query string false "Filter by event type"
-// @Param   timeMin query int false "Minimum start time (Unix timestamp)"
-// @Param   timeMax query int false "Maximum end time (Unix timestamp)"
-// @Param   data query string false "Filter by area data (JSON string, exact match or specific query logic needed)"
 // @Success 200 {object} util.Response{data=[]models.InfraDownEvent} "Successfully retrieved events"
-// @Failure 400 {object} util.Response "Invalid input for timeMin/timeMax"
 // @Failure 500 {object} util.Response "Internal server error"
 // @Router /api/v1/infraDown [get]
 func GetInfraDownEvents(c *gin.Context) {
+
 	var events []models.InfraDownEvent
 	query := global.DB.Model(&models.InfraDownEvent{})
-
-	// Pagination
-	page, _ := strconv.Atoi(c.DefaultQuery("tab", "1"))
-	if page < 1 {
-		page = 1
-	}
-	pageSize := 50
-	offset := (page - 1) * pageSize
-	query = query.Offset(offset).Limit(pageSize)
-
-	// Type filter
-	if eventType := c.Query("type"); eventType != "" {
-		query = query.Where("type = ?", eventType)
-	}
-
-	// TimeMin filter
-	if timeMinStr := c.Query("timeMin"); timeMinStr != "" {
-		timeMinUnix, err := strconv.ParseInt(timeMinStr, 10, 64)
-		if err != nil {
-			util.ResponseError(c, http.StatusBadRequest, "Invalid timeMin format: must be a Unix timestamp")
-			return
-		}
-		query = query.Where("start_time >= ?", time.Unix(timeMinUnix, 0))
-	}
-
-	// TimeMax filter
-	if timeMaxStr := c.Query("timeMax"); timeMaxStr != "" {
-		timeMaxUnix, err := strconv.ParseInt(timeMaxStr, 10, 64)
-		if err != nil {
-			util.ResponseError(c, http.StatusBadRequest, "Invalid timeMax format: must be a Unix timestamp")
-			return
-		}
-		query = query.Where("end_time <= ?", time.Unix(timeMaxUnix, 0))
-	}
-
-	// Data filter (simple exact match for pq.StringArray, might need more complex JSON query for other types)
-	// Note: Filtering JSONB effectively often requires specific database functions (e.g., @>, ?, ?&, ?|)
-	// This example provides a placeholder for how one might start, but it's not a comprehensive JSON query solution.
-	// The issue states "阿龍定義" (Ah Long defines it), so the exact query logic for 'data' might be complex.
-	// For now, this will be a placeholder or a very simple match if possible.
-	// if dataQuery := c.Query("data"); dataQuery != "" {
-	//    // This is tricky with pq.StringArray directly for partial matches.
-	//    // If AreaData were datatypes.JSON, you could use GORM's JSON querying features.
-	//    // For pq.StringArray, you might need raw SQL or a different approach for complex queries.
-	//    // Example: query = query.Where("area_data @> ?", dataQuery) // If dataQuery is a valid JSONB array string for containment
-	// }
-
-	query = query.Order("created_at DESC")
 
 	if err := query.Find(&events).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
