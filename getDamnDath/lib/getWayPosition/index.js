@@ -20,7 +20,7 @@ async function getWayPosition(wayName) {
       body: OVERPASS_QUERY(wayName)
     };
 
-    try {
+    // try {
       const response = await fetch(API_BASE_URL, options);
       if (!response.ok) {
         console.error("錯誤，無法獲取道路位置，狀態碼:", response.status);
@@ -56,10 +56,10 @@ async function getWayPosition(wayName) {
       });
 
       resolve(points);
-    } catch (error) {
-      console.error("錯誤，獲取道路位置時發生錯誤:", error.message);
-      reject(new Error(`獲取道路位置時發生錯誤: ${error.message}`));
-    }
+    // } catch (error) {
+    //   console.error("錯誤，獲取道路位置時發生錯誤:", error.message);
+    //   reject(new Error(`獲取道路位置時發生錯誤: ${error.message}`));
+    // }
   });
 }
 

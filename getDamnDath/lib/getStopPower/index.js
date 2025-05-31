@@ -19,7 +19,7 @@
  * @property {GeoJsonFeatureMetadata} properties 屬性
  * @property {Object} geometry 幾何資訊
  * @property {"MultiLineStringd"} geometry.type 幾何類型
- * @property {[number, number]} geometry.coordinates 座標
+ * @property {[number, number][]} geometry.coordinates 座標
  */
 
 /**
@@ -303,27 +303,29 @@ async function getStopPowerWays() {
 
 async function getStopPower() {
   try {
-
+    /**
+     * @type {packageJson[]}
+     */
     const packages = await getStopPowerWays();
 
-    console.log(packages)
+    console.log(packages[0].data.features.length)
 
-    return;
+    // return;
 
     let addressCount = 0;
     for (let i = 0; i < packages.length; i++) {
       const packageJson = packages[i];
-      // addressCount += packageJson.data.features.length;
-      console.log(packageJson.data.features);
+      addressCount += packageJson.data.features.length;
+      // console.log(packageJson.data.features.length);
     }
 
     console.log(`共 ${packages.length} 個停電資料包，每個包包含 ${addressCount} 個地址`);
 
     // debug
-    return;
+    // return;
 
 
-    console.log(`Total addresses: ${addressCount}`);
+    // console.log(`Total addresses: ${addressCount}`);
 
     let count = 0;
 
@@ -339,9 +341,9 @@ async function getStopPower() {
 
     let status = "➡️"
     for (let i = 0; i < packages.length; i++) {
-      const item = packages[i];
-      for (let i = 0; i < item.address.length; i++) {
-        const address = item.address[i];
+      const packageJson = packages[i];
+      for (let i = 0; i < packageJson.data.features.length; i++) {
+        const address = packageJson.data.features[i].properties.route_name;
 
 
         const percent = addressCount === 0 ? 0 : Math.floor((count / addressCount) * 100);
@@ -358,10 +360,8 @@ async function getStopPower() {
         process.stdout.write(`last：${status} now：${address}\n${bar} ${count}/${addressCount} addresses, use ${elapsed.toFixed(2)}s, ${((count / (Date.now() - startTime)) * 1000).toFixed(2)} addresses/s, 預計剩餘時間: ${eta.toFixed(2)}s `);
 
 
-
-        // const position = await getWayPosition(address);
-        item.address[i] = position;
-
+        const position = await getWayPosition(address);
+        packageJson.data.features[i].geometry.coordinates = position;
 
 
         count++;
@@ -370,9 +370,6 @@ async function getStopPower() {
         process.stdout.cursorTo(0, 0);
         status = position.length == 0 ? "🔴" : "✅";
         process.stdout.write(`${status} ${address.padEnd(80, ' ')}\n${bar} ${count}/${addressCount} addresses, use ${((Date.now() - startTime) / 1000).toFixed(2)}s, ${((count / (Date.now() - startTime)) * 1000).toFixed(2)} addresses/s`);
-
-        fs.writeFileSync('stop_water_data.json', JSON.stringify(packages, null, 2), 'utf8');
-
       }
     }
 
