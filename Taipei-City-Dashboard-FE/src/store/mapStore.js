@@ -240,8 +240,6 @@ export const useMapStore = defineStore("map", {
 
 					const polygonFeatures = [];
 					const lineFeatures = [];
-					const polygonFeatures = [];
-					const lineFeatures = [];
 
 					Object.entries(groupMap).forEach(([group, coords]) => {
 						if (coords.length < 2) return;
