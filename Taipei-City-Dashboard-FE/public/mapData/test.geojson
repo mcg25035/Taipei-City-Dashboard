@@ -1,0 +1,59 @@
+{
+	"type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "group": "A", "name": "點A1" },
+      "geometry": { "type": "Point", "coordinates": [121.515, 25.0478] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "group": "A", "name": "點A2" },
+      "geometry": { "type": "Point", "coordinates": [121.5645, 25.033] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "group": "A", "name": "點A3" },
+      "geometry": { "type": "Point", "coordinates": [121.525, 25.088] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "group": "B", "name": "點B1" },
+      "geometry": { "type": "Point", "coordinates": [121.6, 25.0] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "group": "B", "name": "點B2" },
+      "geometry": { "type": "Point", "coordinates": [121.65, 25.05] }
+    },
+    {
+		"type": "Feature",
+		"properties": { "group": "A", "name": "區域A" },
+		"geometry": {
+		  "type": "Polygon",
+		  "coordinates": [[
+			[121.515, 25.0478],
+			[121.5645, 25.033],
+			[121.5485, 25.1024],
+			[121.525, 25.088],
+			[121.515, 25.0478]
+		  ]]
+		}
+	  },
+	  {
+		"type": "Feature",
+		"properties": { "group": "B", "name": "區域B" },
+		"geometry": {
+		  "type": "Polygon",
+		  "coordinates": [[
+			[121.6, 25.0],
+			[121.65, 25.0],
+			[121.65, 25.05],
+			[121.6, 25.05],
+			[121.6, 25.0]
+		  ]]
+		}
+	  }
+	]
+  }
+  

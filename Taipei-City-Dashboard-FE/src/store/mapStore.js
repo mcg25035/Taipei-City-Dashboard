@@ -43,6 +43,45 @@ import { voronoi } from "../assets/utilityFunctions/voronoi.js";
 import { calculateHaversineDistance } from "../assets/utilityFunctions/calculateHaversineDistance";
 import { AnimatedArcLayer } from "../assets/configs/mapbox/arcAnimate.js";
 
+//test function
+function createPolygonsFromPoints(geojson) {
+	const groupMap = {};
+  
+	// 分組收集點的座標
+	for (const feature of geojson.features) {
+	  if (feature.geometry.type === 'Point') {
+		const group = feature.properties.group;
+		if (!groupMap[group]) groupMap[group] = [];
+		groupMap[group].push(feature.geometry.coordinates);
+	  }
+	}
+  
+	const polygonFeatures = [];
+  
+	for (const group in groupMap) {
+	  const coords = groupMap[group];
+	  if (coords.length >= 3) {
+		// 必須有至少3個點才能組成多邊形，且需封閉（回到起點）
+		const closedCoords = [...coords, coords[0]];
+		polygonFeatures.push({
+		  type: 'Feature',
+		  properties: { group, name: `區域${group}` },
+		  geometry: {
+			type: 'Polygon',
+			coordinates: [closedCoords]
+		  }
+		});
+	  }
+	}
+  
+	return {
+	  type: 'FeatureCollection',
+	  features: [...geojson.features, ...polygonFeatures]
+	};
+  }
+  
+
+
 export const useMapStore = defineStore("map", {
 	state: () => ({
 		// Array of layer IDs that are in the map
@@ -141,6 +180,54 @@ export const useMapStore = defineStore("map", {
 						})
 						.addLayer(metroTaipeiTown);
 				});
+			//test
+			fetch('/mapData/test.geojson')
+				.then(response => response.json())
+				.then(data => {
+				  // 加載 GeoJSON source
+				  this.map.addSource('test', {
+					type: 'geojson',
+					data: data
+				  });
+			  
+				  // 畫點 layer
+				  this.map.addLayer({
+					id: 'test-points',
+					type: 'circle',
+					source: 'test',
+					filter: ['==', '$type', 'Point'],  // 只畫點
+					paint: {
+					  'circle-radius': 6,
+					  'circle-color': '#007cbf'
+					}
+				  });
+			  
+				  // 畫多邊形 layer
+				  this.map.addLayer({
+					id: 'test-polygon',
+					type: 'fill',
+					source: 'test',
+					filter: ['==', '$type', 'Polygon'],  // 只畫多邊形
+					paint: {
+					  'fill-color': '#ff6600',
+					  'fill-opacity': 0.3
+					}
+				  });
+			  
+				  // 如果想要多邊形邊框，再加一個 line layer
+				  this.map.addLayer({
+					id: 'test-polygon-outline',
+					type: 'line',
+					source: 'test',
+					filter: ['==', '$type', 'Polygon'],
+					paint: {
+					  'line-color': '#ff6600',
+					  'line-width': 2
+					}
+				  });
+				});
+			  
+			  
 			// metroTaipei Village Labels
 			fetch(`/mapData/metrotaipei_village.geojson`)
 				.then((response) => response.json())
