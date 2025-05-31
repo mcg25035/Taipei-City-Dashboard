@@ -46,7 +46,6 @@ func MergeAndRemoveDuplicates(slices ...[]int) []int {
 	return result
 }
 
-
 // GetTime is a utility function to get the time from the header and set default values.
 func GetTime(c *gin.Context) (string, string, error) {
 	timefrom := c.Query("timefrom")
@@ -74,4 +73,21 @@ func GetTime(c *gin.Context) (string, string, error) {
 	}
 
 	return timefrom, timeto, nil
+}
+
+// ResponseSuccess sends a success JSON response.
+func ResponseSuccess(c *gin.Context, code int, message string, data interface{}) {
+	c.JSON(code, gin.H{
+		"status":  "success",
+		"message": message,
+		"data":    data,
+	})
+}
+
+// ResponseError sends an error JSON response.
+func ResponseError(c *gin.Context, code int, message string) {
+	c.JSON(code, gin.H{
+		"status":  "error",
+		"message": message,
+	})
 }
