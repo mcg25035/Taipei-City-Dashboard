@@ -1,59 +1,32 @@
 {
 	"type": "FeatureCollection",
-  "features": [
-    {
-      "type": "Feature",
-      "properties": { "group": "A", "name": "點A1" },
-      "geometry": { "type": "Point", "coordinates": [121.515, 25.0478] }
-    },
-    {
-      "type": "Feature",
-      "properties": { "group": "A", "name": "點A2" },
-      "geometry": { "type": "Point", "coordinates": [121.5645, 25.033] }
-    },
-    {
-      "type": "Feature",
-      "properties": { "group": "A", "name": "點A3" },
-      "geometry": { "type": "Point", "coordinates": [121.525, 25.088] }
-    },
-    {
-      "type": "Feature",
-      "properties": { "group": "B", "name": "點B1" },
-      "geometry": { "type": "Point", "coordinates": [121.6, 25.0] }
-    },
-    {
-      "type": "Feature",
-      "properties": { "group": "B", "name": "點B2" },
-      "geometry": { "type": "Point", "coordinates": [121.65, 25.05] }
-    },
-    {
-		"type": "Feature",
-		"properties": { "group": "A", "name": "區域A" },
-		"geometry": {
-		  "type": "Polygon",
-		  "coordinates": [[
-			[121.515, 25.0478],
-			[121.5645, 25.033],
-			[121.5485, 25.1024],
-			[121.525, 25.088],
-			[121.515, 25.0478]
-		  ]]
-		}
-	  },
-	  {
-		"type": "Feature",
-		"properties": { "group": "B", "name": "區域B" },
-		"geometry": {
-		  "type": "Polygon",
-		  "coordinates": [[
-			[121.6, 25.0],
-			[121.65, 25.0],
-			[121.65, 25.05],
-			[121.6, 25.05],
-			[121.6, 25.0]
-		  ]]
-		}
-	  }
+	"features": [
+	  { "type": "Feature", "properties": { "group": "A", "name": "A1" }, "geometry": { "type": "Point", "coordinates": [121.5, 25.05] } },
+	  { "type": "Feature", "properties": { "group": "A", "name": "A2" }, "geometry": { "type": "Point", "coordinates": [121.55, 25.04] } },
+	  { "type": "Feature", "properties": { "group": "A", "name": "A3" }, "geometry": { "type": "Point", "coordinates": [121.53, 25.08] } },
+  
+	  { "type": "Feature", "properties": { "group": "B", "name": "B1" }, "geometry": { "type": "Point", "coordinates": [121.6, 25.0] } },
+	  { "type": "Feature", "properties": { "group": "B", "name": "B2" }, "geometry": { "type": "Point", "coordinates": [121.62, 25.02] } },
+  
+	  { "type": "Feature", "properties": { "group": "C", "name": "C1" }, "geometry": { "type": "Point", "coordinates": [121.4, 25.01] } },
+  
+	  { "type": "Feature", "properties": { "group": "D", "name": "D1" }, "geometry": { "type": "Point", "coordinates": [121.7, 25.06] } },
+	  { "type": "Feature", "properties": { "group": "D", "name": "D2" }, "geometry": { "type": "Point", "coordinates": [121.71, 25.09] } },
+	  { "type": "Feature", "properties": { "group": "D", "name": "D3" }, "geometry": { "type": "Point", "coordinates": [121.69, 25.08] } },
+	  { "type": "Feature", "properties": { "group": "D", "name": "D4" }, "geometry": { "type": "Point", "coordinates": [121.705, 25.04] } },
+  
+	  { "type": "Feature", "properties": { "group": "E", "name": "E1" }, "geometry": { "type": "Point", "coordinates": [121.48, 25.07] } },
+	  { "type": "Feature", "properties": { "group": "E", "name": "E2" }, "geometry": { "type": "Point", "coordinates": [121.49, 25.07] } },
+	  { "type": "Feature", "properties": { "group": "E", "name": "E3" }, "geometry": { "type": "Point", "coordinates": [121.50, 25.07] } },
+	  { "type": "Feature", "properties": { "group": "E", "name": "E4" }, "geometry": { "type": "Point", "coordinates": [121.51, 25.07] } },
+	  { "type": "Feature", "properties": { "group": "E", "name": "E5" }, "geometry": { "type": "Point", "coordinates": [121.50, 25.07] } },
+  
+	  { "type": "Feature", "properties": { "group": "F", "name": "F1" }, "geometry": { "type": "Point", "coordinates": [121.75, 25.05] } },
+	  { "type": "Feature", "properties": { "group": "F", "name": "F2" }, "geometry": { "type": "Point", "coordinates": [121.76, 25.07] } },
+	  { "type": "Feature", "properties": { "group": "F", "name": "F3" }, "geometry": { "type": "Point", "coordinates": [121.78, 25.06] } },
+	  { "type": "Feature", "properties": { "group": "F", "name": "F4" }, "geometry": { "type": "Point", "coordinates": [121.77, 25.04] } },
+	  { "type": "Feature", "properties": { "group": "F", "name": "F5" }, "geometry": { "type": "Point", "coordinates": [121.755, 25.03] } },
+	  { "type": "Feature", "properties": { "group": "F", "name": "F6" }, "geometry": { "type": "Point", "coordinates": [121.74, 25.04] } }
 	]
   }
   

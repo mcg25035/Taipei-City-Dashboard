@@ -182,50 +182,127 @@ export const useMapStore = defineStore("map", {
 				});
 			//test
 			fetch('/mapData/test.geojson')
-				.then(response => response.json())
-				.then(data => {
-				  // 加載 GeoJSON source
-				  this.map.addSource('test', {
-					type: 'geojson',
-					data: data
-				  });
-			  
-				  // 畫點 layer
-				  this.map.addLayer({
-					id: 'test-points',
-					type: 'circle',
-					source: 'test',
-					filter: ['==', '$type', 'Point'],  // 只畫點
-					paint: {
-					  'circle-radius': 6,
-					  'circle-color': '#007cbf'
-					}
-				  });
-			  
-				  // 畫多邊形 layer
-				  this.map.addLayer({
-					id: 'test-polygon',
-					type: 'fill',
-					source: 'test',
-					filter: ['==', '$type', 'Polygon'],  // 只畫多邊形
-					paint: {
-					  'fill-color': '#ff6600',
-					  'fill-opacity': 0.3
-					}
-				  });
-			  
-				  // 如果想要多邊形邊框，再加一個 line layer
-				  this.map.addLayer({
-					id: 'test-polygon-outline',
-					type: 'line',
-					source: 'test',
-					filter: ['==', '$type', 'Polygon'],
-					paint: {
-					  'line-color': '#ff6600',
-					  'line-width': 2
-					}
-				  });
-				});
+  .then(response => response.json())
+  .then(data => {
+    this.map.addSource('test-points', {
+      type: 'geojson',
+      data: data
+    });
+
+    this.map.addLayer({
+      id: 'test-points-layer',
+      type: 'circle',
+      source: 'test-points',
+      paint: {
+        'circle-radius': 6,
+        'circle-color': '#007cbf'
+      }
+    });
+
+    const groupMap = {};
+    data.features.forEach(feature => {
+      if (feature.geometry.type !== 'Point') return;
+      const group = feature.properties.group;
+      if (!groupMap[group]) groupMap[group] = [];
+      groupMap[group].push(feature.geometry.coordinates);
+    });
+
+    const polygonFeatures = [];
+    const lineFeatures = [];
+
+    Object.entries(groupMap).forEach(([group, coords]) => {
+      if (coords.length < 2) return;
+
+      if (coords.length === 2) {
+        // 畫線
+        lineFeatures.push({
+          type: 'Feature',
+          properties: { group },
+          geometry: {
+            type: 'LineString',
+            coordinates: coords
+          }
+        });
+      } else {
+        // 嘗試畫多邊形（凸包）
+        const turfPoints = coords.map(coord => turf.point(coord));
+        const fc = turf.featureCollection(turfPoints);
+        const hull = turf.convex(fc);
+
+        if (hull) {
+          hull.properties = { group };
+          polygonFeatures.push(hull);
+        } else {
+          // 如果凸包失敗，改畫線
+          lineFeatures.push({
+            type: 'Feature',
+            properties: { group },
+            geometry: {
+              type: 'LineString',
+              coordinates: coords
+            }
+          });
+        }
+      }
+    });
+
+    // 多邊形圖層
+    const polygonGeoJSON = {
+      type: 'FeatureCollection',
+      features: polygonFeatures
+    };
+
+    this.map.addSource('test-polygons', {
+      type: 'geojson',
+      data: polygonGeoJSON
+    });
+
+    this.map.addLayer({
+      id: 'test-polygons-layer',
+      type: 'fill',
+      source: 'test-polygons',
+      paint: {
+        'fill-color': '#FFA500',
+        'fill-opacity': 0.3
+      }
+    });
+
+    // 多邊形邊框
+    this.map.addLayer({
+      id: 'test-polygons-outline',
+      type: 'line',
+      source: 'test-polygons',
+      paint: {
+        'line-color': '#FF8C00',
+        'line-width': 2
+      }
+    });
+
+    // 額外畫出的線圖層（2 點或 fallback）
+    const lineGeoJSON = {
+      type: 'FeatureCollection',
+      features: lineFeatures
+    };
+
+    this.map.addSource('test-lines', {
+      type: 'geojson',
+      data: lineGeoJSON
+    });
+
+    this.map.addLayer({
+      id: 'test-lines-layer',
+      type: 'line',
+      source: 'test-lines',
+      paint: {
+        'line-color': '#FF8C00',
+        'line-width': 2
+      }
+    });
+  });
+
+
+
+		  
 			  
 			  
 			// metroTaipei Village Labels
