@@ -38,6 +38,8 @@ func ConfigureRoutes() {
 	configureIncidentRoutes()
 	// configureWsRoutes()
 	configureContributorRoutes()
+	configureHomeDownRoutes()
+	configureInfraDownRoutes()
 }
 
 func configureAuthRoutes() {
@@ -67,6 +69,30 @@ func configureUserRoutes() {
 	{
 		userRoutes.GET("/", controllers.GetAllUsers)
 		userRoutes.PATCH("/:id", controllers.UpdateUserByID)
+	}
+}
+
+func configureHomeDownRoutes() {
+	homeDownRoutes := RouterGroup.Group("/homeDown")
+	// Add specific middleware if needed, e.g.:
+	// homeDownRoutes.Use(middleware.LimitAPIRequests(global.DefaultLimitAPIRequestsTimes, global.LimitRequestsDuration))
+	// homeDownRoutes.Use(middleware.LimitTotalRequests(global.DefaultLimitTotalRequestsTimes, global.TokenExpirationDuration))
+	// homeDownRoutes.Use(middleware.IsLoggedIn()) // Assuming these endpoints require login
+	{
+		homeDownRoutes.POST("/", controllers.CreateHomeDownEvent)
+		homeDownRoutes.GET("/", controllers.GetHomeDownEvents)
+	}
+}
+
+func configureInfraDownRoutes() {
+	infraDownRoutes := RouterGroup.Group("/infraDown")
+	// Add specific middleware if needed
+	// infraDownRoutes.Use(middleware.IsLoggedIn()) // Assuming these endpoints require login
+	// infraDownRoutes.Use(middleware.IsSysAdm()) // Assuming POST/DELETE might be admin-only
+	{
+		infraDownRoutes.POST("/", controllers.CreateInfraDownEvent)
+		infraDownRoutes.GET("/", controllers.GetInfraDownEvents)
+		infraDownRoutes.DELETE("/:id", controllers.DeleteInfraDownEvent)
 	}
 }
 
