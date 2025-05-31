@@ -182,34 +182,34 @@ export const useMapStore = defineStore("map", {
 				});
 
 			// 北水停水圖
-			fetch('/mapData/water.geojson')
-				.then(response => response.json())
-				.then(data => {
-					this.map.addSource('water-areas', {
-						type: 'geojson',
-						data: data
-					});
+			// fetch('/mapData/water.geojson')
+			// 	.then(response => response.json())
+			// 	.then(data => {
+			// 		this.map.addSource('water-areas', {
+			// 			type: 'geojson',
+			// 			data: data
+			// 		});
 
-					this.map.addLayer({
-						id: 'water-fill-layer',
-						type: 'fill',
-						source: 'water-areas',
-						paint: {
-							'fill-color': '#3399ff',
-							'fill-opacity': 0.4
-						}
-					});
+			// 		this.map.addLayer({
+			// 			id: 'water-fill-layer',
+			// 			type: 'fill',
+			// 			source: 'water-areas',
+			// 			paint: {
+			// 				'fill-color': '#3399ff',
+			// 				'fill-opacity': 0.4
+			// 			}
+			// 		});
 
-					this.map.addLayer({
-						id: 'water-outline-layer',
-						type: 'line',
-						source: 'water-areas',
-						paint: {
-							'line-color': '#0066cc',
-							'line-width': 1.5
-						}
-					});
-				});
+			// 		this.map.addLayer({
+			// 			id: 'water-outline-layer',
+			// 			type: 'line',
+			// 			source: 'water-areas',
+			// 			paint: {
+			// 				'line-color': '#0066cc',
+			// 				'line-width': 1.5
+			// 			}
+			// 		});
+			// 	});
 
 			//test
 			fetch('/mapData/test.geojson')

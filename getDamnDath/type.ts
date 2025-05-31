@@ -17,7 +17,7 @@ interface GeoJsonFeature {
   properties: GeoJsonFeatureMetadata;
   geometry: {
     type: "MultiLineStringd";
-    coordinates: [number, number];
+    coordinates: [number, number][];
   };
 }
 
