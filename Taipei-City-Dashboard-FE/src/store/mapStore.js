@@ -415,59 +415,59 @@ export const useMapStore = defineStore("map", {
 			// 	});
 
 			///getapi
-			async function loadApiPoints(queryParams = {}) {
-				try {
-					const response = await http.get('/homeDown', { params: queryParams });
-					console.log('response.data =', response.data);
+			// async function loadApiPoints(queryParams = {}) {
+			// 	try {
+			// 		const response = await http.get('/homeDown', { params: queryParams });
+			// 		console.log('response.data =', response.data);
 
-					// 確保 data 屬性存在且是陣列
-					const dataArray = response.data && Array.isArray(response.data.data) ? response.data.data : [];
-					console.log('data = ', dataArray)
+			// 		// 確保 data 屬性存在且是陣列
+			// 		const dataArray = response.data && Array.isArray(response.data.data) ? response.data.data : [];
+			// 		console.log('data = ', dataArray)
 
-					const apiFeatures = dataArray.map(item => ({
-						type: 'Feature',
-						properties: {
-							group: item.id,
-							name: item.name,
-						},
-						geometry: {
-							type: 'Point',
-							coordinates: [Number(item.longitude), Number(item.latitude)],
-						},
-					}));
-					console.log('apiFeatures= ', apiFeatures)
+			// 		const apiFeatures = dataArray.map(item => ({
+			// 			type: 'Feature',
+			// 			properties: {
+			// 				group: item.id,
+			// 				name: item.name,
+			// 			},
+			// 			geometry: {
+			// 				type: 'Point',
+			// 				coordinates: [Number(item.longitude), Number(item.latitude)],
+			// 			},
+			// 		}));
+			// 		console.log('apiFeatures= ', apiFeatures)
 
-					const apiGeoJSON = {
-						type: 'FeatureCollection',
-						features: apiFeatures,
-					};
+			// 		const apiGeoJSON = {
+			// 			type: 'FeatureCollection',
+			// 			features: apiFeatures,
+			// 		};
 
-					console.log(this);
+			// 		console.log(this);
 
-					if (this.map.getSource('api-points')) {
-						this.map.getSource('api-points').setData(apiGeoJSON);
-					} else {
-						this.map.addSource('api-points', {
-							type: 'geojson',
-							data: apiGeoJSON,
-						});
+			// 		if (this.map.getSource('api-points')) {
+			// 			this.map.getSource('api-points').setData(apiGeoJSON);
+			// 		} else {
+			// 			this.map.addSource('api-points', {
+			// 				type: 'geojson',
+			// 				data: apiGeoJSON,
+			// 			});
 
-						this.map.addLayer({
-							id: 'api-points-layer',
-							type: 'circle',
-							source: 'api-points',
-							paint: {
-								'circle-radius': 6,
-								'circle-color': '#FF0000',
-							},
-						});
-					}
-				} catch (err) {
-					console.error('錯誤:', err);
-				}
-			}
+			// 			this.map.addLayer({
+			// 				id: 'api-points-layer',
+			// 				type: 'circle',
+			// 				source: 'api-points',
+			// 				paint: {
+			// 					'circle-radius': 6,
+			// 					'circle-color': '#FF0000',
+			// 				},
+			// 			});
+			// 		}
+			// 	} catch (err) {
+			// 		console.error('錯誤:', err);
+			// 	}
+			// }
 
-			loadApiPoints.bind(this)();
+			// loadApiPoints.bind(this)();
 
 
 			// metroTaipei Village Labels
