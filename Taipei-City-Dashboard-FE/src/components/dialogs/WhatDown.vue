@@ -13,7 +13,7 @@ async function handleSubmit() {
 	const { homeDownForm } = dialogStore;
 	try {
 		await http.post("/homeDown", {
-			where: [25.012875478644947, 121.46585368626272],
+			where: [121.46585368626272, 25.012875478644947],
 			type: what.value,
 			name: homeDownForm.name,
 		});
