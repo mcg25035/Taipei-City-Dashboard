@@ -4,8 +4,10 @@ ARG HF_TOKEN   # 若你有 Hugging Face 私有模型或想提高速率，可傳 
 ENV HF_HOME=/root/.cache/huggingface
 WORKDIR /w
 
-# 安裝匯出所需套件
-RUN pip install --no-cache-dir \
+# 安裝匯出所需套件 (CPU-only torch 避免拖 CUDA wheels ~3GB)
+RUN pip install --no-cache-dir --retries 10 --timeout 300 \
+      torch --index-url https://download.pytorch.org/whl/cpu \
+ && pip install --no-cache-dir --retries 10 --timeout 300 \
       "transformers>=4.44" \
       "optimum[onnxruntime]>=1.20.0" \
       onnxruntime
@@ -117,6 +119,10 @@ COPY --from=model_export /out/onnx-e5 /opt/lm_model/onnx-e5
 WORKDIR /app
 EXPOSE 8080
 
-RUN useradd -r -u 10001 appuser
+RUN go install github.com/air-verse/air@latest
+
+RUN useradd -r -u 10001 appuser && \
+    mkdir -p /tmp/air /tmp/go-build-cache /go/pkg/mod && \
+    chown -R 10001:appuser /tmp/air /tmp/go-build-cache /go/pkg
 USER 10001
-CMD ["go", "run", "main.go"]
+CMD ["air", "-c", ".air.toml"]

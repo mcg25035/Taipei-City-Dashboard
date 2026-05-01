@@ -80,7 +80,7 @@ services:
     working_dir: /opt/Taipei-City-Dashboard-BE
     ports:
       - "8088:${PORT:-8080}"
-    command: ["go", "run", "main.go"]
+    command: ["air", "-c", ".air.toml"]
 
   vector-db-upgrade:
     build:
