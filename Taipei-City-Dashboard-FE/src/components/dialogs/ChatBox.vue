@@ -64,6 +64,8 @@ const sendBtnHandler = () => {
 		return;
 	}
 
+	contentStore.clearAiSearchedComponents();
+
 	const sanitized = attachments.value.map(({ marker, ...rest }) => rest);
 	addQueryData({
 		role: "user",
