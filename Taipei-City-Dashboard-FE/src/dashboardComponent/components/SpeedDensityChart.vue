@@ -151,8 +151,8 @@ const meanSpeed = computed(() => {
 					:y2="PAD_TOP + CURVE_H"
 					gradientUnits="userSpaceOnUse"
 				>
-					<stop offset="0%" stop-color="#ffffff" />
-					<stop offset="100%" stop-color="#000000" />
+					<stop offset="0%" stop-color="#e6e6e6" />
+					<stop offset="100%" stop-color="#4d4d4d" />
 				</linearGradient>
 				<mask
 					id="speeddensity-mask"
