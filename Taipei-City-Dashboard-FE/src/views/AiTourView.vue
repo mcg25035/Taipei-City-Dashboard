@@ -3,7 +3,7 @@
 
 <script setup>
 /* global gtag */
-import { computed, ref, watch } from "vue";
+import { computed, ref, watch, nextTick } from "vue";
 import DashboardComponent from "../dashboardComponent/DashboardComponent.vue";
 import { useContentStore } from "../store/contentStore";
 import { useDialogStore } from "../store/dialogStore";
@@ -71,6 +71,21 @@ function shouldDisable(map_config) {
 			.length > 0
 	);
 }
+
+watch(
+	() => parseMapLayers.value.hasMap.length,
+	(newLen, oldLen) => {
+		if (newLen > oldLen) {
+			nextTick(() => {
+				for (let i = oldLen; i < newLen; i++) {
+					const item = parseMapLayers.value.hasMap[i];
+					toggleOn.value.hasMap[i] = true;
+					handleToggle(true, item.map_config);
+				}
+			});
+		}
+	},
+);
 
 function popularThematicLayerGA(map_config) {
 	if (map_config[0].city && map_config[0].title) {
@@ -193,7 +208,7 @@ function popularThematicLayerGA(map_config) {
 						:city-tag="
 							contentStore.cityManager.getTagList(item.city)
 						"
-						:toggle-on="toggleOn.noMap[arrayIdx]"
+						:toggle-on="true"
 						@toggle="
 							(value, map_config) => {
 								handleToggle(value, map_config);
