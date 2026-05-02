@@ -1,0 +1,37 @@
+{
+    "dag_infos": {
+        "dag_id": "road_speed_realtime",
+        "start_date": "2026-05-02",
+        "schedule_interval": "*/2 * * * *",
+        "catchup": false,
+        "tags": ["traffic_road_speed_realtime", "交通局", "即時道路速度"],
+        "description": "Nearly realtime road segment speed from itsapi.taipei.gov.tw.",
+        "default_args": {
+            "owner": "airflow",
+            "email": ["DEFAULT_EMAIL_LIST"],
+            "email_on_retry": false,
+            "email_on_failure": true,
+            "retries": 1,
+            "retry_delay": 60
+        },
+        "ready_data_db": "postgres_default",
+        "ready_data_default_table": "traffic_road_speed_realtime",
+        "ready_data_history_table": "traffic_road_speed_realtime_history",
+        "raw_data_db": "postgres_default",
+        "raw_data_table": "",
+        "load_behavior": "current+history"
+    },
+    "data_infos": {
+        "name_cn": "臺北市即時道路速度",
+        "airflow_update_freq": "every 2 minutes",
+        "source": "https://itsapi.taipei.gov.tw/TPTS_WEB_API/roadInformation/roadSpeedGeoJSON",
+        "source_type": "API (POST)",
+        "source_dept": "交通局交通管制工程處",
+        "gis_format": "Polygon",
+        "output_coordinate": "EPSG:4326",
+        "is_geometry": 1,
+        "dataset_description": "依路段顯示即時平均速度與壅塞等級(對應顏色)。",
+        "etl_description": "POST fetch GeoJSON, parse polygons, standardize time, store with current+history.",
+        "sensitivity": "public"
+    }
+}
