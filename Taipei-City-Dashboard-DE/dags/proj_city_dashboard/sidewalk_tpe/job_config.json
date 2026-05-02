@@ -1,0 +1,37 @@
+{
+    "dag_infos": {
+        "dag_id": "sidewalk_tpe",
+        "start_date": "2026-05-02",
+        "schedule_interval": "0 4 * * *",
+        "catchup": false,
+        "tags": ["sidewalk", "openrouteservice", "人行道", "taipei"],
+        "description": "Taipei sidewalk / footway lines from openrouteservice.ydtw.net.",
+        "default_args": {
+            "owner": "airflow",
+            "email": ["DEFAULT_EMAIL_LIST"],
+            "email_on_retry": false,
+            "email_on_failure": true,
+            "retries": 1,
+            "retry_delay": 60
+        },
+        "ready_data_db": "postgres_default",
+        "ready_data_default_table": "sidewalk_tpe",
+        "ready_data_history_table": "sidewalk_tpe_history",
+        "raw_data_db": "postgres_default",
+        "raw_data_table": "",
+        "load_behavior": "current+history"
+    },
+    "data_infos": {
+        "name_cn": "臺北市人行道",
+        "airflow_update_freq": "daily 04:00",
+        "source": "https://openrouteservice.ydtw.net/taipei.geojson",
+        "source_type": "API (GeoJSON)",
+        "source_dept": "openrouteservice (ydtw, OSM-derived)",
+        "gis_format": "LineString",
+        "output_coordinate": "EPSG:4326",
+        "is_geometry": 1,
+        "dataset_description": "臺北市人行道/步道線型資料 (OSM footway/sidewalk).",
+        "etl_description": "Fetch GeoJSON, rename OSM colon-tags to snake_case, keep core attributes.",
+        "sensitivity": "public"
+    }
+}

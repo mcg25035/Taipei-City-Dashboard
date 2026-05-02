@@ -1,0 +1,37 @@
+{
+    "dag_infos": {
+        "dag_id": "road_obstacle",
+        "start_date": "2026-05-02",
+        "schedule_interval": "*/10 * * * *",
+        "catchup": false,
+        "tags": ["road_obstacle", "交通局", "路障"],
+        "description": "Road obstacles (路障) imported from openrouteservice.ydtw.net.",
+        "default_args": {
+            "owner": "airflow",
+            "email": ["DEFAULT_EMAIL_LIST"],
+            "email_on_retry": false,
+            "email_on_failure": true,
+            "retries": 1,
+            "retry_delay": 60
+        },
+        "ready_data_db": "postgres_default",
+        "ready_data_default_table": "road_obstacle",
+        "ready_data_history_table": "road_obstacle_history",
+        "raw_data_db": "postgres_default",
+        "raw_data_table": "",
+        "load_behavior": "current+history"
+    },
+    "data_infos": {
+        "name_cn": "路障",
+        "airflow_update_freq": "every 10 minutes",
+        "source": "https://openrouteservice.ydtw.net/geo_example.json",
+        "source_type": "API (GeoJSON)",
+        "source_dept": "openrouteservice (ydtw)",
+        "gis_format": "Point",
+        "output_coordinate": "EPSG:4326",
+        "is_geometry": 1,
+        "dataset_description": "臺北市路障點位資訊 (施工封閉、臨時路障)。",
+        "etl_description": "Fetch GeoJSON, snake_case columns, point geometry to WKB.",
+        "sensitivity": "public"
+    }
+}
