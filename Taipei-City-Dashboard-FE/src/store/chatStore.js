@@ -398,6 +398,12 @@ export const useChatStore = defineStore("chat", () => {
 		);
 	};
 
+	const resetSession = () => {
+		sessionId.value = null;
+		messageHistory.value = [];
+		chatData.value = [...defaultChatData];
+	};
+
 	const saveChatLog = async (question, answer) => {
 		try {
 			const formData = new FormData();
@@ -429,5 +435,6 @@ export const useChatStore = defineStore("chat", () => {
 		addQueryData,
 		saveChatLog,
 		consumeFrontendAction,
+		resetSession,
 	};
 });
