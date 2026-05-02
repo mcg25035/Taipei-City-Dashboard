@@ -17,6 +17,7 @@ jobs:
       be: ${{ steps.filter.outputs.be }}
       fe: ${{ steps.filter.outputs.fe }}
       de: ${{ steps.filter.outputs.de }}
+      qd: ${{ steps.filter.outputs.qd }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -37,6 +38,9 @@ jobs:
             de:
               - 'Taipei-City-Dashboard-DE/**'
               - 'docker/scripts/restart_de.sh'
+            qd:
+              - 'docker/qdrant-upgrade/**'
+              - 'docker/scripts/upgrade_qdrant.sh'
 
   pull:
     needs: changes
@@ -45,6 +49,7 @@ jobs:
       needs.changes.outputs.be == 'true' ||
       needs.changes.outputs.fe == 'true' ||
       needs.changes.outputs.de == 'true' ||
+      needs.changes.outputs.qd == 'true' ||
       github.event_name == 'workflow_dispatch'
     steps:
       - name: Git pull host clone
@@ -77,3 +82,11 @@ jobs:
     steps:
       - name: Run restart_de.sh
         run: bash /root/Taipei-City-Dashboard/docker/scripts/restart_de.sh
+
+  upgrade-qdrant:
+    needs: [changes, pull]
+    if: needs.changes.outputs.qd == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: self-hosted
+    steps:
+      - name: Run upgrade_qdrant.sh
+        run: bash /root/Taipei-City-Dashboard/docker/scripts/upgrade_qdrant.sh

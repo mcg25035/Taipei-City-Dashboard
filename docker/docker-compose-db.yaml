@@ -60,6 +60,7 @@ services:
   qdrant:
     image: qdrant/qdrant:latest
     container_name: qdrant
+    restart: always
     ports:
       - "6333:6333" # HTTP/gRPC 接口預設埠
       - "6334:6334" # 複製／分片關係預設埠（如有需要）
