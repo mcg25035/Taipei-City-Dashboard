@@ -180,6 +180,18 @@ watch(
 											{{ att.lat.toFixed(6) }}</span
 										>
 									</template>
+									<template
+										v-else-if="
+											att.type === 'current-location'
+										"
+									>
+										<span class="attachment-icon"
+											>my_location</span
+										>
+										<span class="attachment-text"
+											>當前位置</span
+										>
+									</template>
 								</div>
 							</div>
 							<p>{{ chat.content }}</p>
@@ -202,6 +214,10 @@ watch(
 						>{{ attachment.lng.toFixed(6) }},
 						{{ attachment.lat.toFixed(6) }}</span
 					>
+				</template>
+				<template v-else-if="attachment.type === 'current-location'">
+					<span class="attachment-icon">my_location</span>
+					<span class="attachment-text">當前位置</span>
 				</template>
 				<button class="attachment-clear" @click="removeAttachment(idx)">
 					×

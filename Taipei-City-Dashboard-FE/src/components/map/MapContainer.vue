@@ -75,11 +75,29 @@ watch(
 );
 
 onMounted(() => {
-	mapStore.initializeMapBox();
+	const geoLocate = mapStore.initializeMapBox();
 	mapStore.setCurrentLocation();
 	route.query.city
 		? mapStore.updateMapViewForCity(route.query.city)
 		: mapStore.updateMapViewForCity("taipei");
+
+	geoLocate.on("geolocate", (position) => {
+		if (route.name !== "ai-tour") return;
+		const { longitude: lng, latitude: lat } = position.coords;
+		const idx = chatStore.attachments.findIndex(
+			(a) => a.type === "current-location",
+		);
+		if (idx !== -1) chatStore.attachments.splice(idx, 1);
+		chatStore.attachments.push({ type: "current-location", lng, lat });
+	});
+
+	geoLocate.on("trackuserlocationend", () => {
+		const idx = chatStore.attachments.findIndex(
+			(a) => a.type === "current-location",
+		);
+		if (idx !== -1) chatStore.attachments.splice(idx, 1);
+	});
+
 	mapStore.map.on("dblclick", (event) => {
 		if (route.name === "ai-tour") {
 			const locationCount = chatStore.attachments.filter(
@@ -184,7 +202,6 @@ onMounted(() => {
 			<IncidentReport />
 			<FindClosestPoint />
 		</div>
-
 	</div>
 </template>
 
@@ -202,7 +219,7 @@ onMounted(() => {
 	&-layers {
 		position: absolute;
 		right: 10px;
-		top: 150px;
+		top: 160px;
 		z-index: 1;
 		display: flex;
 		flex-direction: column;
@@ -274,7 +291,6 @@ onMounted(() => {
 	height: 100%;
 	border-radius: 5px;
 }
-
 </style>
 
 <style lang="scss">
