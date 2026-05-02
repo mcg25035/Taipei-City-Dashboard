@@ -11,7 +11,7 @@ import { useContentStore } from "../../store/contentStore";
 
 const chatStore = useChatStore();
 const contentStore = useContentStore();
-const { addQueryData } = chatStore;
+const { addQueryData, resetSession } = chatStore;
 const { chatData, attachments } = storeToRefs(chatStore);
 
 function removeAttachment(idx) {

@@ -106,6 +106,12 @@ export const useChatStore = defineStore("chat", () => {
 		messageHistory.value.push(newMessageHistory);
 	};
 
+	const resetSession = () => {
+		sessionId.value = null;
+		messageHistory.value = [];
+		chatData.value = [...defaultChatData];
+	};
+
 	const addQueryData = async (newChatData) => {
 		addChatData(newChatData);
 		addMessageHistory(newChatData);
@@ -262,5 +268,6 @@ export const useChatStore = defineStore("chat", () => {
 		attachments,
 		addChatData,
 		addQueryData,
+		resetSession,
 	};
 });
