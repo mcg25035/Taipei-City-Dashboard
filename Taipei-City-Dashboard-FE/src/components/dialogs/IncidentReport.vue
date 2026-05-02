@@ -1,7 +1,7 @@
 <!-- Developed by Taipei Urban Intelligence Center 2023-2024-->
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, watch } from "vue";
 import { useDialogStore } from "../../store/dialogStore";
 import { useMapStore } from "../../store/mapStore";
 import http from "../../router/axios";
@@ -53,9 +53,12 @@ async function handleSubmit() {
 	dialogStore.hideAllDialogs();
 }
 
-onMounted(() => {
-	mapStore.setCurrentLocation();
-});
+watch(
+	() => dialogStore.dialogs.incidentReport,
+	(visible) => {
+		if (visible) mapStore.setCurrentLocation();
+	},
+);
 </script>
 
 <template>

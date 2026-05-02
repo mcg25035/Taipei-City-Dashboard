@@ -1,7 +1,7 @@
 <!-- Developed by Taipei Urban Intelligence Center 2023-2024-->
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { useMapStore } from "../../store/mapStore";
 import { useDialogStore } from "../../store/dialogStore";
 import { useAuthStore } from "../../store/authStore";
@@ -14,6 +14,13 @@ const dialogStore = useDialogStore();
 const authStore = useAuthStore();
 
 const selectedLocation = ref("0");
+
+watch(
+	() => dialogStore.dialogs.findClosestPoint,
+	(visible) => {
+		if (visible) mapStore.setCurrentLocation();
+	},
+);
 
 const availableLocations = computed(() => {
 	const locations = [];

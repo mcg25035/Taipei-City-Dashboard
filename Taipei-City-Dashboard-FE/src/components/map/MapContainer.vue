@@ -76,7 +76,6 @@ watch(
 
 onMounted(() => {
 	mapStore.initializeMapBox();
-	mapStore.setCurrentLocation();
 	route.query.city
 		? mapStore.updateMapViewForCity(route.query.city)
 		: mapStore.updateMapViewForCity("taipei");
