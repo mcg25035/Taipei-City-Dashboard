@@ -2,11 +2,11 @@ import asyncio
 
 from pydantic_ai import Agent
 # from pydantic_ai.capabilities import AbstractCapability
-from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.messages import ModelMessage
 
 from config import TWCC_LLAMA_FFM_API_KEY, TWCC_LLAMA_FFM_API_URL, TWCC_LLAMA_FFM_MODEL
+from taipei_agent.fallback_model import TWCCFallbackChatModel
 from tools._shared import ChatDeps
 from tools.components import components_toolset
 from tools.mobility import mobility_toolset
@@ -16,7 +16,7 @@ from tools.ui import ui_toolset
 
 class TaipeiAgent:
     def __init__(self) -> None:
-        model = OpenAIChatModel(
+        model = TWCCFallbackChatModel(
             TWCC_LLAMA_FFM_MODEL,
             provider=OpenAIProvider(
                 base_url=TWCC_LLAMA_FFM_API_URL,

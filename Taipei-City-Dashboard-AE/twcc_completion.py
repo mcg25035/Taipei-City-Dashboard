@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 
 from config import TWCC_LLAMA_FFM_API_KEY, TWCC_LLAMA_FFM_API_URL, TWCC_LLAMA_FFM_MODEL
 from observability import setup_logfire
+from tools.tool_call_fallback import extract_tool_calls
 
 setup_logfire()
 
@@ -117,6 +118,7 @@ async def chat(
     tool_choice: str | dict | None = None,
     api_key: str | None = None,
     timeout: float = 60.0,
+    enable_tool_call_fallback: bool = True,
 ) -> ChatResponse:
     key = api_key or TWCC_LLAMA_FFM_API_KEY
     if not key:
@@ -151,7 +153,26 @@ async def chat(
             json=payload.model_dump(exclude_none=True),
         )
         resp.raise_for_status()
-        return ChatResponse.model_validate(resp.json())
+        result = ChatResponse.model_validate(resp.json())
+
+    if enable_tool_call_fallback and not result.tool_calls() and result.text():
+        parsed, cleaned = extract_tool_calls(result.text() or "")
+        if parsed:
+            msg = result.choices[0].message
+            msg.tool_calls = [
+                ToolCall(
+                    id=f"fallback_{i}",
+                    function=ToolCallFunction(
+                        name=p.name,
+                        arguments=json.dumps(p.arguments),
+                    ),
+                )
+                for i, p in enumerate(parsed)
+            ]
+            msg.content = cleaned or None
+            result.choices[0].finish_reason = "tool_calls"
+
+    return result
 
 
 # --- demo: tool calling round-trip ---
