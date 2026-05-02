@@ -41,6 +41,7 @@ func ConfigureRoutes() {
 	configureContributorRoutes()
 	configureChatLogRoutes()
 	configureAIRoutes()
+	configureAgentRoutes()
 }
 
 func configureAuthRoutes() {
@@ -204,6 +205,18 @@ func configureAIRoutes() {
 	aiRoutes.Use(middleware.IsLoggedIn())
 	{
 		aiRoutes.POST("/chat/twai", controllers.ChatWithTWCC)
+	}
+}
+
+// configureAgentRoutes exposes endpoints intended for AI agents / LLM tool-use.
+// Both endpoints are public (no auth) — same posture as POST /vector/component.
+func configureAgentRoutes() {
+	agentRoutes := RouterGroup.Group("/agent")
+	agentRoutes.Use(middleware.LimitAPIRequests(global.ComponentLimitAPIRequestsTimes, global.LimitRequestsDuration))
+	agentRoutes.Use(middleware.LimitTotalRequests(global.ComponentLimitTotalRequestsTimes, global.LimitRequestsDuration))
+	{
+		agentRoutes.POST("/search", controllers.AgentSearchComponents)
+		agentRoutes.GET("/component/:id", controllers.AgentGetComponentData)
 	}
 }
 
