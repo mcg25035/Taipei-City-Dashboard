@@ -80,7 +80,17 @@ services:
     working_dir: /opt/Taipei-City-Dashboard-BE
     ports:
       - "8088:${PORT:-8080}"
-    command: ["air", "-c", ".air.toml"]
+    command:
+      - bash
+      - -c
+      - |
+        echo "Waiting for postgres-manager + postgres-data..."
+        until pg_isready -h postgres-manager -U postgres -d dashboardmanager -q && \
+              pg_isready -h postgres-data -U postgres -d dashboard -q; do
+          sleep 2
+        done
+        echo "Postgres ready, starting air"
+        exec air -c .air.toml
 
   vector-db-upgrade:
     build:

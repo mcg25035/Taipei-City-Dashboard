@@ -61,7 +61,7 @@ x-airflow-common:
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
     AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session'
-    AIRFLOW__WEBSERVER__BASE_URL: 'https://test-citydashboard.taipei/airflow-sit'
+    AIRFLOW__WEBSERVER__BASE_URL: ${AIRFLOW_BASE_URL:-https://test-citydashboard.taipei/airflow-sit}
     AIRFLOW__WEBSERVER__ENABLE_PROXY_FIX: "True"
 
     # Reduce DAG parsing CPU pressure
@@ -96,9 +96,9 @@ services:
     cpus: "0.5"
     mem_limit: "2g"
     ports:
-      - "8080:8080"
+      - "8090:8080"
     healthcheck:
-      test: ["CMD", "curl", "--fail", "http://localhost:8080/airflow-sit/health"]
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -313,3 +313,8 @@ services:
     depends_on:
       airflow-init:
         condition: service_completed_successfully
+
+networks:
+  default:
+    name: br_dashboard
+    external: true

@@ -93,7 +93,7 @@ FROM golang:1.25.4-bookworm AS dev
 ARG TARGETARCH
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        ca-certificates wget libgomp1 && \
+        ca-certificates wget libgomp1 postgresql-client && \
     update-ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
