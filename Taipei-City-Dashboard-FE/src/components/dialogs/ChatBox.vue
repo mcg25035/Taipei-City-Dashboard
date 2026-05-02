@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, nextTick } from "vue";
+import { ref, computed, watch, nextTick } from "vue";
 import { storeToRefs } from "pinia";
 import SendIcon from "../icons/SendIcon.vue";
 import BotLogo from "../icons/BotLogo.vue";
@@ -8,11 +8,18 @@ import DashboardComponent from "../../dashboardComponent/DashboardComponent.vue"
 
 import { useChatStore } from "../../store/chatStore";
 import { useContentStore } from "../../store/contentStore";
+import { useDialogStore } from "../../store/dialogStore";
 
 const chatStore = useChatStore();
 const contentStore = useContentStore();
+const dialogStore = useDialogStore();
 const { addQueryData, resetSession } = chatStore;
 const { chatData, attachments } = storeToRefs(chatStore);
+
+const currentLocationIndex = computed(() =>
+	attachments.value.findIndex((a) => a.type === "current_location"),
+);
+const hasCurrentLocation = computed(() => currentLocationIndex.value !== -1);
 
 function removeAttachment(idx) {
 	const item = attachments.value[idx];
@@ -22,6 +29,30 @@ function removeAttachment(idx) {
 
 function clearAllAttachmentMarkers() {
 	attachments.value.forEach((a) => a.marker?.remove());
+}
+
+function toggleCurrentLocation() {
+	if (hasCurrentLocation.value) {
+		removeAttachment(currentLocationIndex.value);
+		return;
+	}
+	if (!navigator.geolocation) {
+		dialogStore?.showNotification?.("error", "瀏覽器不支援定位功能");
+		return;
+	}
+	navigator.geolocation.getCurrentPosition(
+		(position) => {
+			attachments.value.push({
+				type: "current_location",
+				lng: position.coords.longitude,
+				lat: position.coords.latitude,
+			});
+		},
+		(error) => {
+			console.error(error.message);
+			dialogStore?.showNotification?.("error", "無法取得定位授權");
+		},
+	);
 }
 
 const userMessage = ref("");
@@ -180,6 +211,18 @@ watch(
 											{{ att.lat.toFixed(6) }}</span
 										>
 									</template>
+									<template
+										v-else-if="
+											att.type === 'current_location'
+										"
+									>
+										<span class="attachment-icon"
+											>my_location</span
+										>
+										<span class="attachment-text"
+											>已分享當前位置給小儀</span
+										>
+									</template>
 								</div>
 							</div>
 							<p>{{ chat.content }}</p>
@@ -203,6 +246,10 @@ watch(
 						{{ attachment.lat.toFixed(6) }}</span
 					>
 				</template>
+				<template v-else-if="attachment.type === 'current_location'">
+					<span class="attachment-icon">my_location</span>
+					<span class="attachment-text">已分享當前位置給小儀</span>
+				</template>
 				<button class="attachment-clear" @click="removeAttachment(idx)">
 					×
 				</button>
@@ -217,6 +264,14 @@ watch(
 				placeholder="輸入訊息..."
 				@keyup.enter="sendBtnHandler()"
 			/>
+			<button
+				class="location-btn"
+				:class="{ 'location-btn--active': hasCurrentLocation }"
+				:title="hasCurrentLocation ? '取消分享位置' : '分享當前位置'"
+				@click="toggleCurrentLocation()"
+			>
+				<span class="location-btn-icon">my_location</span>
+			</button>
 			<button @click="sendBtnHandler()">
 				<SendIcon />
 			</button>
@@ -660,6 +715,24 @@ $radius-20: 20px;
 
 			&:hover {
 				filter: brightness(0.5);
+			}
+		}
+
+		.location-btn {
+			width: 35px;
+			height: 35px;
+			border-radius: 50%;
+			color: $white;
+			flex-shrink: 0;
+
+			&.location-btn--active {
+				color: #4fc1e9;
+			}
+
+			.location-btn-icon {
+				font-family: var(--font-icon);
+				font-size: 22px;
+				line-height: 1;
 			}
 		}
 	}

@@ -109,6 +109,17 @@ onMounted(() => {
 				if (a.type === "location" && a.marker) {
 					a.marker.getElement().textContent = String(n++);
 				}
+				if (a.type === "current_location" && !a.marker) {
+					const el = document.createElement("div");
+					el.className = "user-location-marker";
+					const m = new mapboxGl.Marker({
+						element: el,
+						anchor: "center",
+					})
+						.setLngLat([a.lng, a.lat])
+						.addTo(mapStore.map);
+					a.marker = markRaw(m);
+				}
 			});
 		},
 	);
@@ -292,5 +303,16 @@ onMounted(() => {
 	border: 2px solid white;
 	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 	cursor: pointer;
+}
+
+.user-location-marker {
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	background-color: #4fc1e9;
+	border: 3px solid white;
+	box-shadow:
+		0 0 0 3px rgba(79, 193, 233, 0.35),
+		0 2px 6px rgba(0, 0, 0, 0.4);
 }
 </style>
