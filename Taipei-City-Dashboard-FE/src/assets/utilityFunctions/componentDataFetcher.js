@@ -8,7 +8,11 @@ export async function fetchChartData(component) {
 		params: {
 			city: component.city,
 			...(!STATIC_TIME_VALUES.includes(component.time_from)
-				? getComponentDataTimeframe(component.time_from, component.time_to, true)
+				? getComponentDataTimeframe(
+						component.time_from,
+						component.time_to,
+						true,
+					)
 				: {}),
 		},
 	});
@@ -38,16 +42,26 @@ export async function fetchHistoryData(component) {
 
 export async function fetchComponentData(component) {
 	try {
-		await fetchChartData(component);
+		if (!component.chart_data) {
+			await fetchChartData(component);
+		}
 	} catch (error) {
-		console.error(`Failed to fetch chart data for AI component ${component.id}:`, error);
+		console.error(
+			`Failed to fetch chart data for AI component ${component.id}:`,
+			error,
+		);
 		component.chart_data = [];
 	}
 
 	try {
-		await fetchHistoryData(component);
+		if (!component.history_data) {
+			await fetchHistoryData(component);
+		}
 	} catch (error) {
-		console.error(`Failed to fetch history data for AI component ${component.id}:`, error);
+		console.error(
+			`Failed to fetch history data for AI component ${component.id}:`,
+			error,
+		);
 		if (!component.history_data) {
 			component.history_data = [];
 		}

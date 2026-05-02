@@ -31,7 +31,7 @@ BEGIN
         'traffic_road_speed_realtime',
         '即時道路速度',
         'fill',
-        'geojson',  -- B1 deviation: see docs/road_speed_realtime_b1_deviation.md (would be 'raster' under the WFS convention)
+        'be_geojson',  -- BE-served PostGIS via /api/v1/geojson/:index (see docs/playbook_add_dynamic_data_layer.md)
         NULL,
         NULL,
         '{"fill-color": ["coalesce", ["get", "level_color"], "#888888"], "fill-opacity": 0.7, "fill-outline-color": "#222222"}'::json,

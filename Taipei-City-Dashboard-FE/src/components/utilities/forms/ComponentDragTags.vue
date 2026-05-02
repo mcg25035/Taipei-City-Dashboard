@@ -46,35 +46,36 @@ const handleDragEnd = () => {
 </script>
 
 <template>
-  <div
-    v-for="(tag, index) in tags"
-    :key="`${tag.index}-${tag.city}`"
-    :class="{
-      componentdragtag: true,
-      'componentdragtag-dragging': index === draggedItem,
-    }"
-    :style="{
-      backgroundColor: colorData ? tag : '',
-      textShadow: colorData ? '0 0 2px black' : '',
-    }"
-    :draggable="true"
-    @dragstart="(event) => handleDragStart(event, index)"
-    @dragover="(event) => handleDragOver(event, index)"
-    @dragend="handleDragEnd"
-  >
-    <h3>{{ tag.id }}</h3>
-    <p>{{ tag.name }}</p>
-    <button
-      :style="{ backgroundColor: colorData ? tag : '' }"
-      @click="$emit('deletetag', index)"
-    >
-      <span
-        :style="{
-          textShadow: colorData ? '0 0 2px black' : '',
-        }"
-      >cancel</span>
-    </button>
-  </div>
+	<div
+		v-for="(tag, index) in tags"
+		:key="`${tag.index}-${tag.city}`"
+		:class="{
+			componentdragtag: true,
+			'componentdragtag-dragging': index === draggedItem,
+		}"
+		:style="{
+			backgroundColor: colorData ? tag : '',
+			textShadow: colorData ? '0 0 2px black' : '',
+		}"
+		:draggable="true"
+		@dragstart="(event) => handleDragStart(event, index)"
+		@dragover="(event) => handleDragOver(event, index)"
+		@dragend="handleDragEnd"
+	>
+		<h3>{{ tag.id }}</h3>
+		<p>{{ tag.name }}</p>
+		<button
+			:style="{ backgroundColor: colorData ? tag : '' }"
+			@click="$emit('deletetag', index)"
+		>
+			<span
+				:style="{
+					textShadow: colorData ? '0 0 2px black' : '',
+				}"
+				>cancel</span
+			>
+		</button>
+	</div>
 </template>
 
 <style scoped lang="scss">

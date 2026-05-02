@@ -40,7 +40,7 @@ watch(
 	() => {
 		initializeCollapsedStates();
 	},
-	{ immediate: true }
+	{ immediate: true },
 );
 
 onMounted(() => {
@@ -49,101 +49,119 @@ onMounted(() => {
 </script>
 
 <template>
-  <Teleport to="body">
-    <Transition name="dialog">
-      <div
-        v-if="dialogStore.dialogs.mobileNavigation"
-        class="dialogcontainer"
-      >
-        <div
-          class="dialogcontainer-background"
-          @click="dialogStore.hideAllDialogs"
-        />
-        <div class="dialogcontainer-dialog">
-          <div class="mobilenavigation">
-            <template v-if="authStore.token">
-              <h1 @click="toggleCollapse(['favorites', 'personal'])">
-                私人儀表板
-              </h1>
-              <h2 @click="toggleCollapse('favorites')">
-                我的最愛
-              </h2>
-              <transition name="collapse">
-                <template v-if="!collapsedStates.favorites">
-                  <SideBarTab
-                    icon="favorite"
-                    title="收藏組件"
-                    :expanded="true"
-                    :index="contentStore.favorites?.index"
-                    @click="dialogStore.hideAllDialogs"
-                  />
-                </template>
-              </transition>
+	<Teleport to="body">
+		<Transition name="dialog">
+			<div
+				v-if="dialogStore.dialogs.mobileNavigation"
+				class="dialogcontainer"
+			>
+				<div
+					class="dialogcontainer-background"
+					@click="dialogStore.hideAllDialogs"
+				/>
+				<div class="dialogcontainer-dialog">
+					<div class="mobilenavigation">
+						<template v-if="authStore.token">
+							<h1
+								@click="
+									toggleCollapse(['favorites', 'personal'])
+								"
+							>
+								私人儀表板
+							</h1>
+							<h2 @click="toggleCollapse('favorites')">
+								我的最愛
+							</h2>
+							<transition name="collapse">
+								<template v-if="!collapsedStates.favorites">
+									<SideBarTab
+										icon="favorite"
+										title="收藏組件"
+										:expanded="true"
+										:index="contentStore.favorites?.index"
+										@click="dialogStore.hideAllDialogs"
+									/>
+								</template>
+							</transition>
 
-              <h2 @click="toggleCollapse('personal')">
-                個人儀表板
-              </h2>
-              <div
-                v-if="
-                  contentStore.personalDashboards.filter(
-                    (item) => item.icon !== 'favorite' && item.index !== 'ai-searched'
-                  ).length === 0
-                "
-                class="mobilenavigation-sub-no"
-              >
-                <!-- <p>尚無個人儀表板</p> -->
-              </div>
-              <transition name="collapse">
-                <div v-if="!collapsedStates.personal">
-                  <SideBarTab
-                    v-for="item in contentStore.personalDashboards.filter(
-                      (item) => item.icon !== 'favorite'
-                    )"
-                    :key="item.index"
-                    :icon="item.icon"
-                    :title="item.name"
-                    :index="item.index"
-                    :expanded="true"
-                    @click="dialogStore.hideAllDialogs"
-                  />
-                </div>
-              </transition>
-            </template>
-            <h1 @click="toggleCollapse(contentStore.cityManager.activeCities)">
-              公共儀表板
-            </h1>
-            <template
-              v-for="city in contentStore.cityManager.activeCities"
-              :key="city"
-            >
-              <h2 @click="toggleCollapse(city)">
-                {{ `${contentStore.cityManager.getExpandedNameName(city)}` }}
-              </h2>
-              <transition name="collapse">
-                <div
-                  v-if="
-                    !collapsedStates[city] &&
-                      contentStore.getDashboardsByCity(city)?.length > 0
-                  "
-                >
-                  <SideBarTab
-                    v-for="item in contentStore.getDashboardsByCity(city)"
-                    :key="item.index"
-                    :icon="item.icon"
-                    :title="item.name"
-                    :index="item.index"
-                    :expanded="true"
-                    :city="city"
-                    @click="dialogStore.hideAllDialogs"
-                  />
-                </div>
-              </transition>
-            </template>
-          </div>
-        </div>
-      </div>
-    </Transition>
-  </Teleport>
+							<h2 @click="toggleCollapse('personal')">
+								個人儀表板
+							</h2>
+							<div
+								v-if="
+									contentStore.personalDashboards.filter(
+										(item) =>
+											item.icon !== 'favorite' &&
+											item.index !== 'ai-searched',
+									).length === 0
+								"
+								class="mobilenavigation-sub-no"
+							>
+								<!-- <p>尚無個人儀表板</p> -->
+							</div>
+							<transition name="collapse">
+								<div v-if="!collapsedStates.personal">
+									<SideBarTab
+										v-for="item in contentStore.personalDashboards.filter(
+											(item) => item.icon !== 'favorite',
+										)"
+										:key="item.index"
+										:icon="item.icon"
+										:title="item.name"
+										:index="item.index"
+										:expanded="true"
+										@click="dialogStore.hideAllDialogs"
+									/>
+								</div>
+							</transition>
+						</template>
+						<h1
+							@click="
+								toggleCollapse(
+									contentStore.cityManager.activeCities,
+								)
+							"
+						>
+							公共儀表板
+						</h1>
+						<template
+							v-for="city in contentStore.cityManager
+								.activeCities"
+							:key="city"
+						>
+							<h2 @click="toggleCollapse(city)">
+								{{
+									`${contentStore.cityManager.getExpandedNameName(city)}`
+								}}
+							</h2>
+							<transition name="collapse">
+								<div
+									v-if="
+										!collapsedStates[city] &&
+										contentStore.getDashboardsByCity(city)
+											?.length > 0
+									"
+								>
+									<SideBarTab
+										v-for="item in contentStore.getDashboardsByCity(
+											city,
+										)"
+										:key="item.index"
+										:icon="item.icon"
+										:title="item.name"
+										:index="item.index"
+										:expanded="true"
+										:city="city"
+										@click="dialogStore.hideAllDialogs"
+									/>
+								</div>
+							</transition>
+						</template>
+					</div>
+				</div>
+			</div>
+		</Transition>
+	</Teleport>
 </template>
 
 <style scoped lang="scss">
@@ -245,6 +263,8 @@ onMounted(() => {
 
 .collapse-enter-active,
 .collapse-leave-active {
-	transition: opacity 0.2s ease, transform 0.2s ease;
+	transition:
+		opacity 0.2s ease,
+		transform 0.2s ease;
 }
 </style>

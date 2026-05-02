@@ -11,21 +11,21 @@ const props = defineProps({
 </script>
 
 <template>
-  <div
-    :style="props.position"
-    class="chart-tooltip tagtooltip"
-  >
-    <h6>組件資訊與功能</h6>
-    <p>
-      <span>{{ props.hasFilter ? "check" : "clear" }}</span>可用圖表篩選地圖
-    </p>
-    <p>
-      <span>{{ props.hasMapLayer ? "check" : "clear" }}</span>具備空間資料
-    </p>
-    <p>
-      <span>{{ props.hasHistory ? "check" : "clear" }}</span>具備歷史資料
-    </p>
-  </div>
+	<div :style="props.position" class="chart-tooltip tagtooltip">
+		<h6>組件資訊與功能</h6>
+		<p>
+			<span>{{ props.hasFilter ? "check" : "clear" }}</span
+			>可用圖表篩選地圖
+		</p>
+		<p>
+			<span>{{ props.hasMapLayer ? "check" : "clear" }}</span
+			>具備空間資料
+		</p>
+		<p>
+			<span>{{ props.hasHistory ? "check" : "clear" }}</span
+			>具備歷史資料
+		</p>
+	</div>
 </template>
 
 <style scoped lang="scss">

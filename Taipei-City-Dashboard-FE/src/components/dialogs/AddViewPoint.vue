@@ -45,39 +45,38 @@ function handleAddViewPoint() {
 </script>
 
 <template>
-  <DialogContainer
-    :dialog="name"
-    @on-close="handleClose"
-  >
-    <div class="addviewpoint">
-      <div class="addviewpoint-title">
-        <h2>
-          {{ name === "addPin" ? "新增地標" : "新增視角" }}
-        </h2>
-        <button
-          v-if="viewPoint.name.length > 0"
-          @click="handleAddViewPoint"
-        >
-          確認
-        </button>
-      </div>
-      <div class="addviewpoint-content">
-        <label>{{ name === "addPin" ? "地標" : "視角" }}名稱 ({{
-          viewPoint.name.length
-        }}/10)</label>
-        <input
-          v-model="viewPoint.name"
-          maxlength="10"
-          type="text"
-          name="view-point-name"
-          :placeholder="`請輸入${
-            name === 'addPin' ? '地標' : '視角'
-          }名稱`"
-          required
-        >
-      </div>
-    </div>
-  </DialogContainer>
+	<DialogContainer :dialog="name" @on-close="handleClose">
+		<div class="addviewpoint">
+			<div class="addviewpoint-title">
+				<h2>
+					{{ name === "addPin" ? "新增地標" : "新增視角" }}
+				</h2>
+				<button
+					v-if="viewPoint.name.length > 0"
+					@click="handleAddViewPoint"
+				>
+					確認
+				</button>
+			</div>
+			<div class="addviewpoint-content">
+				<label
+					>{{ name === "addPin" ? "地標" : "視角" }}名稱 ({{
+						viewPoint.name.length
+					}}/10)</label
+				>
+				<input
+					v-model="viewPoint.name"
+					maxlength="10"
+					type="text"
+					name="view-point-name"
+					:placeholder="`請輸入${
+						name === 'addPin' ? '地標' : '視角'
+					}名稱`"
+					required
+				/>
+			</div>
+		</div>
+	</DialogContainer>
 </template>
 
 <style scoped lang="scss">

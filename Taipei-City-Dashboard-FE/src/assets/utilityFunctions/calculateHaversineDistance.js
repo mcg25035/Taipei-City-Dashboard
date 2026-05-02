@@ -37,7 +37,7 @@ export function calculateHaversineDistance(point1, point2) {
 			point2.longitude > 180
 		) {
 			throw new Error(
-				"Latitude must be between -90 and 90, and longitude must be between -180 and 180."
+				"Latitude must be between -90 and 90, and longitude must be between -180 and 180.",
 			);
 		}
 
@@ -60,7 +60,7 @@ export function calculateHaversineDistance(point1, point2) {
 			2 *
 			Math.atan2(
 				Math.sqrt(halfChordLengthSquared),
-				Math.sqrt(1 - halfChordLengthSquared)
+				Math.sqrt(1 - halfChordLengthSquared),
 			);
 
 		// Convert the angular distance to kilometers

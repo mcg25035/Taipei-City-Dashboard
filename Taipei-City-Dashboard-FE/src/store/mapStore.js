@@ -517,6 +517,8 @@ export const useMapStore = defineStore("map", {
 				this.loadingLayers.push(appendLayer.layerId);
 				if (element.source === "geojson") {
 					this.fetchLocalGeoJson(appendLayer);
+				} else if (element.source === "be_geojson") {
+					this.fetchBeGeoJson(appendLayer);
 				} else if (element.source === "raster") {
 					this.addRasterSource(appendLayer);
 				}
@@ -524,8 +526,39 @@ export const useMapStore = defineStore("map", {
 		},
 		// 2. Call an API to get the layer data
 		fetchLocalGeoJson(map_config) {
+			if (map_config.data) {
+				const data = decorateGeoJson(map_config, map_config.data);
+				if (data?.features) {
+					this.featureCache = {
+						...this.featureCache,
+						[map_config.index]: data.features,
+					};
+				}
+				this.addGeojsonSource(map_config, data);
+				return;
+			}
 			axios
 				.get(`/mapData/${map_config.index}.geojson`)
+				.then((rs) => {
+					const data = decorateGeoJson(map_config, rs.data);
+					if (data?.features) {
+						this.featureCache = {
+							...this.featureCache,
+							[map_config.index]: data.features,
+						};
+					}
+					this.addGeojsonSource(map_config, data);
+				})
+				.catch((e) => console.error(e));
+		},
+		// 2b. Fetch a GeoJSON FeatureCollection from BE (PostGIS-backed, dynamic).
+		// Used when map_config.source === "be_geojson". The BE endpoint is
+		// whitelisted against component_maps so map_config.index is safe to
+		// pass through verbatim.
+		fetchBeGeoJson(map_config) {
+			const apiBase = import.meta.env.VITE_API_URL || "/api/dev";
+			axios
+				.get(`${apiBase}/geojson/${map_config.index}`)
 				.then((rs) => {
 					const data = decorateGeoJson(map_config, rs.data);
 					if (data?.features) {

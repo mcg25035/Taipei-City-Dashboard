@@ -17,66 +17,68 @@ const filteredMapLayers = computed(() => {
 		return [];
 	}
 	return contentStore.currentDashboard.components.filter(
-		(element) => element?.map_config.length !== 0
+		(element) => element?.map_config.length !== 0,
 	);
 });
 </script>
 
 <template>
-  <Teleport to="body">
-    <div
-      :class="{
-        dialogcontainer: true,
-        'show-dialog-animation':
-          dialogStore.dialogs.mobileLayers === true,
-      }"
-    >
-      <div
-        class="dialogcontainer-background"
-        @click="dialogStore.hideAllDialogs"
-      />
-      <div class="dialogcontainer-dialog">
-        <div class="mobilelayers">
-          <!-- Map Layers Dashboard -->
-          <div
-            v-if="
-              contentStore?.currentDashboard.index?.includes('map-layers')
-            "
-          >
-            <MobileLayerTab
-              v-for="item in contentStore?.currentDashboard
-                .components"
-              :key="`map-layer-${item.index}`"
-              :content="item"
-            />
-          </div>
-          <!-- other dashboards with components -->
-          <div v-else-if="filteredMapLayers.length !== 0">
-            <MobileLayerTab
-              v-for="item in filteredMapLayers"
-              :key="item.index"
-              :content="item"
-            />
-            <h2>基本圖層</h2>
-            <MobileLayerTab
-              v-for="item in contentStore.mapLayers"
-              :key="`map-layer-${item.index}`"
-              :content="item"
-            />
-          </div>
-          <!-- Other dashboards without components -->
-          <div v-else>
-            <h2>基本圖層</h2>
-            <MobileLayerTab
-              v-for="item in contentStore.mapLayers"
-              :key="`map-layer-${item.index}`"
-              :content="item"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  </Teleport>
+	<Teleport to="body">
+		<div
+			:class="{
+				dialogcontainer: true,
+				'show-dialog-animation':
+					dialogStore.dialogs.mobileLayers === true,
+			}"
+		>
+			<div
+				class="dialogcontainer-background"
+				@click="dialogStore.hideAllDialogs"
+			/>
+			<div class="dialogcontainer-dialog">
+				<div class="mobilelayers">
+					<!-- Map Layers Dashboard -->
+					<div
+						v-if="
+							contentStore?.currentDashboard.index?.includes(
+								'map-layers',
+							)
+						"
+					>
+						<MobileLayerTab
+							v-for="item in contentStore?.currentDashboard
+								.components"
+							:key="`map-layer-${item.index}`"
+							:content="item"
+						/>
+					</div>
+					<!-- other dashboards with components -->
+					<div v-else-if="filteredMapLayers.length !== 0">
+						<MobileLayerTab
+							v-for="item in filteredMapLayers"
+							:key="item.index"
+							:content="item"
+						/>
+						<h2>基本圖層</h2>
+						<MobileLayerTab
+							v-for="item in contentStore.mapLayers"
+							:key="`map-layer-${item.index}`"
+							:content="item"
+						/>
+					</div>
+					<!-- Other dashboards without components -->
+					<div v-else>
+						<h2>基本圖層</h2>
+						<MobileLayerTab
+							v-for="item in contentStore.mapLayers"
+							:key="`map-layer-${item.index}`"
+							:content="item"
+						/>
+					</div>
+				</div>
+			</div>
+		</div>
+	</Teleport>
 </template>
 
 <style scoped lang="scss">

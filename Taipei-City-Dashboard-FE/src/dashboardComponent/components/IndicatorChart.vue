@@ -18,7 +18,7 @@ const emits = defineEmits([
 	"filterByLayer",
 	"clearByParamFilter",
 	"clearByLayerFilter",
-	"fly"
+	"fly",
 ]);
 
 const parseSeries = computed(() => {
@@ -75,11 +75,7 @@ const chartOptions = ref({
 	},
 	tooltip: {
 		// The class "chart-tooltip" could be edited in /assets/styles/chartStyles.css
-		custom: function ({
-			seriesIndex,
-			dataPointIndex,
-			w,
-		}) {
+		custom: function ({ seriesIndex, dataPointIndex, w }) {
 			return (
 				'<div class="chart-tooltip">' +
 				"<h6>" +
@@ -129,7 +125,7 @@ function handleDataSelection(_e, _chartContext, config) {
 				props.map_filter,
 				props.map_config,
 				config.w.globals.labels[config.dataPointIndex],
-				config.w.globals.seriesNames[config.seriesIndex]
+				config.w.globals.seriesNames[config.seriesIndex],
 			);
 		}
 		// Supports filtering by xAxis
@@ -137,7 +133,7 @@ function handleDataSelection(_e, _chartContext, config) {
 			emits(
 				"filterByLayer",
 				props.map_config,
-				config.w.globals.labels[config.dataPointIndex]
+				config.w.globals.labels[config.dataPointIndex],
 			);
 		}
 		selectedIndex.value = `${config.dataPointIndex}-${config.seriesIndex}`;
@@ -153,14 +149,14 @@ function handleDataSelection(_e, _chartContext, config) {
 </script>
 
 <template>
-  <div v-if="activeChart === 'IndicatorChart'">
-    <VueApexCharts
-      width="100%"
-      height="260px"
-      type="bar"
-      :options="chartOptions"
-      :series="parseSeries"
-      @data-point-selection="handleDataSelection"
-    />
-  </div>
+	<div v-if="activeChart === 'IndicatorChart'">
+		<VueApexCharts
+			width="100%"
+			height="260px"
+			type="bar"
+			:options="chartOptions"
+			:series="parseSeries"
+			@data-point-selection="handleDataSelection"
+		/>
+	</div>
 </template>

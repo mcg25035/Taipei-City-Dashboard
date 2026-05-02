@@ -45,12 +45,7 @@ const chartOptions = ref({
 		width: 2,
 	},
 	tooltip: {
-		custom: function ({
-			series,
-			seriesIndex,
-			dataPointIndex,
-			w,
-		}) {
+		custom: function ({ series, seriesIndex, dataPointIndex, w }) {
 			// The class "chart-tooltip" could be edited in /assets/styles/chartStyles.css
 			return (
 				'<div class="chart-tooltip">' +
@@ -111,13 +106,13 @@ const chartOptions = ref({
 </script>
 
 <template>
-  <div v-if="activeChart === 'RadarChart'">
-    <VueApexCharts
-      width="100%"
-      height="270px"
-      type="radar"
-      :options="chartOptions"
-      :series="series"
-    />
-  </div>
+	<div v-if="activeChart === 'RadarChart'">
+		<VueApexCharts
+			width="100%"
+			height="270px"
+			type="radar"
+			:options="chartOptions"
+			:series="series"
+		/>
+	</div>
 </template>

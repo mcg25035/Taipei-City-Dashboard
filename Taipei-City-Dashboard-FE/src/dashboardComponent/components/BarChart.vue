@@ -17,10 +17,30 @@ const emits = defineEmits([
 	"filterByLayer",
 	"clearByParamFilter",
 	"clearByLayerFilter",
-	"fly"
+	"fly",
 ]);
 
-const chartOptions = ref({
+const proportionalColors = computed(() => {
+	const palette = props.chart_config.color ?? [];
+	const data = props.series?.[0]?.data ?? [];
+	if (palette.length === 0 || data.length === 0) {
+		return [...palette];
+	}
+	const min = Math.min(...data);
+	const max = Math.max(...data);
+	const range = max - min;
+	const n = palette.length;
+	if (range === 0) {
+		return data.map(() => palette[0]);
+	}
+	return data.map((value) => {
+		const ratio = (value - min) / range;
+		const idx = Math.min(Math.floor(ratio * n), n - 1);
+		return palette[idx];
+	});
+});
+
+const chartOptions = computed(() => ({
 	chart: {
 		offsetY: 15,
 		stacked: true,
@@ -28,7 +48,7 @@ const chartOptions = ref({
 			show: false,
 		},
 	},
-	colors: [...props.chart_config.color],
+	colors: proportionalColors.value,
 	dataLabels: {
 		offsetX: 20,
 		textAnchor: "start",
@@ -45,7 +65,7 @@ const chartOptions = ref({
 			distributed: true,
 			horizontal: true,
 			dataLabels: {
-				hideOverflowingLabels: false
+				hideOverflowingLabels: false,
 			},
 		},
 	},
@@ -56,12 +76,7 @@ const chartOptions = ref({
 	},
 	// The class "chart-tooltip" could be edited in /assets/styles/chartStyles.css
 	tooltip: {
-		custom: function ({
-			series,
-			seriesIndex,
-			dataPointIndex,
-			w,
-		}) {
+		custom: function ({ series, seriesIndex, dataPointIndex, w }) {
 			return (
 				'<div class="chart-tooltip">' +
 				"<h6>" +
@@ -95,7 +110,7 @@ const chartOptions = ref({
 			},
 		},
 	},
-});
+}));
 
 const chartHeight = computed(() => {
 	return `${40 + props.series[0].data.length * 30}`;
@@ -117,7 +132,7 @@ function handleDataSelection(_e, _chartContext, config) {
 				props.map_filter,
 				props.map_config,
 				config.w.globals.labels[config.dataPointIndex],
-				null
+				null,
 			);
 		}
 		// Supports filtering by xAxis
@@ -125,7 +140,7 @@ function handleDataSelection(_e, _chartContext, config) {
 			emits(
 				"filterByLayer",
 				props.map_config,
-				config.w.globals.labels[config.dataPointIndex]
+				config.w.globals.labels[config.dataPointIndex],
 			);
 		}
 		selectedIndex.value = `${config.dataPointIndex}-${config.seriesIndex}`;
@@ -141,14 +156,14 @@ function handleDataSelection(_e, _chartContext, config) {
 </script>
 
 <template>
-  <div v-if="activeChart === 'BarChart'">
-    <VueApexCharts
-      width="100%"
-      :height="chartHeight"
-      type="bar"
-      :options="chartOptions"
-      :series="series"
-      @data-point-selection="handleDataSelection"
-    />
-  </div>
+	<div v-if="activeChart === 'BarChart'">
+		<VueApexCharts
+			width="100%"
+			:height="chartHeight"
+			type="bar"
+			:options="chartOptions"
+			:series="series"
+			@data-point-selection="handleDataSelection"
+		/>
+	</div>
 </template>

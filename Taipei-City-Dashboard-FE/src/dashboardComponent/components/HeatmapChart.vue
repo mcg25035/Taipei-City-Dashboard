@@ -18,7 +18,7 @@ const emits = defineEmits([
 	"filterByLayer",
 	"clearByParamFilter",
 	"clearByLayerFilter",
-	"fly"
+	"fly",
 ]);
 
 const heatmapData = computed(() => {
@@ -46,7 +46,7 @@ const heatmapData = computed(() => {
 		});
 		sum = Object.values(output).reduce(
 			(partialSum, a) => partialSum + a,
-			0
+			0,
 		);
 	}
 
@@ -56,21 +56,18 @@ const heatmapData = computed(() => {
 });
 
 const colorScale = computed(() => {
-	const ranges = props.chart_config.color.map(
-		(el, index) => ({
-			to: Math.floor(
+	const ranges = props.chart_config.color.map((el, index) => ({
+		to: Math.floor(
+			(heatmapData.value.highest / props.chart_config.color.length) *
+				(props.chart_config.color.length - index),
+		),
+		from:
+			Math.floor(
 				(heatmapData.value.highest / props.chart_config.color.length) *
-					(props.chart_config.color.length - index)
-			),
-			from:
-				Math.floor(
-					(heatmapData.value.highest /
-						props.chart_config.color.length) *
-						(props.chart_config.color.length - index - 1)
-				) + 1,
-			color: el,
-		})
-	);
+					(props.chart_config.color.length - index - 1),
+			) + 1,
+		color: el,
+	}));
 	ranges.unshift({
 		to: 0,
 		from: 0,
@@ -118,12 +115,7 @@ const chartOptions = ref({
 		colors: ["#282a2c"],
 	},
 	tooltip: {
-		custom: function ({
-			series,
-			seriesIndex,
-			dataPointIndex,
-			w,
-		}) {
+		custom: function ({ series, seriesIndex, dataPointIndex, w }) {
 			// The class "chart-tooltip" could be edited in /assets/styles/chartStyles.css
 			return (
 				'<div class="chart-tooltip">' +
@@ -185,7 +177,7 @@ function handleDataSelection(_e, _chartContext, config) {
 				props.map_filter,
 				props.map_config,
 				config.w.globals.labels[config.dataPointIndex],
-				config.w.globals.seriesNames[config.seriesIndex]
+				config.w.globals.seriesNames[config.seriesIndex],
 			);
 		}
 		// Supports filtering by xAxis
@@ -193,7 +185,7 @@ function handleDataSelection(_e, _chartContext, config) {
 			emits(
 				"filterByLayer",
 				props.map_config,
-				config.w.globals.labels[config.dataPointIndex]
+				config.w.globals.labels[config.dataPointIndex],
 			);
 		}
 		selectedIndex.value = `${config.dataPointIndex}-${config.seriesIndex}`;
@@ -209,23 +201,20 @@ function handleDataSelection(_e, _chartContext, config) {
 </script>
 
 <template>
-  <div
-    v-if="activeChart === 'HeatmapChart'"
-    class="heatmapchart"
-  >
-    <div class="heatmapchart-title">
-      <h5>總合</h5>
-      <h6>{{ heatmapData.sum }} {{ chart_config.unit }}</h6>
-    </div>
-    <VueApexCharts
-      width="100%"
-      height="360px"
-      type="heatmap"
-      :options="chartOptions"
-      :series="series"
-      @data-point-selection="handleDataSelection"
-    />
-  </div>
+	<div v-if="activeChart === 'HeatmapChart'" class="heatmapchart">
+		<div class="heatmapchart-title">
+			<h5>總合</h5>
+			<h6>{{ heatmapData.sum }} {{ chart_config.unit }}</h6>
+		</div>
+		<VueApexCharts
+			width="100%"
+			height="360px"
+			type="heatmap"
+			:options="chartOptions"
+			:series="series"
+			@data-point-selection="handleDataSelection"
+		/>
+	</div>
 </template>
 
 <style scoped lang="scss">

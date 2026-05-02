@@ -27,19 +27,19 @@ export function calculateGradientSteps(startColor, endColor, steps) {
 			Math.round(
 				((startRGB[0] + (endRGB[0] - startRGB[0]) * (i / (steps - 1))) /
 					255) *
-					1000
+					1000,
 			) / 1000;
 		const g =
 			Math.round(
 				((startRGB[1] + (endRGB[1] - startRGB[1]) * (i / (steps - 1))) /
 					255) *
-					1000
+					1000,
 			) / 1000;
 		const b =
 			Math.round(
 				((startRGB[2] + (endRGB[2] - startRGB[2]) * (i / (steps - 1))) /
 					255) *
-					1000
+					1000,
 			) / 1000;
 		gradientSteps.push(r);
 		gradientSteps.push(g);

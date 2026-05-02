@@ -34,27 +34,26 @@ const parsedJson = computed(() => {
 
 const parsedCsv = computed(() => {
 	const csvString = content.value.chart_data
-		? jsonToCsv(
-				content.value.chart_data,
-				content.value.chart_config
-		  )
+		? jsonToCsv(content.value.chart_data, content.value.chart_config)
 		: "";
 	// Create blob with BOM for better UTF-8 support
-	const bom = '\uFEFF';
-	const blob = new Blob([bom + csvString], { type: 'text/csv;charset=utf-8;' });
+	const bom = "\uFEFF";
+	const blob = new Blob([bom + csvString], {
+		type: "text/csv;charset=utf-8;",
+	});
 	return URL.createObjectURL(blob);
 });
 
 function handleSubmit() {
 	// 資料下載時觸發GA自訂事件
 	if (content.value.city && content.value.name && fileType.value) {
-		gtag('event','popular_data_download', {
-			dashboard_city:content.value.city,
-			component_name:content.value.name,
-			city_component:`${content.value.city}-${content.value.name}`,
+		gtag("event", "popular_data_download", {
+			dashboard_city: content.value.city,
+			component_name: content.value.name,
+			city_component: `${content.value.city}-${content.value.name}`,
 			data_type: fileType.value,
 			time: Date.now(),
-  		})
+		});
 	}
 	handleClose();
 }
@@ -65,76 +64,66 @@ function handleClose() {
 </script>
 
 <template>
-  <DialogContainer
-    :dialog="`downloadData`"
-    @on-close="handleClose"
-  >
-    <div class="downloaddata">
-      <h2>下載資料</h2>
-      <div class="downloaddata-input">
-        <h3>請輸入檔名</h3>
-        <input
-          v-model="name"
-          type="text"
-          :minlength="1"
-          required
-        >
-      </div>
-      <h3>請選擇檔案格式</h3>
-      <div>
-        <input
-          id="JSON"
-          v-model="fileType"
-          class="downloaddata-radio"
-          type="radio"
-          value="JSON"
-        >
-        <label for="JSON">
-          <div />
-          JSON
-        </label>
-        <input
-          id="CSV"
-          v-model="fileType"
-          class="downloaddata-radio"
-          type="radio"
-          value="CSV"
-        >
-        <label for="CSV">
-          <div />
-          CSV (UTF-8)
-        </label>
-      </div>
-      <div class="downloaddata-control">
-        <button
-          class="downloaddata-control-cancel"
-          @click="handleClose"
-        >
-          取消
-        </button>
-        <button
-          v-if="name && fileType === 'JSON'"
-          class="downloaddata-control-confirm"
-          @click="handleSubmit"
-        >
-          <a
-            :href="`data:application/json;charset=utf-8,${parsedJson}`"
-            :download="`${name}.json`"
-          >下載JSON</a>
-        </button>
-        <button
-          v-if="name && fileType === 'CSV'"
-          class="downloaddata-control-confirm"
-          @click="handleSubmit"
-        >
-          <a
-            :href="parsedCsv"
-            :download="`${name}.csv`"
-          >下載CSV</a>
-        </button>
-      </div>
-    </div>
-  </DialogContainer>
+	<DialogContainer :dialog="`downloadData`" @on-close="handleClose">
+		<div class="downloaddata">
+			<h2>下載資料</h2>
+			<div class="downloaddata-input">
+				<h3>請輸入檔名</h3>
+				<input v-model="name" type="text" :minlength="1" required />
+			</div>
+			<h3>請選擇檔案格式</h3>
+			<div>
+				<input
+					id="JSON"
+					v-model="fileType"
+					class="downloaddata-radio"
+					type="radio"
+					value="JSON"
+				/>
+				<label for="JSON">
+					<div />
+					JSON
+				</label>
+				<input
+					id="CSV"
+					v-model="fileType"
+					class="downloaddata-radio"
+					type="radio"
+					value="CSV"
+				/>
+				<label for="CSV">
+					<div />
+					CSV (UTF-8)
+				</label>
+			</div>
+			<div class="downloaddata-control">
+				<button
+					class="downloaddata-control-cancel"
+					@click="handleClose"
+				>
+					取消
+				</button>
+				<button
+					v-if="name && fileType === 'JSON'"
+					class="downloaddata-control-confirm"
+					@click="handleSubmit"
+				>
+					<a
+						:href="`data:application/json;charset=utf-8,${parsedJson}`"
+						:download="`${name}.json`"
+						>下載JSON</a
+					>
+				</button>
+				<button
+					v-if="name && fileType === 'CSV'"
+					class="downloaddata-control-confirm"
+					@click="handleSubmit"
+				>
+					<a :href="parsedCsv" :download="`${name}.csv`">下載CSV</a>
+				</button>
+			</div>
+		</div>
+	</DialogContainer>
 </template>
 
 <style scoped lang="scss">

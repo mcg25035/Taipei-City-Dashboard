@@ -213,6 +213,7 @@ export const useChatStore = defineStore("chat", () => {
 			isDefault: true,
 			content:
 				"你好，我是小儀！\n\n 你可以問我跟交通相關的問題，例如： \n\n • 「幫我規劃從台北車站到 101 的路線」 \n • 「附近哪裡有 YouBike 站？」 \n • 「中山區的即時交通狀況」 \n\n 也可以在地圖上雙擊新增最多 6 個地點，我會根據這些位置互動式操作圖資並導覽說明。\n\n 直接輸入你的問題，我會即時為你解答！",
+			componentDatas: [],
 		},
 	];
 
@@ -252,14 +253,13 @@ export const useChatStore = defineStore("chat", () => {
 		});
 	};
 
+	const addMessageHistory = (newMessageHistory) => {
+		messageHistory.value.push(newMessageHistory);
+	};
+
 	const addQueryData = async (newChatData) => {
-		// 1. 顯示使用者訊息
-		chatData.value.push({
-			id: chatData.value.length + 1,
-			isDefault: false,
-			...newChatData,
-		});
-		messageHistory.value.push(newChatData);
+		addChatData(newChatData);
+		addMessageHistory(newChatData);
 
 		// 2. 建立 bot 串流訊息（loading 狀態）
 		const botMsgId = chatData.value.length + 1;
@@ -269,6 +269,7 @@ export const useChatStore = defineStore("chat", () => {
 			isDefault: false,
 			loading: true,
 			content: "",
+			componentDatas: [],
 		});
 
 		try {
@@ -317,20 +318,25 @@ export const useChatStore = defineStore("chat", () => {
 
 					case "tool_used":
 						console.log(`[chat] tool_used: ${data.name}`);
+
+						addMessageHistory({
+							role: "bot",
+							tool_used: data.name,
+						});
 						break;
 
 					case "frontend_action":
 						console.log(
-							`[chat] frontend_action: ${data.action}, args: ${JSON.stringify(data.params)}`,
+							`[chat] frontend_action: ${data.action}, params: ${JSON.stringify(data.params)}`,
 						);
 
 						switch (data.action) {
 							case "show_component":
-								botMsg.loading = false;
 								const componentData = await fetchComponentData(
 									data.params.data.component,
 								);
-								addChatData({ role: "bot", componentData });
+								botMsg.loading = false;
+								botMsg.componentDatas.push(componentData);
 								break;
 							default:
 								emitAgentEvent(

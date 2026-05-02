@@ -80,7 +80,7 @@ class BinarySearchTree {
 			currentNode.val = minRightChildNode.val;
 			currentNode.right = this.removeHelper(
 				minRightChildNode.val,
-				currentNode.right
+				currentNode.right,
 			);
 			return currentNode;
 		}
@@ -270,12 +270,12 @@ function BowyerWatson(points) {
 	let superTriangle1 = new Triangle(
 		cornerPoints[0],
 		cornerPoints[1],
-		cornerPoints[2]
+		cornerPoints[2],
 	);
 	let superTriangle2 = new Triangle(
 		cornerPoints[0],
 		cornerPoints[3],
-		cornerPoints[2]
+		cornerPoints[2],
 	);
 
 	let triangulation = [superTriangle1, superTriangle2];

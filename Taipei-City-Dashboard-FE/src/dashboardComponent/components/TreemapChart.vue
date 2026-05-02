@@ -18,7 +18,7 @@ const emits = defineEmits([
 	"filterByLayer",
 	"clearByParamFilter",
 	"clearByLayerFilter",
-	"fly"
+	"fly",
 ]);
 
 const chartOptions = ref({
@@ -30,10 +30,7 @@ const chartOptions = ref({
 	},
 	colors: [...props.chart_config.color],
 	dataLabels: {
-		formatter: function (
-			val,
-			{ dataPointIndex }
-		) {
+		formatter: function (val, { dataPointIndex }) {
 			return dataPointIndex > 5 ? "" : val;
 		},
 	},
@@ -55,12 +52,7 @@ const chartOptions = ref({
 		width: 2,
 	},
 	tooltip: {
-		custom: function ({
-			series,
-			seriesIndex,
-			dataPointIndex,
-			w,
-		}) {
+		custom: function ({ series, seriesIndex, dataPointIndex, w }) {
 			// The class "chart-tooltip" could be edited in /assets/styles/chartStyles.css
 			return (
 				'<div class="chart-tooltip">' +
@@ -91,9 +83,7 @@ const chartOptions = ref({
 
 const sum = computed(() => {
 	let sum = 0;
-	props.series[0].data.forEach(
-		(item) => (sum += item.y)
-	);
+	props.series[0].data.forEach((item) => (sum += item.y));
 	return Math.round(sum * 100) / 100;
 });
 
@@ -113,7 +103,7 @@ function handleDataSelection(_e, _chartContext, config) {
 				props.map_filter,
 				props.map_config,
 				config.w.globals.categoryLabels[config.dataPointIndex],
-				null
+				null,
 			);
 		}
 		// Supports filtering by xAxis
@@ -121,7 +111,7 @@ function handleDataSelection(_e, _chartContext, config) {
 			emits(
 				"filterByLayer",
 				props.map_config,
-				config.w.globals.categoryLabels[config.dataPointIndex]
+				config.w.globals.categoryLabels[config.dataPointIndex],
 			);
 		}
 		selectedIndex.value = `${config.dataPointIndex}-${config.seriesIndex}`;
@@ -137,22 +127,19 @@ function handleDataSelection(_e, _chartContext, config) {
 </script>
 
 <template>
-  <div
-    v-if="activeChart === 'TreemapChart'"
-    class="treemapchart"
-  >
-    <div class="treemapchart-title">
-      <h5>總合</h5>
-      <h6>{{ sum }} {{ chart_config.unit }}</h6>
-    </div>
-    <VueApexCharts
-      width="100%"
-      type="treemap"
-      :options="chartOptions"
-      :series="series"
-      @data-point-selection="handleDataSelection"
-    />
-  </div>
+	<div v-if="activeChart === 'TreemapChart'" class="treemapchart">
+		<div class="treemapchart-title">
+			<h5>總合</h5>
+			<h6>{{ sum }} {{ chart_config.unit }}</h6>
+		</div>
+		<VueApexCharts
+			width="100%"
+			type="treemap"
+			:options="chartOptions"
+			:series="series"
+			@data-point-selection="handleDataSelection"
+		/>
+	</div>
 </template>
 
 <style scoped lang="scss">

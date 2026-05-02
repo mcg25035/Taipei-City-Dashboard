@@ -24,7 +24,7 @@ const selectLabels = computed(() => {
 function handleClick(tag) {
 	if (selectedTagList.value.includes(tag)) {
 		selectedTagList.value = selectedTagList.value.filter(
-			(item) => item !== tag
+			(item) => item !== tag,
 		);
 	} else {
 		if (props.limit && selectedTagList.value.length >= props.limit) {
@@ -37,24 +37,24 @@ function handleClick(tag) {
 </script>
 
 <template>
-  <div class="selectbuttons">
-    <button
-      v-for="tag in tags"
-      :key="`chart-${tag}`"
-      :class="{
-        'selectbuttons-button': true,
-        'selectbuttons-active': selectedTagList.includes(tag),
-      }"
-      :disabled="disable"
-      @click="
-        () => {
-          handleClick(tag);
-        }
-      "
-    >
-      {{ selectLabels[tag] }}
-    </button>
-  </div>
+	<div class="selectbuttons">
+		<button
+			v-for="tag in tags"
+			:key="`chart-${tag}`"
+			:class="{
+				'selectbuttons-button': true,
+				'selectbuttons-active': selectedTagList.includes(tag),
+			}"
+			:disabled="disable"
+			@click="
+				() => {
+					handleClick(tag);
+				}
+			"
+		>
+			{{ selectLabels[tag] }}
+		</button>
+	</div>
 </template>
 
 <style scoped lang="scss">

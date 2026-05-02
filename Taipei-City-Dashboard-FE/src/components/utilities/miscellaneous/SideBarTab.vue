@@ -22,7 +22,9 @@ const authStore = useAuthStore();
 
 const tabLink = computed(() => {
 	const isAdminPath = authStore.currentPath === "admin";
-	const cityParam = props.city ? `${isAdminPath ? "?" : "&"}city=${props.city}` : "";
+	const cityParam = props.city
+		? `${isAdminPath ? "?" : "&"}city=${props.city}`
+		: "";
 	return isAdminPath
 		? `/admin/${props.index}${cityParam}`
 		: `${route.path}?index=${props.index}${cityParam}`;
@@ -33,9 +35,7 @@ const linkActiveOrNot = computed(() => {
 	const isPathMatch = isAdminPath
 		? route.path === `/admin/${props.index}`
 		: route.query.index === props.index;
-	const isCityMatch = props.city
-		? route.query.city === props.city
-		: true;
+	const isCityMatch = props.city ? route.query.city === props.city : true;
 
 	return isPathMatch && isCityMatch;
 });
@@ -43,27 +43,26 @@ const linkActiveOrNot = computed(() => {
 // 點擊側欄儀表板主題時觸發GA自訂事件
 const popularThemeGA = (title) => {
 	if (props.city && title) {
-		gtag('event','popular_theme', {
-			dashboard_city:props.city,
-			theme_name:title,
-			city_theme:`${props.city}-${title}`
-  		})
+		gtag("event", "popular_theme", {
+			dashboard_city: props.city,
+			theme_name: title,
+			city_theme: `${props.city}-${title}`,
+		});
 	}
 };
-
 </script>
 
 <template>
-  <router-link
-    :to="tabLink"
-    :class="{ sidebartab: true, 'sidebartab-active': linkActiveOrNot }"
-    @click="popularThemeGA(title)"
-  >
-    <span :title="!expanded ? title : ''">{{ icon }}</span>
-    <h3 v-if="expanded">
-      {{ title }}
-    </h3>
-  </router-link>
+	<router-link
+		:to="tabLink"
+		:class="{ sidebartab: true, 'sidebartab-active': linkActiveOrNot }"
+		@click="popularThemeGA(title)"
+	>
+		<span :title="!expanded ? title : ''">{{ icon }}</span>
+		<h3 v-if="expanded">
+			{{ title }}
+		</h3>
+	</router-link>
 </template>
 
 <style scoped lang="scss">

@@ -12,7 +12,7 @@ import { interpolateAlongSegment } from "../utilityFunctions/geometryUtils";
 export function updateCarsPosition(cars, options = {}) {
 	const offsetMeters = options.offsetMeters ?? -30;
 
-	return cars.map(car => {
+	return cars.map((car) => {
 		// 更新進度
 		car.progress = Math.min(car.progress + car.speed, 1);
 
@@ -29,7 +29,7 @@ export function updateCarsPosition(cars, options = {}) {
 			dir = new THREE.Vector3(
 				nextPos[0] - pos[0],
 				nextPos[1] - pos[1],
-				nextPos[2] - pos[2]
+				nextPos[2] - pos[2],
 			).normalize();
 			car.lastDir = dir;
 		}
@@ -49,7 +49,7 @@ export function updateCarsPosition(cars, options = {}) {
 		return {
 			type: "Feature",
 			geometry: { type: "Point", coordinates: offsetLngLat },
-			properties: { trainnumber: car.trainnumber }
+			properties: { trainnumber: car.trainnumber },
 		};
 	});
 }

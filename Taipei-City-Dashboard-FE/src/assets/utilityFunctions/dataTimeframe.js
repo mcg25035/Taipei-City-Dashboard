@@ -16,7 +16,7 @@ export function getComponentDataTimeframe(time_from, time_to, api) {
 			case "week":
 				nowTimeFrom.setHours(0, 0, 0, 0);
 				nowTimeFrom.setDate(
-					nowTimeFrom.getDate() - nowTimeFrom.getDay() + 1
+					nowTimeFrom.getDate() - nowTimeFrom.getDay() + 1,
 				);
 				break;
 			case "month":

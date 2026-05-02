@@ -9,48 +9,55 @@ If your data is genuinely **static** (one-shot, never updates — e.g., administ
 boundaries that change once a decade), you can skip DE entirely and go straight to
 the "Static GeoJSON shortcut" appendix at the end. Everything else belongs here.
 
-> If you are looking for a worked example, see
-> `docs/road_speed_realtime_b1_deviation.md` for one that took the static-export
-> shortcut, and any DAG under
-> `Taipei-City-Dashboard-DE/dags/proj_city_dashboard/R*` for the pure-convention
-> path (e.g. `R0036` for realtime + WFS).
+> Worked examples in the repo:
+> - `Taipei-City-Dashboard-DE/dags/proj_city_dashboard/road_speed_realtime/`
+>   plus `Taipei-City-Dashboard-BE/app/controllers/staticGeojson.go` —
+>   `source = 'be_geojson'` end-to-end (the default for DAG-driven layers).
+> - Any `R0036`-style DAG — `source = 'raster'` (GeoServer WFS, used in prod
+>   when GeoServer is available).
 
 ---
 
 ## 0. Decide source type up front
 
-| Update cadence | DAG `schedule_interval` | Map layer convention | Notes |
+| Update cadence | DAG `schedule_interval` | Map layer convention | `component_maps.source` |
 |---|---|---|---|
-| Sub-minute push | Not supported. | n/a | Repo has no streaming. Pull at the highest cron rate the source allows. |
-| 2–10 min pull | `*/2 * * * *` … `*/10 * * * *` | **WFS via GeoServer** (`source = 'raster'`) | Auto-routed to Airflow `realtime` queue. |
-| Hourly | `@hourly` | WFS via GeoServer | Routed to `default` queue. |
-| Daily | `00 20 * * *` etc. | WFS via GeoServer | Hashed to `default` or `heavy`. |
-| Weekly / monthly / yearly | `@monthly`, `0 0 1 * *`, etc. | WFS via GeoServer | `heavy` queue. Tables can be much larger. |
-| One-shot static | `@once` or commit to git | Pre-baked GeoJSON in `Taipei-City-Dashboard-FE/public/mapData/*.geojson` (`source = 'geojson'`) | No DAG, no DB table needed. |
+| Sub-minute push | Not supported. | n/a | n/a |
+| 2–10 min pull | `*/2 * * * *` … `*/10 * * * *` | DAG → PostGIS → BE-served GeoJSON | **`be_geojson`** |
+| Hourly | `@hourly` | DAG → PostGIS → BE-served GeoJSON | `be_geojson` |
+| Daily | `00 20 * * *` etc. | DAG → PostGIS → BE-served GeoJSON | `be_geojson` |
+| Weekly / monthly / yearly | `@monthly`, `0 0 1 * *`, etc. | DAG → PostGIS → BE-served GeoJSON, **or** WFS if bbox/tiling matters | `be_geojson` (default) / `raster` (when GeoServer wins) |
+| One-shot static | `@once` or commit to git | Pre-baked GeoJSON in `Taipei-City-Dashboard-FE/public/mapData/*.geojson` | `geojson` |
 
-**Pick WFS unless the data is truly static.** Static GeoJSON works in dev because
-the file is committed to git and ships in the FE build, but it can't represent
-data that changes after deploy. The B1 deviation in
-`docs/road_speed_realtime_b1_deviation.md` is the only case in this repo where
-a non-static layer is wired through `source = 'geojson'`, and it exists only
-because dev had no local GeoServer during a contest sprint.
+**Default to `be_geojson` for any layer whose data changes over time.** It is the
+shortest path from a PostGIS table to a Mapbox layer in this stack — no
+GeoServer dependency, no static-file gymnastics. Use `raster` only when you
+actually need GeoServer features (BBOX filtering, vector tiles, server-side
+styling). Use `geojson` only for genuinely immutable layers that ship inside
+the FE build.
 
-> **Dev-environment caveat (read before coding).** The dev stack ships **no**
-> local GeoServer container, and the FE vite proxy forwards `/geo_server/*`
-> straight to **production** GeoServer. Production GeoServer does not know
-> about new ready_data tables you create in dev. Practical consequence:
->
-> - If you write `source = 'raster'` and stop there, the FE in dev will fetch
->   from prod GeoServer, get nothing, and render an empty layer. You'll think
->   it's broken when the DAG is fine.
-> - Until someone adds a local GeoServer, **realtime layers in dev follow the
->   B1 deviation pattern by default** — `source = 'geojson'` plus a
->   `/opt/airflow/fe_mapdata/<index>.geojson` export at the end of the DAG.
->   See `road_speed_realtime` for the canonical shape and
->   `docs/road_speed_realtime_b1_deviation.md` for full reasoning + migration plan.
-> - When GeoServer arrives, flipping back is one column update plus deleting
->   the export block. The PostGIS table you build under §1 is the same either
->   way — never skip it.
+How `be_geojson` works end-to-end:
+
+```
+TDX / data.taipei / agency API
+      │
+      ▼
+   Airflow DAG (cron)                   ← convention §1
+      │
+      ▼
+   PostGIS table (ready_data)            ← convention §1
+      │
+      ▼
+   BE GET /api/v1/geojson/:index         ← controllers/staticGeojson.go
+      │  (whitelisted via component_maps,
+      │   serialised with ST_AsGeoJSON)
+      ▼
+   FE map_config.source = "be_geojson"   ← mapStore.fetchBeGeoJson
+```
+
+The BE controller validates `:index` against the `[a-z][a-z0-9_]{0,62}` regex
+and against `component_maps` (`source = 'be_geojson'`) before reading any
+table, so it is safe to expose `:index` directly in the URL.
 
 ---
 
@@ -197,44 +204,6 @@ dag.create_dag(etl_func=_<dag_id>)
 fresh HTTP client unless the source is genuinely odd (e.g., POST endpoint with
 no helper exists yet).
 
-#### B1 deviation — extra export block
-
-If you are following the dev-default B1 path (see §0 caveat), append a
-GeoJSON-export block after `update_lasttime_in_data_to_dataset_info(...)`. The
-shape mirrors `road_speed_realtime.py`:
-
-```python
-import json, os
-from shapely.geometry import mapping  # only for non-Point geometries
-
-export_dir = "/opt/airflow/fe_mapdata"     # bind-mounted to FE public/mapData
-final_path = os.path.join(export_dir, "<index>.geojson")
-tmp_path = final_path + ".tmp"
-
-# Build features list from `ready_data` (or the EPSG:4326 GeoDataFrame).
-# Atomic write: tmp + os.replace so FE never sees a half-written file.
-with open(tmp_path, "w", encoding="utf-8") as fh:
-    json.dump(payload, fh, ensure_ascii=False, separators=(",", ":"))
-os.replace(tmp_path, final_path)
-```
-
-**Required infra for the export to land in FE:** the airflow workers must
-have `Taipei-City-Dashboard-FE/public/mapData/` bind-mounted at
-`/opt/airflow/fe_mapdata`. Confirm this exists in
-`Taipei-City-Dashboard-DE/docker/develop/docker-compose.yaml` under
-`x-airflow-common.volumes` before you wire a new B1 layer; if it isn't there,
-the DAG will fail with `FileNotFoundError` on the `os.replace`. Add it once,
-then every B1 layer reuses it.
-
-**Add the export filename to `.gitignore`.** The file is regenerated every
-DAG run; committing it bloats history and creates merge churn. Pattern:
-
-```
-Taipei-City-Dashboard-FE/public/mapData/<index>.geojson
-```
-
-(See the existing entries near the bottom of `.gitignore`.)
-
 ### 1.3 `init_tables.sql`
 
 Generate the DDL with the in-repo helper instead of hand-writing it. This
@@ -303,7 +272,7 @@ docker exec develop-airflow-scheduler-1 \
 for import errors. Common dev gotchas (already fixed once, may regress):
 - `postgres_default` connection missing → `airflow connections add ...`
 - `DEFAULT_EMAIL_LIST` Airflow variable missing → `airflow variables set DEFAULT_EMAIL_LIST '[]'`
-- `dataset_info` table missing → create it in `postgres-data` (see the deviation doc).
+- `dataset_info` table missing → create it in `postgres-data`. Schema is defined by the `info` dict inside `_create_or_update_dataset_info` in `Taipei-City-Dashboard-DE/dags/operators/common_pipeline.py`.
 
 Once parsed, unpause and trigger:
 
@@ -327,8 +296,15 @@ docker exec -e PGPASSWORD=admin postgres-data \
 
 ## 2. BE — make it discoverable
 
-The Go BE does **no** code changes for a new layer. It reads `dashboardmanager`.
-Your job is to insert the right rows.
+For most layers the Go BE needs **no** code changes. It reads
+`dashboardmanager`. Your job is to insert the right rows.
+
+The only exception is `source = 'be_geojson'`, which is served by
+`Taipei-City-Dashboard-BE/app/controllers/staticGeojson.go` mounted at
+`GET /api/v1/geojson/:index`. That controller is generic — it whitelists the
+index against `component_maps` and runs `ST_AsGeoJSON` over the underlying
+PostGIS table — so you do not modify it for new layers either. Adding rows
+is enough.
 
 There are four tables involved (all in the `dashboardmanager` Postgres DB).
 `createTempComponentDB()` in
@@ -368,7 +344,7 @@ BEGIN
       '<map_layer_index>',
       '<title shown in legend>',
       'fill' /* or 'line', 'circle', 'symbol', 'arc', 'voronoi', 'isoline', 'symbol-3d' */,
-      'raster' /* WFS via GeoServer (the convention) — use 'geojson' only for static layers */,
+      'be_geojson' /* default for any DAG-driven layer; 'raster' for GeoServer WFS; 'geojson' for static FE files */,
       NULL,
       NULL,  -- icon name from FE map asset folder, only for symbol layers
       '{"fill-color": ["coalesce", ["get", "level_color"], "#888"], "fill-opacity": 0.7}'::json,
@@ -479,15 +455,16 @@ Your `<component_index>` should appear in the list. If it doesn't:
 
 ## 3. FE — usually no code change
 
-If your `source = 'raster'` and a GeoServer layer of the same `index` exists,
-the FE just works. `mapStore.js` looks at `map_config.source` and routes:
+The FE has nothing to do unless you are introducing a brand-new `source` type.
+`mapStore.js` already routes the existing three:
 
 | `source` | FE fetch |
 |---|---|
 | `geojson` | `GET /mapData/${index}.geojson` (static file in `public/mapData/`) |
+| `be_geojson` | `GET ${VITE_API_URL}/geojson/${index}` (BE-served, PostGIS-backed) |
 | `raster` | `GET /geo_server/taipei_vioc/ows?...&typeName=taipei_vioc:${index}&...` (WFS) or PBF tiles via GeoWebCache |
 
-That's the entire FE contract. No FE PR needed.
+That's the entire FE contract. No FE PR needed for new layers using these.
 
 If you want a **custom symbol icon**, drop a PNG into
 `Taipei-City-Dashboard-FE/src/dashboardComponent/assets/map/<icon_name>.png` and
@@ -496,10 +473,12 @@ register it in `MapLegend.vue::returnIcon`. Set `component_maps.icon` to
 
 ---
 
-## 4. GeoServer — the only piece outside this repo
+## 4. GeoServer — only when you choose `source = 'raster'`
 
-For `source = 'raster'` (the convention), a GeoServer layer must exist with
-the same `index` you put in `component_maps.index`.
+For `source = 'raster'` a GeoServer layer must exist with the same `index`
+you put in `component_maps.index`. **Most realtime layers in this repo do not
+need this.** Use `be_geojson` (default) unless you specifically need
+GeoServer features (BBOX filtering, vector tiles, server-side styling).
 
 Do this once per layer in the target environment:
 
@@ -519,11 +498,10 @@ curl -s "https://citydashboard.taipei/geo_server/taipei_vioc/ows?service=WFS&ver
 ```
 
 In the **dev** environment the stack ships **without** a GeoServer container
-and the FE vite proxy forwards `/geo_server/*` to production. That means a
-`source = 'raster'` layer added in dev has no working FE preview unless either
-(a) you add a local GeoServer container and repoint the proxy, or
-(b) you use the static-export shortcut (see appendix). Option (b) is what the
-B1 deviation does.
+and the FE vite proxy forwards `/geo_server/*` to production. A
+`source = 'raster'` layer added in dev therefore has no working FE preview
+unless you stand up a local GeoServer and repoint the proxy. **Use
+`source = 'be_geojson'` instead** — it requires nothing outside this repo.
 
 ---
 
@@ -555,6 +533,7 @@ and silently fail every subsequent run.
 [ ] BE API returns the component     (`/api/v1/dashboard/<dashboard_index>?city=...`)
 [ ] FE legend renders correctly      (open the dashboard tab in the browser)
 [ ] FE map renders the layer         (open the map tab, toggle layer on)
+[ ] If source=be_geojson: `GET /api/v1/geojson/<index>` returns a FeatureCollection (this is the default)
 [ ] If source=raster: GeoServer WFS request returns features
 [ ] If source=geojson: `/mapData/<index>.geojson` is reachable and parses
 ```
@@ -603,13 +582,13 @@ a 10-min DAG), open an incident against the **data source**, not the DAG.
 | First DAG run fails: `relation "dataset_info" does not exist` | Bookkeeping table not created in this env | Create it manually; columns are listed in `_create_or_update_dataset_info` in `operators/common_pipeline.py` |
 | First DAG run fails: `relation "<table_name>" does not exist` | Forgot to run `init_tables.sql` | Run it; `current+history` mode TRUNCATEs first and won't auto-create the table. |
 | Component absent from BE response | Missing `component_charts` row (INNER JOIN drops you) | Insert it (see step 2.1 step 4). |
-| Component present in BE response, no map drawn | `source = 'raster'` but GeoServer layer missing, or `source = 'geojson'` but the file doesn't exist under `public/mapData/` | Publish the WFS layer, or write the static file. |
+| Component present in BE response, no map drawn | `source = 'be_geojson'` and BE `GET /api/v1/geojson/<index>` returns 404 / 500, or `source = 'raster'` but no GeoServer layer exists, or `source = 'geojson'` but the file under `public/mapData/` is missing | curl the relevant URL directly. For `be_geojson`: confirm the row in `component_maps` has `source='be_geojson'` and the underlying ready_data table actually exists. |
+| BE `GET /api/v1/geojson/<index>` returns `{"status":"error","message":"no be_geojson layer registered for this index"}` | The whitelist in `staticGeojson.go` only serves indices whose `component_maps` row has `source='be_geojson'`. Likely you set source to `geojson` (static) by mistake, or the row doesn't exist. | `UPDATE component_maps SET source='be_geojson' WHERE index='<index>';` then retry. |
 | Legend has empty entry | Legend SQL emits more rows than `component_charts.color` array length | Trim either side so they match. |
 | Map renders, but everything is grey | `paint` references a property that doesn't exist on the features | Inspect the GeoJSON / WFS response — property names must be exactly the column names from the DB after lowercasing, not the camelCase source names. |
 | **Tasks queue but never execute.** dag_run state = `failed`, no log directory created under `/opt/airflow/logs/dag_id=.../run_id=.../task_id=etl/`, and `docker logs develop-airflow-scheduler-1 \| grep -i "Error sending Celery task"` shows `module 'redis' has no attribute 'client'` | Scheduler process has corrupted `redis` / `kombu` module state (typically after a fork or a mid-run pip install). Confirmed by: from a fresh shell `docker exec develop-airflow-scheduler-1 python3 -c "from kombu.transport import redis; print('ok')"` works fine, but the live scheduler keeps failing. The bug is in process memory, not on disk — editing files won't help. | `docker restart develop-airflow-scheduler-1`. Wait for `health: healthy`, then verify with the time-series check in §5 (≥3 successful runs in the next ~6 minutes for a 2-min DAG). Long-term: pin `redis<5.2` in the DE image so the kombu/redis combo stays stable. |
 | First DAG run after image rebuild fails with kombu/redis import errors | Same root cause as above, but caught earlier — usually means a freshly-built image installed an incompatible `redis-py`. | Rebuild with `redis==5.0.x` pinned in `Taipei-City-Dashboard-DE/docker/develop/Dockerfile` (or the equivalent `requirements*.txt`). Avoid pip-installing into a running scheduler; rebuild the image instead. |
 | FE shows old data forever, but DAG runs all `success` | Upstream API is stale; our pipeline is dutifully writing the same old `data_time` every cycle. | Run the skew check in §5 (`max(_mtime) - max(data_time)`). If skew is hours/days, the issue is at the source — escalate to the data owner, not Airflow. Do **not** "fix" by lying about `data_time`. |
-| B1 DAG runs but FE 404s on `/mapData/<index>.geojson` | The export step succeeded inside the worker container but the bind mount to FE's `public/mapData/` is missing or wrong. | `docker exec develop-airflow-worker-realtime-1 ls /opt/airflow/fe_mapdata/` should list your file. If it does but FE doesn't see it, the mount in `Taipei-City-Dashboard-DE/docker/develop/docker-compose.yaml` is not pointing at `Taipei-City-Dashboard-FE/public/mapData/`. Fix the compose, restart workers. |
 
 ### Infra health quick reference
 
@@ -644,6 +623,6 @@ historical incident points, fixed administrative boundaries.
 3. The remaining BE rows (steps 2.1.2–2.1.4) are still required.
 
 If you find yourself wanting to **rewrite** a `public/mapData/*.geojson` file
-at runtime, you are about to repeat the B1 deviation — read
-`docs/road_speed_realtime_b1_deviation.md` first and pick GeoServer instead
-unless you really cannot.
+at runtime, stop — that is what `source = 'be_geojson'` exists for. The BE
+endpoint is generic and already streams from PostGIS. There is no good reason
+to round-trip data through a static file when the data isn't static.

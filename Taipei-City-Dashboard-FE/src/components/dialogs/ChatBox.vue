@@ -1,6 +1,5 @@
 <script setup>
 import { ref, watch, nextTick } from "vue";
-import { useRouter, useRoute } from "vue-router";
 import { storeToRefs } from "pinia";
 import SendIcon from "../icons/SendIcon.vue";
 import BotLogo from "../icons/BotLogo.vue";
@@ -15,6 +14,11 @@ import http from "../../router/axios";
 const chatStore = useChatStore();
 const contentStore = useContentStore();
 const authStore = useAuthStore();
+const { addChatData, addQueryData, saveChatLog } = chatStore;
+const { createDashboard } = contentStore;
+const { chatData, attachments } = storeToRefs(chatStore);
+const { editDashboard } = storeToRefs(contentStore);
+const { user } = storeToRefs(authStore);
 
 function removeAttachment(idx) {
 	const item = attachments.value[idx];
@@ -25,13 +29,6 @@ function removeAttachment(idx) {
 function clearAllAttachmentMarkers() {
 	attachments.value.forEach((a) => a.marker?.remove());
 }
-const router = useRouter();
-const route = useRoute();
-const { addChatData, addQueryData, saveChatLog } = chatStore;
-const { createDashboard } = contentStore;
-const { chatData, attachments } = storeToRefs(chatStore);
-const { editDashboard } = storeToRefs(contentStore);
-const { user } = storeToRefs(authStore);
 
 const userMessage = ref("");
 const chatAreaRef = ref(null);
@@ -77,12 +74,17 @@ const qaBtnHandler = async (text, relations) => {
 };
 
 const sendBtnHandler = () => {
+	if (!userMessage.value.trim()) {
+		return;
+	}
+
 	const sanitized = attachments.value.map(({ marker, ...rest }) => rest);
 	addQueryData({
 		role: "user",
 		content: userMessage.value,
 		attachments: sanitized,
 	});
+
 	userMessage.value = "";
 	clearAllAttachmentMarkers();
 	attachments.value = [];
@@ -135,41 +137,40 @@ watch(
 						<BotLogo />
 					</div>
 					<div class="content">
-						<!-- Loading 動畫 -->
-						<div
-							v-if="chat.loading"
-							class="message--bubble message--loading"
-						>
-							<span class="dot" />
-							<span class="dot" />
-							<span class="dot" />
+						<div v-if="chat.tool_used" class="tool-used-badge">
+							🔧 已使用工具分析
 						</div>
-						<div v-if="chat.content" class="message--bubble">
-							<p>{{ chat.content }}</p>
-							<div v-if="chat.toolUsed" class="tool-used-badge">
-								🔧 已使用工具分析
+						<div
+							v-if="chat.loading || chat.content"
+							class="message--bubble"
+						>
+							<div v-if="chat.loading" class="message--loading">
+								<span class="dot" />
+								<span class="dot" />
+								<span class="dot" />
 							</div>
+							<p v-else>{{ chat.content }}</p>
 						</div>
 						<DashboardComponent
-							v-if="chat.componentData"
-							:key="`component-${chat.componentData.index}-${chat.componentData.city}`"
-							:config="chat.componentData"
+							v-for="componentData in chat.componentDatas"
+							:key="`component-${componentData.index}-${componentData.city}`"
+							:config="componentData"
 							mode="default"
-							:active-city="chat.componentData.city"
+							:active-city="componentData.city"
 							:select-btn="true"
 							:select-btn-disabled="
 								contentStore.cityManager.getSelectList(
-									chat.componentData.city,
+									componentData.city,
 								).length === 1
 							"
 							:select-btn-list="
 								contentStore.cityManager.getSelectList(
-									chat.componentData.city,
+									componentData.city,
 								)
 							"
 							:city-tag="
 								contentStore.cityManager.getTagList(
-									chat.componentData.city,
+									componentData.city,
 								)
 							"
 							@change-city="
@@ -178,11 +179,11 @@ watch(
 										contentStore.aiSearchedComponents.find(
 											(data) =>
 												data.index ===
-													chat.componentData.index &&
+													componentData.index &&
 												data.city === city,
 										);
 									if (selectedData) {
-										chat.componentData = selectedData;
+										componentData = selectedData;
 									}
 								}
 							"
@@ -430,6 +431,10 @@ $radius-20: 20px;
 					flex-direction: row-reverse;
 				}
 
+				&.user .content {
+					align-items: flex-end;
+				}
+
 				.avatar {
 					width: 40px;
 					height: 40px;
@@ -484,8 +489,9 @@ $radius-20: 20px;
 					.message--attachments {
 						display: flex;
 						flex-wrap: wrap;
-						gap: 0.4rem;
-						padding: 8px 16px 0 16px;
+						gap: 0.5rem;
+						padding: 0.5rem;
+						padding-bottom: 0;
 
 						.attachment-chip--sent {
 							background: #2a2a2a;
@@ -540,7 +546,15 @@ $radius-20: 20px;
 						}
 					}
 
+					.tool-used-badge {
+						font-size: 11px;
+						color: #aaa;
+						padding: 0 16px 8px;
+					}
+
 					.message--bubble {
+						max-width: 100%;
+						width: fit-content;
 						display: flex;
 						flex-direction: column;
 						border: 1px solid $white;
@@ -551,17 +565,9 @@ $radius-20: 20px;
 							color: $white;
 							white-space: pre-line;
 							margin: 0;
-							padding-top: 8px;
-							padding-bottom: 8px;
-							padding-left: 16px;
-							padding-right: 16px;
+							padding: 0.5rem 1rem;
 							font-size: 16px;
-						}
-
-						.tool-used-badge {
-							font-size: 11px;
-							color: #aaa;
-							padding: 0 16px 8px;
+							word-break: break-word;
 						}
 					}
 
@@ -595,7 +601,7 @@ $radius-20: 20px;
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		padding: 1.5rem 1.125rem;
+		padding: 1.5rem 1rem;
 		padding-bottom: 0.5rem;
 		background: $panel-bg;
 		border-top: 1px solid $border-color;
@@ -650,7 +656,7 @@ $radius-20: 20px;
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.5rem;
-		padding: 1.125rem;
+		padding: 1rem;
 		padding-bottom: 0;
 		background: $panel-bg;
 
@@ -698,8 +704,7 @@ $radius-20: 20px;
 		align-items: center;
 		justify-content: center;
 		gap: 0.5rem;
-		padding: 1.125rem;
-		padding-top: 0.5rem;
+		padding: 1rem;
 		background: $panel-bg;
 
 		input[type="text"] {
