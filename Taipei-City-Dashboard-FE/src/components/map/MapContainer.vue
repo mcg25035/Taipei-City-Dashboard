@@ -42,181 +42,174 @@ function toggleDistrictLayer() {
 	districtLayer.value = !districtLayer.value;
 	mapStore.toggleDistrictBoundaries(districtLayer.value);
 	// 載入區界時觸發GA自訂事件
-	gtag('event','map_actions', {
+	gtag("event", "map_actions", {
 		action_type: "載入區界",
 		time: Date.now(),
-  	})
+	});
 }
 
 function toggleVillageLayer() {
 	villageLayer.value = !villageLayer.value;
 	mapStore.toggleVillageBoundaries(villageLayer.value);
 	// 載入里界時觸發GA自訂事件
-	gtag('event','map_actions', {
+	gtag("event", "map_actions", {
 		action_type: "載入里界",
 		time: Date.now(),
-  	})
+	});
 }
 
 // 尋找最近點時觸發GA自訂事件
 function findClosestPointGA() {
-	gtag('event','map_actions', {
+	gtag("event", "map_actions", {
 		action_type: "尋找最近點",
 		time: Date.now(),
-  	})
+	});
 }
 
 watch(
 	() => route.query?.city,
 	(newValue) => {
-		newValue 
+		newValue
 			? mapStore.updateMapViewForCity(newValue)
-			: mapStore.updateMapViewForCity('default');
-	}
+			: mapStore.updateMapViewForCity("default");
+	},
 );
-
-function copyLocationToChat() {
-	const { lng, lat } = mapStore.contextMenuInfo;
-	chatStore.pendingInputMessage = `經緯度 ${lng.toFixed(6)}, ${lat.toFixed(6)}`;
-	mapStore.contextMenuInfo = null;
-}
 
 onMounted(() => {
 	mapStore.initializeMapBox();
 	mapStore.setCurrentLocation();
-	route.query.city 
+	route.query.city
 		? mapStore.updateMapViewForCity(route.query.city)
-		: mapStore.updateMapViewForCity('default');
+		: mapStore.updateMapViewForCity("default");
+	mapStore.map.on("dblclick", (event) => {
+		if (route.name === "ai-tour") {
+			chatStore.attachments.push({
+				type: "location",
+				lng: event.lngLat.lng,
+				lat: event.lngLat.lat,
+			});
+		}
+	});
 });
 </script>
 
 <template>
-  <div class="mapcontainer">
-    <div class="mapcontainer-map">
-      <!-- #mapboxBox needs to be empty to ensure Mapbox performance -->
-      <div id="mapboxBox" />
-      <div class="mapcontainer-layers">
-        <button
-          :style="{
-            color: districtLayer
-              ? 'var(--color-highlight)'
-              : 'var(--color-component-background)',
-          }"
-          @click="toggleDistrictLayer"
-        >
-          區
-        </button>
-        <button
-          :style="{
-            color: villageLayer
-              ? 'var(--color-highlight)'
-              : 'var(--color-component-background)',
-          }"
-          @click="toggleVillageLayer"
-        >
-          里
-        </button>
+	<div class="mapcontainer">
+		<div class="mapcontainer-map">
+			<!-- #mapboxBox needs to be empty to ensure Mapbox performance -->
+			<div id="mapboxBox" />
+			<div class="mapcontainer-layers">
+				<button
+					:style="{
+						color: districtLayer
+							? 'var(--color-highlight)'
+							: 'var(--color-component-background)',
+					}"
+					@click="toggleDistrictLayer"
+				>
+					區
+				</button>
+				<button
+					:style="{
+						color: villageLayer
+							? 'var(--color-highlight)'
+							: 'var(--color-component-background)',
+					}"
+					@click="toggleVillageLayer"
+				>
+					里
+				</button>
 
-        <button
-          v-if="canUseFindClosestPoint"
-          :style="{
-            color: villageLayer
-              ? 'var(--color-highlight)'
-              : 'var(--color-component-background)',
-          }"
-          class="hide-if-mobile"
-          type="button"
-          @click="dialogStore.showDialog('findClosestPoint'); findClosestPointGA();"
-        >
-          近
-        </button>
-        <button
-          class="show-if-mobile"
-          @click="dialogStore.showDialog('mobileLayers')"
-        >
-          <span>layers</span>
-        </button>
-        <div
-          v-if="mapStore.loadingLayers.length > 0"
-          class="mapcontainer-layers-loading"
-        >
-          <div />
-        </div>
-      </div>
+				<button
+					v-if="canUseFindClosestPoint"
+					:style="{
+						color: villageLayer
+							? 'var(--color-highlight)'
+							: 'var(--color-component-background)',
+					}"
+					class="hide-if-mobile"
+					type="button"
+					@click="
+						dialogStore.showDialog('findClosestPoint');
+						findClosestPointGA();
+					"
+				>
+					近
+				</button>
+				<button
+					class="show-if-mobile"
+					@click="dialogStore.showDialog('mobileLayers')"
+				>
+					<span>layers</span>
+				</button>
+				<div
+					v-if="mapStore.loadingLayers.length > 0"
+					class="mapcontainer-layers-loading"
+				>
+					<div />
+				</div>
+			</div>
 
-      <button
-        v-if="authStore.user.is_admin"
-        class="mapcontainer-layers-incident"
-        title="通報災害"
-        @click="dialogStore.showDialog('incidentReport')"
-      >
-        !
-      </button><!-- The key prop informs vue that the component should be updated when switching dashboards -->
-      <MobileLayers :key="contentStore.currentDashboard.index" />
-      <IncidentReport />
-      <FindClosestPoint />
-      <div
-        v-if="mapStore.contextMenuInfo && route.name === 'ai-tour'"
-        class="mapcontainer-contextmenu"
-        :style="{ left: mapStore.contextMenuInfo.x + 'px', top: mapStore.contextMenuInfo.y + 'px' }"
-        @mouseleave="mapStore.contextMenuInfo = null"
-      >
-        <button @click="copyLocationToChat">
-          將位置複製到聊天室
-        </button>
-      </div>
-    </div>
+			<button
+				v-if="authStore.user.is_admin"
+				class="mapcontainer-layers-incident"
+				title="通報災害"
+				@click="dialogStore.showDialog('incidentReport')"
+			>
+				!</button
+			><!-- The key prop informs vue that the component should be updated when switching dashboards -->
+			<MobileLayers :key="contentStore.currentDashboard.index" />
+			<IncidentReport />
+			<FindClosestPoint />
+		</div>
 
-    <div class="mapcontainer-controls hide-if-mobile">
-      <button
-        @click="
-          mapStore.easeToLocation([
-            [121.536609, 25.044808],
-            12.5,
-            0,
-            0,
-          ])
-        "
-      >
-        返回預設
-      </button>
-      <template v-if="!authStore.user?.user_id">
-        <div
-          v-for="(item, index) in savedLocations"
-          :key="`${item[4]}-${index}`"
-        >
-          <button @click="mapStore.easeToLocation(item)">
-            {{ item[4] }}
-          </button>
-        </div>
-      </template>
-      <div
-        v-for="(item, index) in mapStore.viewPoints"
-        :key="index"
-      >
-        <button
-          v-if="item.point_type === 'view'"
-          @click="mapStore.easeToLocation(item)"
-        >
-          {{ item["name"] }}
-        </button>
-        <div
-          v-if="authStore.user?.user_id"
-          class="mapcontainer-controls-delete"
-          @click="mapStore.removeViewPoint(item)"
-        >
-          <span>delete</span>
-        </div>
-      </div>
-      <button
-        v-if="authStore.user?.user_id"
-        @click="dialogStore.showDialog('addViewPoint')"
-      >
-        新增
-      </button>
-    </div>
-  </div>
-  <AddViewPoint name="addViewPoint" />
+		<div class="mapcontainer-controls hide-if-mobile">
+			<button
+				@click="
+					mapStore.easeToLocation([
+						[121.536609, 25.044808],
+						12.5,
+						0,
+						0,
+					])
+				"
+			>
+				返回預設
+			</button>
+			<template v-if="!authStore.user?.user_id">
+				<div
+					v-for="(item, index) in savedLocations"
+					:key="`${item[4]}-${index}`"
+				>
+					<button @click="mapStore.easeToLocation(item)">
+						{{ item[4] }}
+					</button>
+				</div>
+			</template>
+			<div v-for="(item, index) in mapStore.viewPoints" :key="index">
+				<button
+					v-if="item.point_type === 'view'"
+					@click="mapStore.easeToLocation(item)"
+				>
+					{{ item["name"] }}
+				</button>
+				<div
+					v-if="authStore.user?.user_id"
+					class="mapcontainer-controls-delete"
+					@click="mapStore.removeViewPoint(item)"
+				>
+					<span>delete</span>
+				</div>
+			</div>
+			<button
+				v-if="authStore.user?.user_id"
+				@click="dialogStore.showDialog('addViewPoint')"
+			>
+				新增
+			</button>
+		</div>
+	</div>
+	<AddViewPoint name="addViewPoint" />
 </template>
 
 <style scoped lang="scss">
@@ -312,33 +305,6 @@ onMounted(() => {
 		}
 	}
 
-	&-contextmenu {
-		position: absolute;
-		z-index: 10;
-		background-color: var(--color-component-background);
-		border: 1px solid var(--color-border);
-		border-radius: 5px;
-		padding: 4px 0;
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-
-		button {
-			display: block;
-			width: 100%;
-			padding: 6px 14px;
-			text-align: left;
-			white-space: nowrap;
-			color: var(--color-complement-text);
-			font-size: var(--font-s);
-			background: transparent;
-			cursor: pointer;
-
-			&:hover {
-				background-color: var(--color-highlight);
-				color: white;
-			}
-		}
-	}
-
 	&-layers {
 		position: absolute;
 		right: 10px;
@@ -397,7 +363,9 @@ onMounted(() => {
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			transition: background-color 0.2s, color 0.2s;
+			transition:
+				background-color 0.2s,
+				color 0.2s;
 			font-size: var(--font-xl);
 
 			&:hover {

@@ -219,7 +219,7 @@ export const useChatStore = defineStore("chat", () => {
 	const chatData = ref([...defaultChatData]);
 	const messageHistory = ref([]);
 	const sessionId = ref(null);
-	const pendingInputMessage = ref("");
+	const attachments = ref([]);
 
 	// frontend_action queue — components watch and dispatch
 	const frontendActions = ref([]);
@@ -259,10 +259,7 @@ export const useChatStore = defineStore("chat", () => {
 			isDefault: false,
 			...newChatData,
 		});
-		messageHistory.value.push({
-			role: "user",
-			content: newChatData.content,
-		});
+		messageHistory.value.push(newChatData);
 
 		// 2. 建立 bot 串流訊息（loading 狀態）
 		const botMsgId = chatData.value.length + 1;
@@ -275,7 +272,21 @@ export const useChatStore = defineStore("chat", () => {
 		});
 
 		try {
-			const requestBody = { prompt: newChatData.content };
+			const prefix = attachments.value
+				.map((a, index) => {
+					if (a.type === "location")
+						return `[位置${index + 1}: ${a.lng.toFixed(6)}, ${a.lat.toFixed(6)}]`;
+					return "";
+				})
+				.filter(Boolean)
+				.join("\n");
+
+			const prompt = prefix
+				? `${prefix}\n${newChatData.content}`
+				: newChatData.content;
+			if (!prompt.trim()) return;
+
+			const requestBody = { prompt };
 			if (sessionId.value) requestBody.session_id = sessionId.value;
 
 			const sseSource = USE_MOCK
@@ -411,7 +422,7 @@ export const useChatStore = defineStore("chat", () => {
 		chatData,
 		messageHistory,
 		frontendActions,
-		pendingInputMessage,
+		attachments,
 		addChatData,
 		addQueryData,
 		clearSession,
