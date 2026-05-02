@@ -14,7 +14,11 @@ const props = defineProps(["content"]);
 
 const checked = ref(false);
 const toggleCount = ref(0);
-const cityTag = ref(contentStore.cityManager.getTagList(props.content.city).find((tag) => tag.value === props.content.city));
+const cityTag = ref(
+	contentStore.cityManager
+		.getTagList(props.content.city)
+		.find((tag) => tag.value === props.content.city),
+);
 
 // Communicates with the mapStore to open and close map layers on mobile
 function handleToggle() {
@@ -22,7 +26,7 @@ function handleToggle() {
 		return;
 	}
 
-	if (props.content.city === 'metrotaipei') {
+	if (props.content.city === "metrotaipei") {
 		handleMetroTaipeiToggle();
 	} else {
 		handleBasicToggle();
@@ -38,12 +42,18 @@ function handleBasicToggle() {
 
 function handleMetroTaipeiToggle() {
 	let selectedData = contentStore.cityDashboard.components.find((data) => {
-		return data.index === props.content.index && data.city !== props.content.city;
+		return (
+			data.index === props.content.index &&
+			data.city !== props.content.city
+		);
 	});
-	
+
 	if (!selectedData) {
 		selectedData = contentStore.allMapLayers.find((data) => {
-			return data.index === props.content.index && data.city !== props.content.city;
+			return (
+				data.index === props.content.index &&
+				data.city !== props.content.city
+			);
 		});
 	}
 
@@ -62,7 +72,7 @@ function handleMetroTaipeiToggle() {
 		toggleCount.value++;
 	} else {
 		// 第三次切換：關閉所有圖層，重置狀態
-		checked.value = false
+		checked.value = false;
 		cityTag.value = contentStore.cityManager
 			.getTagList(props.content.city)
 			.find((tag) => tag.value === props.content.city);
@@ -74,33 +84,30 @@ function handleMetroTaipeiToggle() {
 </script>
 
 <template>
-  <div class="mobilelayertab">
-    <input
-      :id="content.index"
-      v-model="checked"
-      type="checkbox"
-      @change="handleToggle"
-    >
-    <label
-      :for="content.index"
-      :class="{ checked: checked }"
-    >
-      <img
-        :src="`/images/thumbnails/${content.chart_config.types[0]}.svg`"
-      >
-    </label>
-    <div class="citytagwithname">
-      <ComponentTag
-        :icon="''"
-        :text="cityTag.name"
-        :mode="'small'"
-        :class="`city-tag-item ${cityTag.value}`"
-      />
-      <p>
-        {{ content.name }}
-      </p>
-    </div>
-  </div>
+	<div class="mobilelayertab">
+		<input
+			:id="content.index"
+			v-model="checked"
+			type="checkbox"
+			@change="handleToggle"
+		/>
+		<label :for="content.index" :class="{ checked: checked }">
+			<img
+				:src="`/images/thumbnails/${content.chart_config.types[0]}.svg`"
+			/>
+		</label>
+		<div class="citytagwithname">
+			<ComponentTag
+				:icon="''"
+				:text="cityTag.name"
+				:mode="'small'"
+				:class="`city-tag-item ${cityTag.value}`"
+			/>
+			<p>
+				{{ content.name }}
+			</p>
+		</div>
+	</div>
 </template>
 
 <style scoped lang="scss">

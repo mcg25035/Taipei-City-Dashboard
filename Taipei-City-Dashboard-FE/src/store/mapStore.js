@@ -523,6 +523,17 @@ export const useMapStore = defineStore("map", {
 		},
 		// 2. Call an API to get the layer data
 		fetchLocalGeoJson(map_config) {
+			if (map_config.data) {
+				const data = decorateGeoJson(map_config, map_config.data);
+				if (data?.features) {
+					this.featureCache = {
+						...this.featureCache,
+						[map_config.index]: data.features,
+					};
+				}
+				this.addGeojsonSource(map_config, data);
+				return;
+			}
 			axios
 				.get(`/mapData/${map_config.index}.geojson`)
 				.then((rs) => {

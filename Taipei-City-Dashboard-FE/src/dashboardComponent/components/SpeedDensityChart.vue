@@ -91,10 +91,9 @@ const curvePath = computed(() => {
 
 const gradientStops = computed(() =>
 	STOPS.map((s) => ({
-		offset:
-			(1 - (s.speed - SPEED_MIN) / (SPEED_MAX - SPEED_MIN)) * 100,
+		offset: (1 - (s.speed - SPEED_MIN) / (SPEED_MAX - SPEED_MIN)) * 100,
 		color: s.color,
-	})).sort((a, b) => a.offset - b.offset)
+	})).sort((a, b) => a.offset - b.offset),
 );
 
 const sampleCount = computed(() => speeds.value.length);
@@ -105,54 +104,54 @@ const meanSpeed = computed(() => {
 </script>
 
 <template>
-  <div class="speeddensity">
-    <svg
-      :viewBox="`0 0 ${VIEW_W} ${VIEW_H}`"
-      preserveAspectRatio="none"
-      class="speeddensity-svg"
-    >
-      <defs>
-        <linearGradient
-          id="speeddensity-grad"
-          x1="0"
-          y1="0"
-          x2="1"
-          y2="0"
-        >
-          <stop
-            v-for="s in gradientStops"
-            :key="s.offset"
-            :offset="`${s.offset}%`"
-            :stop-color="s.color"
-          />
-        </linearGradient>
-      </defs>
-      <path
-        v-if="curvePath"
-        :d="curvePath"
-        fill="url(#speeddensity-grad)"
-        fill-opacity="0.85"
-        stroke="#a98ce0"
-        stroke-width="1.2"
-      />
-      <rect
-        :x="PAD_X"
-        :y="BAR_TOP"
-        :width="VIEW_W - PAD_X * 2"
-        :height="BAR_H"
-        rx="3"
-        ry="3"
-        fill="url(#speeddensity-grad)"
-      />
-    </svg>
-    <div class="speeddensity-meta">
-      <span>樣本 {{ sampleCount }} 路段</span>
-      <span v-if="meanSpeed !== null">
-        平均 {{ meanSpeed.toFixed(1) }} km/h
-      </span>
-      <span v-else>等候資料…</span>
-    </div>
-  </div>
+	<div class="speeddensity">
+		<svg
+			:viewBox="`0 0 ${VIEW_W} ${VIEW_H}`"
+			preserveAspectRatio="none"
+			class="speeddensity-svg"
+		>
+			<defs>
+				<linearGradient
+					id="speeddensity-grad"
+					x1="0"
+					y1="0"
+					x2="1"
+					y2="0"
+				>
+					<stop
+						v-for="s in gradientStops"
+						:key="s.offset"
+						:offset="`${s.offset}%`"
+						:stop-color="s.color"
+					/>
+				</linearGradient>
+			</defs>
+			<path
+				v-if="curvePath"
+				:d="curvePath"
+				fill="url(#speeddensity-grad)"
+				fill-opacity="0.85"
+				stroke="#a98ce0"
+				stroke-width="1.2"
+			/>
+			<rect
+				:x="PAD_X"
+				:y="BAR_TOP"
+				:width="VIEW_W - PAD_X * 2"
+				:height="BAR_H"
+				rx="3"
+				ry="3"
+				fill="url(#speeddensity-grad)"
+			/>
+		</svg>
+		<div class="speeddensity-meta">
+			<span>樣本 {{ sampleCount }} 路段</span>
+			<span v-if="meanSpeed !== null">
+				平均 {{ meanSpeed.toFixed(1) }} km/h
+			</span>
+			<span v-else>等候資料…</span>
+		</div>
+	</div>
 </template>
 
 <style scoped lang="scss">

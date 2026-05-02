@@ -18,7 +18,7 @@ const emits = defineEmits([
 	"filterByLayer",
 	"clearByParamFilter",
 	"clearByLayerFilter",
-	"fly"
+	"fly",
 ]);
 
 // Guage charts in apexcharts uses a slightly different data format from other chart types
@@ -115,7 +115,7 @@ function handleDataSelection(_e, _chartContext, config) {
 				props.map_filter,
 				props.map_config,
 				config.w.globals.labels[config.dataPointIndex],
-				props.series[0].name // You can only click on the first series in ApexCharts
+				props.series[0].name, // You can only click on the first series in ApexCharts
 			);
 		}
 		// Supports filtering by xAxis
@@ -123,7 +123,7 @@ function handleDataSelection(_e, _chartContext, config) {
 			emits(
 				"filterByLayer",
 				props.map_config,
-				config.w.globals.labels[config.dataPointIndex]
+				config.w.globals.labels[config.dataPointIndex],
 			);
 		}
 		selectedIndex.value = `${config.dataPointIndex}-${config.seriesIndex}`;
@@ -139,14 +139,14 @@ function handleDataSelection(_e, _chartContext, config) {
 </script>
 
 <template>
-  <div v-if="activeChart === 'GuageChart'">
-    <VueApexCharts
-      width="80%"
-      height="300px"
-      type="radialBar"
-      :options="chartOptions"
-      :series="parseSeries.series"
-      @data-point-selection="handleDataSelection"
-    />
-  </div>
+	<div v-if="activeChart === 'GuageChart'">
+		<VueApexCharts
+			width="80%"
+			height="300px"
+			type="radialBar"
+			:options="chartOptions"
+			:series="parseSeries.series"
+			@data-point-selection="handleDataSelection"
+		/>
+	</div>
 </template>

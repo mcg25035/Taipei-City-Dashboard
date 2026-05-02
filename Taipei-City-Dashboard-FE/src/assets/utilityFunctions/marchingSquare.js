@@ -102,7 +102,7 @@ export function marchingSquare(discreteData, isoValue) {
 				let interpolate_tmp = linearInterpolation(
 					cornerValues[k],
 					cornerValues[(k + 1) % 4],
-					isoValue
+					isoValue,
 				);
 				interpoValues.push(interpolate_tmp);
 			}

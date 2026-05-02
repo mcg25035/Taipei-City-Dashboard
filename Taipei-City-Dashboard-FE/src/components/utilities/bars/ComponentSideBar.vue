@@ -22,11 +22,11 @@ const availableIcons = computed(() => {
 	let filteredIcons = [...allIcons];
 	if (iconSearch.value !== "") {
 		filteredIcons = filteredIcons.filter((icon) =>
-			icon.includes(iconSearch.value)
+			icon.includes(iconSearch.value),
 		);
 	} else {
 		const selected = filteredIcons.findIndex(
-			(icon) => icon === editDashboard.value.icon
+			(icon) => icon === editDashboard.value.icon,
 		);
 		if (selected >= 54) {
 			filteredIcons.splice(selected, 1);
@@ -48,19 +48,19 @@ function switchDashboard() {
 		editDashboard.value = JSON.parse(
 			JSON.stringify(
 				contentStore.personalDashboards.find(
-					(el) => el.index === selectedDashboard.value
-				)
-			)
+					(el) => el.index === selectedDashboard.value,
+				),
+			),
 		);
 		editDashboard.value.components = editDashboard.value.components.map(
 			(component) => {
 				return {
 					id: component,
 					name: contentStore.components.find(
-						(el) => el.id === component
+						(el) => el.id === component,
 					).name,
 				};
-			}
+			},
 		);
 	}
 }
@@ -70,8 +70,13 @@ async function handleConfirm() {
 		// 確認個人儀表板是否超過20個
 		const response = await http.get(`/dashboard/`);
 		if (response.data?.data?.personal?.length > 20) {
-			console.error('您的個人儀表板已超出限制 20 個，請先移除既有儀表板後，重新執行本功能！');
-			dialogStore.showNotification("fail", "您的個人儀表板已超出限制 20 個，請先移除既有儀表板後，重新執行本功能！");
+			console.error(
+				"您的個人儀表板已超出限制 20 個，請先移除既有儀表板後，重新執行本功能！",
+			);
+			dialogStore.showNotification(
+				"fail",
+				"您的個人儀表板已超出限制 20 個，請先移除既有儀表板後，重新執行本功能！",
+			);
 			return;
 		}
 		contentStore.createDashboard();
@@ -84,92 +89,79 @@ async function handleConfirm() {
 </script>
 
 <template>
-  <div :class="{ componentsidebar: true, 'hide-if-mobile': true }">
-    <h2>新增組件至儀表板</h2>
-    <div class="componentsidebar-settings">
-      <label>選擇儀表板</label>
-      <!-- 之後要在contentStore寫處理的東西 -->
-      <select
-        v-model="selectedDashboard"
-        @change="switchDashboard"
-      >
-        <option value="new">
-          新增儀表板
-        </option>
-        <option
-          v-for="dashboard in contentStore.personalDashboards.filter(
-            (el) => el.index !== contentStore.favorites?.index && el.index !== 'ai-searched'
-          )"
-          :key="dashboard.index"
-          :value="dashboard.index"
-        >
-          {{ dashboard.name }}
-        </option>
-      </select>
-    </div>
-    <div
-      v-if="selectedDashboard === 'new'"
-      class="componentsidebar-settings"
-    >
-      <label>名稱*</label>
-      <input
-        v-model="editDashboard.name"
-        placeholder=""
-        required
-      >
-      <label>圖示*</label>
-      <input
-        v-model="iconSearch"
-        placeholder="尋找圖示(英文)"
-      >
-      <div class="componentsidebar-settings-icon">
-        <div
-          v-for="item in availableIcons"
-          :key="item"
-        >
-          <input
-            :id="item"
-            v-model="editDashboard.icon"
-            type="radio"
-            :value="item"
-          >
-          <label :for="item">{{ item }}</label>
-        </div>
-      </div>
-    </div>
-    <div class="componentsidebar-settings">
-      <label>儀表板組件 (點擊右側組件 [+] 圖示以新增)</label>
-      <div class="componentsidebar-settings-components">
-        <ComponentDragTags
-          :tags="editDashboard.components"
-          @deletetag="
-            (index) => {
-              editDashboard.components.splice(index, 1);
-            }
-          "
-          @updatetagorder="
-            (updatedTags) => {
-              editDashboard.components = updatedTags;
-            }
-          "
-        />
-      </div>
-    </div>
-    <div class="componentsidebar-footer">
-      <button
-        v-if="selectedDashboard === 'new' && editDashboard.name"
-        @click="handleConfirm"
-      >
-        新增組件至儀表板
-      </button>
-      <button
-        v-else-if="selectedDashboard !== 'new'"
-        @click="handleConfirm"
-      >
-        更新儀表板
-      </button>
-    </div>
-  </div>
+	<div :class="{ componentsidebar: true, 'hide-if-mobile': true }">
+		<h2>新增組件至儀表板</h2>
+		<div class="componentsidebar-settings">
+			<label>選擇儀表板</label>
+			<!-- 之後要在contentStore寫處理的東西 -->
+			<select v-model="selectedDashboard" @change="switchDashboard">
+				<option value="new">新增儀表板</option>
+				<option
+					v-for="dashboard in contentStore.personalDashboards.filter(
+						(el) =>
+							el.index !== contentStore.favorites?.index &&
+							el.index !== 'ai-searched',
+					)"
+					:key="dashboard.index"
+					:value="dashboard.index"
+				>
+					{{ dashboard.name }}
+				</option>
+			</select>
+		</div>
+		<div
+			v-if="selectedDashboard === 'new'"
+			class="componentsidebar-settings"
+		>
+			<label>名稱*</label>
+			<input v-model="editDashboard.name" placeholder="" required />
+			<label>圖示*</label>
+			<input v-model="iconSearch" placeholder="尋找圖示(英文)" />
+			<div class="componentsidebar-settings-icon">
+				<div v-for="item in availableIcons" :key="item">
+					<input
+						:id="item"
+						v-model="editDashboard.icon"
+						type="radio"
+						:value="item"
+					/>
+					<label :for="item">{{ item }}</label>
+				</div>
+			</div>
+		</div>
+		<div class="componentsidebar-settings">
+			<label>儀表板組件 (點擊右側組件 [+] 圖示以新增)</label>
+			<div class="componentsidebar-settings-components">
+				<ComponentDragTags
+					:tags="editDashboard.components"
+					@deletetag="
+						(index) => {
+							editDashboard.components.splice(index, 1);
+						}
+					"
+					@updatetagorder="
+						(updatedTags) => {
+							editDashboard.components = updatedTags;
+						}
+					"
+				/>
+			</div>
+		</div>
+		<div class="componentsidebar-footer">
+			<button
+				v-if="selectedDashboard === 'new' && editDashboard.name"
+				@click="handleConfirm"
+			>
+				新增組件至儀表板
+			</button>
+			<button
+				v-else-if="selectedDashboard !== 'new'"
+				@click="handleConfirm"
+			>
+				更新儀表板
+			</button>
+		</div>
+	</div>
 </template>
 
 <style scoped lang="scss">

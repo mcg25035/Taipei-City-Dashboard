@@ -18,7 +18,7 @@ const emits = defineEmits([
 	"filterByLayer",
 	"clearByParamFilter",
 	"clearByLayerFilter",
-	"fly"
+	"fly",
 ]);
 
 // How many data points to show before summing all remaining points into "other"
@@ -67,10 +67,7 @@ const chartOptions = ref({
 			? [...props.chart_config.color, "#848c94"]
 			: props.chart_config.color,
 	dataLabels: {
-		formatter: function (
-			_val,
-			{ seriesIndex, w }
-		) {
+		formatter: function (_val, { seriesIndex, w }) {
 			let value = w.globals.labels[seriesIndex];
 			return value.length > 7 ? value.slice(0, 6) + "..." : value;
 		},
@@ -96,11 +93,7 @@ const chartOptions = ref({
 	},
 	tooltip: {
 		followCursor: false,
-		custom: function ({
-			series,
-			seriesIndex,
-			w,
-		}) {
+		custom: function ({ series, seriesIndex, w }) {
 			// The class "chart-tooltip" could be edited in /assets/styles/chartStyles.css
 			return (
 				'<div class="chart-tooltip">' +
@@ -133,7 +126,7 @@ function handleDataSelection(_e, _chartContext, config) {
 				props.map_filter,
 				props.map_config,
 				config.w.globals.labels[config.dataPointIndex],
-				null
+				null,
 			);
 		}
 		// Supports filtering by xAxis
@@ -141,7 +134,7 @@ function handleDataSelection(_e, _chartContext, config) {
 			emits(
 				"filterByLayer",
 				props.map_config,
-				config.w.globals.labels[config.dataPointIndex]
+				config.w.globals.labels[config.dataPointIndex],
 			);
 		}
 		selectedIndex.value = `${config.dataPointIndex}-${config.seriesIndex}`;
@@ -157,22 +150,19 @@ function handleDataSelection(_e, _chartContext, config) {
 </script>
 
 <template>
-  <div
-    v-if="activeChart === 'DonutChart'"
-    class="donutchart"
-  >
-    <VueApexCharts
-      width="100%"
-      type="donut"
-      :options="chartOptions"
-      :series="parsedSeries"
-      @data-point-selection="handleDataSelection"
-    />
-    <div class="donutchart-title">
-      <h5>總合</h5>
-      <h6>{{ sum }}</h6>
-    </div>
-  </div>
+	<div v-if="activeChart === 'DonutChart'" class="donutchart">
+		<VueApexCharts
+			width="100%"
+			type="donut"
+			:options="chartOptions"
+			:series="parsedSeries"
+			@data-point-selection="handleDataSelection"
+		/>
+		<div class="donutchart-title">
+			<h5>總合</h5>
+			<h6>{{ sum }}</h6>
+		</div>
+	</div>
 </template>
 
 <style scoped lang="scss">

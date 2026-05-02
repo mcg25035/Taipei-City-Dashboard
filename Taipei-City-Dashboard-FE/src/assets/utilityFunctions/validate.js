@@ -20,8 +20,8 @@ export const validatePass = (rule, value, callback) => {
 	} else {
 		callback(
 			new Error(
-				"至少有一個數字，一個小寫英文字母，一個大寫英文字母，字串長度在 6 ~ 30 個字母之間"
-			)
+				"至少有一個數字，一個小寫英文字母，一個大寫英文字母，字串長度在 6 ~ 30 個字母之間",
+			),
 		);
 	}
 };

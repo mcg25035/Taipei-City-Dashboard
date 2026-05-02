@@ -65,7 +65,11 @@ function lineSlice(coords, startPt, endPt) {
 	if (startIndex <= endIndex) {
 		sliced = [startPt, ...coords.slice(startIndex + 1, endIndex), endPt];
 	} else {
-		sliced = [startPt, ...coords.slice(endIndex + 1, startIndex).reverse(), endPt];
+		sliced = [
+			startPt,
+			...coords.slice(endIndex + 1, startIndex).reverse(),
+			endPt,
+		];
 	}
 
 	return {
@@ -94,7 +98,11 @@ function mergeSegmentsFallback(segments) {
 	});
 
 	let startKey = null;
-	for (const [k, list] of idx.entries()) if (list.length === 1) { startKey = k; break; }
+	for (const [k, list] of idx.entries())
+		if (list.length === 1) {
+			startKey = k;
+			break;
+		}
 	if (!startKey) startKey = keyOf(segments[0][0]);
 
 	const visited = new Array(segments.length).fill(false);
@@ -105,7 +113,11 @@ function mergeSegmentsFallback(segments) {
 	while (true) {
 		const candidates = idx.get(currentKey) || [];
 		let chosen = null;
-		for (const c of candidates) if (!visited[c.i]) { chosen = c; break; }
+		for (const c of candidates)
+			if (!visited[c.i]) {
+				chosen = c;
+				break;
+			}
 		if (!chosen) break;
 
 		const seg = segments[chosen.i].slice();
@@ -124,7 +136,8 @@ function mergeSegmentsFallback(segments) {
 			const lastMerged = merged[merged.length - 1];
 			const segStartKey = keyOf(seg[0]);
 			const lastKey = lastMerged ? keyOf(lastMerged) : null;
-			if (lastKey && lastKey === segStartKey) merged.push(...seg.slice(1));
+			if (lastKey && lastKey === segStartKey)
+				merged.push(...seg.slice(1));
 			else merged.push(...seg);
 			visited[i] = true;
 		}
@@ -140,13 +153,15 @@ export function cutRouteSegment(geojson, startCoord, endCoord) {
 	if (!geojson) throw new Error("沒有輸入 geojson");
 
 	let geom;
-	if (geojson.type === "FeatureCollection") geom = geojson.features[0].geometry;
+	if (geojson.type === "FeatureCollection")
+		geom = geojson.features[0].geometry;
 	else if (geojson.type === "Feature") geom = geojson.geometry;
 	else throw new Error("輸入必須是 Feature 或 FeatureCollection");
 
 	let mergedCoords;
 	if (geom.type === "LineString") mergedCoords = geom.coordinates.slice();
-	else if (geom.type === "MultiLineString") mergedCoords = mergeSegmentsFallback(geom.coordinates);
+	else if (geom.type === "MultiLineString")
+		mergedCoords = mergeSegmentsFallback(geom.coordinates);
 	else throw new Error("只支援 LineString 或 MultiLineString");
 
 	const snappedStart = nearestPointOnLine(mergedCoords, startCoord);
@@ -155,7 +170,8 @@ export function cutRouteSegment(geojson, startCoord, endCoord) {
 	let sliced = lineSlice(mergedCoords, snappedStart, snappedEnd);
 
 	const firstPt = sliced.geometry.coordinates[0];
-	const lastPt = sliced.geometry.coordinates[sliced.geometry.coordinates.length - 1];
+	const lastPt =
+		sliced.geometry.coordinates[sliced.geometry.coordinates.length - 1];
 
 	if (distance(startCoord, lastPt) < distance(startCoord, firstPt)) {
 		sliced.geometry.coordinates.reverse();

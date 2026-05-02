@@ -27,11 +27,11 @@ const availableIcons = computed(() => {
 	const filterNum = dialogStore.addEdit === "edit" ? 36 : 54;
 	if (iconSearch.value !== "") {
 		filteredIcons = filteredIcons.filter((icon) =>
-			icon.includes(iconSearch.value)
+			icon.includes(iconSearch.value),
 		);
 	} else {
 		const selected = filteredIcons.findIndex(
-			(icon) => icon === editDashboard.value.icon
+			(icon) => icon === editDashboard.value.icon,
 		);
 		if (selected >= filterNum) {
 			filteredIcons.splice(selected, 1);
@@ -47,8 +47,13 @@ async function handleConfirm() {
 		// 確認個人儀表板是否超過20個
 		const response = await http.get(`/dashboard/`);
 		if (response.data?.data?.personal?.length > 20) {
-			console.error('您的個人儀表板已超出限制 20 個，請先移除既有儀表板後，重新執行本功能！');
-			dialogStore.showNotification("fail", "您的個人儀表板已超出限制 20 個，請先移除既有儀表板後，重新執行本功能！");
+			console.error(
+				"您的個人儀表板已超出限制 20 個，請先移除既有儀表板後，重新執行本功能！",
+			);
+			dialogStore.showNotification(
+				"fail",
+				"您的個人儀表板已超出限制 20 個，請先移除既有儀表板後，重新執行本功能！",
+			);
 			return;
 		}
 		contentStore.createDashboard();
@@ -78,122 +83,112 @@ function handleClose() {
 </script>
 
 <template>
-  <DialogContainer
-    :dialog="`addEditDashboards`"
-    @on-close="handleClose"
-  >
-    <div class="addeditdashboards">
-      <div class="addeditdashboards-header">
-        <h2>
-          {{ dialogStore.addEdit === "edit" ? "編輯" : "新增" }}儀表板
-        </h2>
-        <div class="addeditdashboards-header-buttons">
-          <button
-            v-if="
-              dialogStore.addEdit === 'edit' &&
-                deleteConfirm === true
-            "
-            :style="{ backgroundColor: 'rgb(192, 67, 67)' }"
-            @click="handleDelete"
-          >
-            刪除儀表板
-          </button>
-          <button
-            v-if="editDashboard.name"
-            @click="handleConfirm"
-          >
-            確認{{
-              dialogStore.addEdit === "edit" ? "更改" : "新增"
-            }}
-          </button>
-        </div>
-      </div>
-      <div class="addeditdashboards-content">
-        <div class="addeditdashboards-settings">
-          <label v-if="dialogStore.addEdit === 'edit'">Index*</label>
-          <input
-            v-if="dialogStore.addEdit === 'edit'"
-            :value="editDashboard.index"
-            disabled="true"
-          >
-          <label>名稱* ({{ editDashboard.name.length }}/10)</label>
-          <input
-            v-model="editDashboard.name"
-            :minlength="1"
-            :maxlength="10"
-            required
-          >
-          <label>圖示*</label>
-          <input
-            v-model="iconSearch"
-            placeholder="尋找圖示(英文)"
-          >
-          <div class="addeditdashboards-settings-icon">
-            <div
-              v-for="item in availableIcons"
-              :key="item"
-            >
-              <input
-                :id="item"
-                v-model="editDashboard.icon"
-                type="radio"
-                :value="item"
-              >
-              <label :for="item">{{ item }}</label>
-            </div>
-          </div>
-        </div>
-        <div :style="{ display: 'flex', flexDirection: 'column' }">
-          <div class="addeditdashboards-settings">
-            <label>{{
-              dialogStore.addEdit === "edit"
-                ? "編輯"
-                : "新增"
-            }}儀表板組件 (拖拉以更改順序)</label>
-            <div class="addeditdashboards-settings-components">
-              <ComponentDragTags
-                :tags="editDashboard.components"
-                @deletetag="
-                  (index) => {
-                    editDashboard.components.splice(
-                      index,
-                      1
-                    );
-                  }
-                "
-                @updatetagorder="
-                  (updatedTags) => {
-                    editDashboard.components = updatedTags;
-                  }
-                "
-              />
-              <button
-                @click="dialogStore.showDialog('addComponent')"
-              >
-                +
-              </button>
-            </div>
-          </div>
-          <div
-            v-if="dialogStore.addEdit === 'edit'"
-            class="addeditdashboards-settings-delete"
-          >
-            <input
-              id="delete"
-              v-model="deleteConfirm"
-              type="checkbox"
-              :value="true"
-              class="custom-check-input"
-            >
-            <CustomCheckBox for="delete">
-              啟動刪除儀表板功能
-            </CustomCheckBox>
-          </div>
-        </div>
-      </div>
-    </div>
-    <AddComponent />
-  </DialogContainer>
+	<DialogContainer :dialog="`addEditDashboards`" @on-close="handleClose">
+		<div class="addeditdashboards">
+			<div class="addeditdashboards-header">
+				<h2>
+					{{ dialogStore.addEdit === "edit" ? "編輯" : "新增" }}儀表板
+				</h2>
+				<div class="addeditdashboards-header-buttons">
+					<button
+						v-if="
+							dialogStore.addEdit === 'edit' &&
+							deleteConfirm === true
+						"
+						:style="{ backgroundColor: 'rgb(192, 67, 67)' }"
+						@click="handleDelete"
+					>
+						刪除儀表板
+					</button>
+					<button v-if="editDashboard.name" @click="handleConfirm">
+						確認{{
+							dialogStore.addEdit === "edit" ? "更改" : "新增"
+						}}
+					</button>
+				</div>
+			</div>
+			<div class="addeditdashboards-content">
+				<div class="addeditdashboards-settings">
+					<label v-if="dialogStore.addEdit === 'edit'">Index*</label>
+					<input
+						v-if="dialogStore.addEdit === 'edit'"
+						:value="editDashboard.index"
+						disabled="true"
+					/>
+					<label>名稱* ({{ editDashboard.name.length }}/10)</label>
+					<input
+						v-model="editDashboard.name"
+						:minlength="1"
+						:maxlength="10"
+						required
+					/>
+					<label>圖示*</label>
+					<input v-model="iconSearch" placeholder="尋找圖示(英文)" />
+					<div class="addeditdashboards-settings-icon">
+						<div v-for="item in availableIcons" :key="item">
+							<input
+								:id="item"
+								v-model="editDashboard.icon"
+								type="radio"
+								:value="item"
+							/>
+							<label :for="item">{{ item }}</label>
+						</div>
+					</div>
+				</div>
+				<div :style="{ display: 'flex', flexDirection: 'column' }">
+					<div class="addeditdashboards-settings">
+						<label
+							>{{
+								dialogStore.addEdit === "edit"
+									? "編輯"
+									: "新增"
+							}}儀表板組件 (拖拉以更改順序)</label
+						>
+						<div class="addeditdashboards-settings-components">
+							<ComponentDragTags
+								:tags="editDashboard.components"
+								@deletetag="
+									(index) => {
+										editDashboard.components.splice(
+											index,
+											1,
+										);
+									}
+								"
+								@updatetagorder="
+									(updatedTags) => {
+										editDashboard.components = updatedTags;
+									}
+								"
+							/>
+							<button
+								@click="dialogStore.showDialog('addComponent')"
+							>
+								+
+							</button>
+						</div>
+					</div>
+					<div
+						v-if="dialogStore.addEdit === 'edit'"
+						class="addeditdashboards-settings-delete"
+					>
+						<input
+							id="delete"
+							v-model="deleteConfirm"
+							type="checkbox"
+							:value="true"
+							class="custom-check-input"
+						/>
+						<CustomCheckBox for="delete">
+							啟動刪除儀表板功能
+						</CustomCheckBox>
+					</div>
+				</div>
+			</div>
+		</div>
+		<AddComponent />
+	</DialogContainer>
 </template>
 
 <style scoped lang="scss">

@@ -17,7 +17,7 @@ const emits = defineEmits([
 	"filterByLayer",
 	"clearByParamFilter",
 	"clearByLayerFilter",
-	"fly"
+	"fly",
 ]);
 
 const chartOptions = ref({
@@ -45,7 +45,7 @@ const chartOptions = ref({
 			distributed: true,
 			horizontal: true,
 			dataLabels: {
-				hideOverflowingLabels: false
+				hideOverflowingLabels: false,
 			},
 		},
 	},
@@ -56,12 +56,7 @@ const chartOptions = ref({
 	},
 	// The class "chart-tooltip" could be edited in /assets/styles/chartStyles.css
 	tooltip: {
-		custom: function ({
-			series,
-			seriesIndex,
-			dataPointIndex,
-			w,
-		}) {
+		custom: function ({ series, seriesIndex, dataPointIndex, w }) {
 			return (
 				'<div class="chart-tooltip">' +
 				"<h6>" +
@@ -117,7 +112,7 @@ function handleDataSelection(_e, _chartContext, config) {
 				props.map_filter,
 				props.map_config,
 				config.w.globals.labels[config.dataPointIndex],
-				null
+				null,
 			);
 		}
 		// Supports filtering by xAxis
@@ -125,7 +120,7 @@ function handleDataSelection(_e, _chartContext, config) {
 			emits(
 				"filterByLayer",
 				props.map_config,
-				config.w.globals.labels[config.dataPointIndex]
+				config.w.globals.labels[config.dataPointIndex],
 			);
 		}
 		selectedIndex.value = `${config.dataPointIndex}-${config.seriesIndex}`;
@@ -141,14 +136,14 @@ function handleDataSelection(_e, _chartContext, config) {
 </script>
 
 <template>
-  <div v-if="activeChart === 'BarChart'">
-    <VueApexCharts
-      width="100%"
-      :height="chartHeight"
-      type="bar"
-      :options="chartOptions"
-      :series="series"
-      @data-point-selection="handleDataSelection"
-    />
-  </div>
+	<div v-if="activeChart === 'BarChart'">
+		<VueApexCharts
+			width="100%"
+			:height="chartHeight"
+			type="bar"
+			:options="chartOptions"
+			:series="series"
+			@data-point-selection="handleDataSelection"
+		/>
+	</div>
 </template>

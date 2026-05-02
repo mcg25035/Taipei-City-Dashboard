@@ -19,7 +19,7 @@ const emits = defineEmits([
 	"filterByLayer",
 	"clearByParamFilter",
 	"clearByLayerFilter",
-	"fly"
+	"fly",
 ]);
 
 const parseSeries = computed(() => {
@@ -82,12 +82,7 @@ const chartOptions = ref({
 	},
 	// The class "chart-tooltip" could be edited in /assets/styles/chartStyles.css
 	tooltip: {
-		custom: function ({
-			series,
-			seriesIndex,
-			dataPointIndex,
-			w,
-		}) {
+		custom: function ({ series, seriesIndex, dataPointIndex, w }) {
 			const label = w.globals.labels[dataPointIndex];
 			const value = series[seriesIndex][dataPointIndex];
 			const goalValue =
@@ -144,7 +139,7 @@ function handleDataSelection(_e, _chartContext, config) {
 				props.map_filter,
 				props.map_config,
 				config.w.globals.labels[config.dataPointIndex],
-				props.series[0].name // Only the first series can be clicked in apexcharts
+				props.series[0].name, // Only the first series can be clicked in apexcharts
 			);
 		}
 		// Supports filtering by xAxis
@@ -152,7 +147,7 @@ function handleDataSelection(_e, _chartContext, config) {
 			emits(
 				"filterByLayer",
 				props.map_config,
-				config.w.globals.labels[config.dataPointIndex]
+				config.w.globals.labels[config.dataPointIndex],
 			);
 		}
 		selectedIndex.value = `${config.dataPointIndex}-${config.seriesIndex}`;
@@ -168,23 +163,23 @@ function handleDataSelection(_e, _chartContext, config) {
 </script>
 
 <template>
-  <div
-    v-if="activeChart === 'BarChartWithGoal'"
-    :style="{
-      marginTop: `${
-        chart_config.categories.length < 3
-          ? 90 - chart_config.categories.length * 30
-          : 0
-      }px`
-    }"
-  >
-    <VueApexCharts
-      type="bar"
-      width="100%"
-      :height="chartHeight"
-      :options="chartOptions"
-      :series="parseSeries"
-      @data-point-selection="handleDataSelection"
-    />
-  </div>
+	<div
+		v-if="activeChart === 'BarChartWithGoal'"
+		:style="{
+			marginTop: `${
+				chart_config.categories.length < 3
+					? 90 - chart_config.categories.length * 30
+					: 0
+			}px`,
+		}"
+	>
+		<VueApexCharts
+			type="bar"
+			width="100%"
+			:height="chartHeight"
+			:options="chartOptions"
+			:series="parseSeries"
+			@data-point-selection="handleDataSelection"
+		/>
+	</div>
 </template>

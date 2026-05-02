@@ -20,7 +20,7 @@ import router from "./router";
 import { createPinia } from "pinia";
 import VueApexCharts from "vue3-apexcharts";
 import debounce from "lodash/debounce";
-import horizontalWheel from './directives/horizontalWheel';
+import horizontalWheel from "./directives/horizontalWheel";
 
 const app = createApp(App);
 
@@ -33,16 +33,16 @@ pinia.use(({ options, store }) => {
 			(debouncedActions, action) => {
 				debouncedActions[action] = debounce(
 					store[action],
-					options.debounce[action]
+					options.debounce[action],
 				);
 				return debouncedActions;
 			},
-			{}
+			{},
 		);
 	}
 });
 
 app.use(pinia);
 app.use(VueApexCharts);
-app.directive('horizontalWheel', horizontalWheel);
+app.directive("horizontalWheel", horizontalWheel);
 app.mount("#app");
