@@ -478,8 +478,9 @@ $radius-20: 20px;
 					.message--attachments {
 						display: flex;
 						flex-wrap: wrap;
-						gap: 0.4rem;
-						padding: 8px 16px 0 16px;
+						gap: 0.5rem;
+						padding: 0.5rem;
+						padding-bottom: 0;
 
 						.attachment-chip--sent {
 							background: #1a2332;
@@ -553,10 +554,7 @@ $radius-20: 20px;
 							color: $white;
 							white-space: pre-line;
 							margin: 0;
-							padding-top: 8px;
-							padding-bottom: 8px;
-							padding-left: 16px;
-							padding-right: 16px;
+							padding: 0.5rem 1rem;
 							font-size: 16px;
 							word-break: break-word;
 						}
@@ -592,7 +590,7 @@ $radius-20: 20px;
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		padding: 1.5rem 1.125rem;
+		padding: 1.5rem 1rem;
 		padding-bottom: 0.5rem;
 		background: $panel-bg;
 		border-top: 1px solid $border-color;
@@ -647,7 +645,7 @@ $radius-20: 20px;
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.5rem;
-		padding: 1.125rem;
+		padding: 1rem;
 		padding-bottom: 0;
 		background: $panel-bg;
 
@@ -695,8 +693,7 @@ $radius-20: 20px;
 		align-items: center;
 		justify-content: center;
 		gap: 0.5rem;
-		padding: 1.125rem;
-		padding-top: 0.5rem;
+		padding: 1rem;
 		background: $panel-bg;
 
 		input[type="text"] {
