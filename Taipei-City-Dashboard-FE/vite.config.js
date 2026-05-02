@@ -4,6 +4,7 @@ import viteCompression from "vite-plugin-compression";
 
 // 嘗試讀取環境變數，若不存在則回傳 false
 let isDockerCompose = process?.env.DOCKER_COMPOSE === "true"; // eslint-disable-line no-undef
+let localDevBackend = process?.env.LOCAL_DEV_BACKEND; // eslint-disable-line no-undef
 
 const serverConfig = isDockerCompose
 	? {
@@ -15,6 +16,19 @@ const serverConfig = isDockerCompose
 				target: "http://dashboard-be:8080",
 				changeOrigin: true,
 				rewrite: (path) => path.replace("/dev", "/v1")
+			}
+		}
+	}
+	: localDevBackend
+	? {
+		// Local dev backend: /api/dev/* → localDevBackend/api/v1/*
+		host: "localhost",
+		port: 5173,
+		proxy: {
+			"/api/dev": {
+				target: localDevBackend,
+				changeOrigin: true,
+				rewrite: (path) => path.replace("/api/dev", "/api/v1")
 			}
 		}
 	}
