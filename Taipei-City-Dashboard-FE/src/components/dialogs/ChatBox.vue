@@ -15,8 +15,6 @@ import http from "../../router/axios";
 const chatStore = useChatStore();
 const contentStore = useContentStore();
 const authStore = useAuthStore();
-const router = useRouter();
-const route = useRoute();
 const { addChatData, addQueryData, saveChatLog } = chatStore;
 const { createDashboard } = contentStore;
 const { chatData, attachments } = storeToRefs(chatStore);
@@ -123,20 +121,19 @@ watch(
 						<BotLogo />
 					</div>
 					<div class="content">
-						<!-- Loading 動畫 -->
-						<div
-							v-if="chat.loading"
-							class="message--bubble message--loading"
-						>
-							<span class="dot" />
-							<span class="dot" />
-							<span class="dot" />
+						<div v-if="chat.tool_used" class="tool-used-badge">
+							🔧 已使用工具分析
 						</div>
-						<div v-if="chat.content" class="message--bubble">
-							<p>{{ chat.content }}</p>
-							<div v-if="chat.toolUsed" class="tool-used-badge">
-								🔧 已使用工具分析
+						<div
+							v-if="chat.loading || chat.content"
+							class="message--bubble bot"
+						>
+							<div v-if="chat.loading" class="message--loading">
+								<span class="dot" />
+								<span class="dot" />
+								<span class="dot" />
 							</div>
+							<p v-else>{{ chat.content }}</p>
 						</div>
 						<DashboardComponent
 							v-if="chat.componentData"
@@ -233,7 +230,7 @@ watch(
 						v-if="chat.content || chat.attachments?.length"
 						class="content"
 					>
-						<div v-if="chat.content" class="message--bubble">
+						<div v-if="chat.content" class="message--bubble user">
 							<div
 								v-if="chat.attachments?.length"
 								class="message--attachments"
@@ -528,7 +525,15 @@ $radius-20: 20px;
 						}
 					}
 
+					.tool-used-badge {
+						font-size: 11px;
+						color: #aaa;
+						padding: 0 16px 8px;
+					}
+
 					.message--bubble {
+						max-width: 100%;
+						width: fit-content;
 						display: flex;
 						flex-direction: column;
 						border: 1px solid $white;
@@ -544,12 +549,15 @@ $radius-20: 20px;
 							padding-left: 16px;
 							padding-right: 16px;
 							font-size: 16px;
+							word-break: break-word;
 						}
 
-						.tool-used-badge {
-							font-size: 11px;
-							color: #aaa;
-							padding: 0 16px 8px;
+						&.user {
+							align-self: flex-end;
+						}
+
+						&.bot {
+							align-self: flex-start;
 						}
 					}
 

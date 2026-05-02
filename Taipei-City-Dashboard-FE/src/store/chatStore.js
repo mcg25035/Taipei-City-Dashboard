@@ -252,14 +252,13 @@ export const useChatStore = defineStore("chat", () => {
 		});
 	};
 
+	const addMessageHistory = (newMessageHistory) => {
+		messageHistory.value.push(newMessageHistory);
+	};
+
 	const addQueryData = async (newChatData) => {
-		// 1. 顯示使用者訊息
-		chatData.value.push({
-			id: chatData.value.length + 1,
-			isDefault: false,
-			...newChatData,
-		});
-		messageHistory.value.push(newChatData);
+		addChatData(newChatData);
+		addMessageHistory(newChatData);
 
 		// 2. 建立 bot 串流訊息（loading 狀態）
 		const botMsgId = chatData.value.length + 1;
@@ -317,6 +316,11 @@ export const useChatStore = defineStore("chat", () => {
 
 					case "tool_used":
 						console.log(`[chat] tool_used: ${data.name}`);
+
+						addMessageHistory({
+							role: "bot",
+							tool_used: data.name,
+						});
 						break;
 
 					case "frontend_action":
