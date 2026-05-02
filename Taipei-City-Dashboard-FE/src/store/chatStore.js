@@ -213,6 +213,7 @@ export const useChatStore = defineStore("chat", () => {
 			isDefault: true,
 			content:
 				"您好，我是【臺北城市儀表板】小幫手，很高興為您服務！\n 您可以： \n\n • 點擊左側既有的儀表板主題，快速查看各主題內容 \n • 輸入您感興趣的主題描述，我會自動為您組建最適合的儀表板 \n\n 如果有想了解的內容，歡迎直接告訴我，我會盡力協助！\n\n 📩 聯絡信箱：tuic@gov.taipei \n 🏢 臺北大數據中心 \n\n",
+			componentDatas: [],
 		},
 	];
 
@@ -268,6 +269,7 @@ export const useChatStore = defineStore("chat", () => {
 			isDefault: false,
 			loading: true,
 			content: "",
+			componentDatas: [],
 		});
 
 		try {
@@ -325,16 +327,16 @@ export const useChatStore = defineStore("chat", () => {
 
 					case "frontend_action":
 						console.log(
-							`[chat] frontend_action: ${data.action}, args: ${JSON.stringify(data.params)}`,
+							`[chat] frontend_action: ${data.action}, params: ${JSON.stringify(data.params)}`,
 						);
 
 						switch (data.action) {
 							case "show_component":
-								botMsg.loading = false;
 								const componentData = await fetchComponentData(
 									data.params.data.component,
 								);
-								addChatData({ role: "bot", componentData });
+								botMsg.loading = false;
+								botMsg.componentDatas.push(componentData);
 								break;
 							default:
 								emitAgentEvent(

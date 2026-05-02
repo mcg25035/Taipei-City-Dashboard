@@ -54,7 +54,7 @@ export async function fetchComponentData(component) {
 	}
 
 	try {
-		if (!component.history_data.length) {
+		if (!component.history_data) {
 			await fetchHistoryData(component);
 		}
 	} catch (error) {

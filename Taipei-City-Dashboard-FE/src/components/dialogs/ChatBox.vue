@@ -136,25 +136,25 @@ watch(
 							<p v-else>{{ chat.content }}</p>
 						</div>
 						<DashboardComponent
-							v-if="chat.componentData"
-							:key="`component-${chat.componentData.index}-${chat.componentData.city}`"
-							:config="chat.componentData"
+							v-for="componentData in chat.componentDatas"
+							:key="`component-${componentData.index}-${componentData.city}`"
+							:config="componentData"
 							mode="default"
-							:active-city="chat.componentData.city"
+							:active-city="componentData.city"
 							:select-btn="true"
 							:select-btn-disabled="
 								contentStore.cityManager.getSelectList(
-									chat.componentData.city,
+									componentData.city,
 								).length === 1
 							"
 							:select-btn-list="
 								contentStore.cityManager.getSelectList(
-									chat.componentData.city,
+									componentData.city,
 								)
 							"
 							:city-tag="
 								contentStore.cityManager.getTagList(
-									chat.componentData.city,
+									componentData.city,
 								)
 							"
 							@change-city="
@@ -163,11 +163,11 @@ watch(
 										contentStore.aiSearchedComponents.find(
 											(data) =>
 												data.index ===
-													chat.componentData.index &&
+													componentData.index &&
 												data.city === city,
 										);
 									if (selectedData) {
-										chat.componentData = selectedData;
+										componentData = selectedData;
 									}
 								}
 							"
