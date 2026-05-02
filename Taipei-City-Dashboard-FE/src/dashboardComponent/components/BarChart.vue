@@ -26,14 +26,17 @@ const proportionalColors = computed(() => {
 	if (palette.length === 0 || data.length === 0) {
 		return [...palette];
 	}
-	const min = Math.min(...data);
-	const max = Math.max(...data);
+	const numericValues = data.map((item) =>
+		typeof item === "object" && item !== null ? Number(item.y) : Number(item),
+	);
+	const min = Math.min(...numericValues);
+	const max = Math.max(...numericValues);
 	const range = max - min;
 	const n = palette.length;
-	if (range === 0) {
-		return data.map(() => palette[0]);
+	if (!isFinite(min) || !isFinite(max) || range === 0) {
+		return numericValues.map(() => palette[0]);
 	}
-	return data.map((value) => {
+	return numericValues.map((value) => {
 		const ratio = (value - min) / range;
 		const idx = Math.min(Math.floor(ratio * n), n - 1);
 		return palette[idx];
