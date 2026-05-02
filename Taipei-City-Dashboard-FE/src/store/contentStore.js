@@ -13,6 +13,7 @@ import { defineStore } from "pinia";
 import http from "../router/axios";
 import router from "../router/index";
 import { useDialogStore } from "./dialogStore";
+import { useMapStore } from "./mapStore";
 import { useAuthStore } from "./authStore";
 import {
 	fetchChartData,
@@ -868,6 +869,13 @@ export const useContentStore = defineStore("content", {
 		},
 
 		clearAiSearchedComponents() {
+			const mapStore = useMapStore();
+			this.aiSearchedComponents
+				.filter((item) => item.map_config[0])
+				.forEach((item) => {
+					mapStore.clearByParamFilter(item.map_config);
+					mapStore.turnOffMapLayerVisibility(item.map_config);
+				});
 			this.aiSearchedComponents = [];
 		},
 
