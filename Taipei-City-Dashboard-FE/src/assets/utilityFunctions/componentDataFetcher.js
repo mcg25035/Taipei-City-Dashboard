@@ -42,7 +42,7 @@ export async function fetchHistoryData(component) {
 
 export async function fetchComponentData(component) {
 	try {
-		if (!component.chart_data.length) {
+		if (!component.chart_data) {
 			await fetchChartData(component);
 		}
 	} catch (error) {
