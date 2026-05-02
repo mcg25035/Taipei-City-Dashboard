@@ -14,7 +14,7 @@ import http from "../../router/axios";
 const chatStore = useChatStore();
 const contentStore = useContentStore();
 const authStore = useAuthStore();
-const { addChatData, addQueryData, saveChatLog } = chatStore;
+const { addChatData, addQueryData, saveChatLog, resetSession } = chatStore;
 const { createDashboard } = contentStore;
 const { chatData, attachments } = storeToRefs(chatStore);
 const { editDashboard } = storeToRefs(contentStore);
@@ -94,6 +94,12 @@ const toggleSticky = () => {
 	isStickyOpen.value = !isStickyOpen.value;
 };
 
+const startNewChat = () => {
+	clearAllAttachmentMarkers();
+	attachments.value = [];
+	resetSession();
+};
+
 watch(
 	() => chatData.value.length,
 	async () => {
@@ -111,6 +117,7 @@ watch(
 		<!-- 標題 -->
 		<div class="header">
 			<h3>臺北城市儀表板小幫手</h3>
+			<button class="new-btn" @click="startNewChat">+ New</button>
 		</div>
 
 		<!-- 聊天區 -->
@@ -364,12 +371,31 @@ $radius-20: 20px;
 		padding: 1rem;
 		background: $panel-bg;
 		border-bottom: 3px solid $border-color;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
 
 		h3 {
 			font-size: 18px;
 			font-weight: 700;
 			color: $white;
 			margin: 0;
+		}
+
+		.new-btn {
+			background: transparent;
+			color: $white;
+			border: 1px solid $white;
+			border-radius: 6px;
+			padding: 4px 10px;
+			font-size: 13px;
+			cursor: pointer;
+			white-space: nowrap;
+
+			&:hover {
+				filter: brightness(0.7);
+			}
 		}
 	}
 
