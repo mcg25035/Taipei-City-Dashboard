@@ -91,7 +91,7 @@ const emits = defineEmits([
 	"changeCity",
 ]);
 
-const activeChart = ref(props.config.chart_config.types[0]);
+const activeChart = ref(props.config.chart_config.types?.[0] ?? "");
 const activeCity = computed({
 	get: () => props.activeCity,
 	set: (value) => {
