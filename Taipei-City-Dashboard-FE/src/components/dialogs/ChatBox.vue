@@ -19,7 +19,14 @@ const router = useRouter();
 const route = useRoute();
 const { addChatData, addQueryData, saveChatLog } = chatStore;
 const { createDashboard } = contentStore;
-const { chatData } = storeToRefs(chatStore);
+const { chatData, pendingInputMessage } = storeToRefs(chatStore);
+
+watch(pendingInputMessage, (msg) => {
+	if (msg) {
+		userMessage.value = msg;
+		pendingInputMessage.value = '';
+	}
+});
 const { editDashboard } = storeToRefs(contentStore);
 const { user } = storeToRefs(authStore);
 
@@ -161,6 +168,13 @@ watch(
                 🔧 已使用工具分析
               </div>
             </div>
+            <!-- add_component 完整組件渲染 -->
+            <DashboardComponent
+              v-if="chat.componentData"
+              :config="chat.componentData"
+              mode="default"
+              :footer="false"
+            />
             <!-- 圖表渲染區 -->
             <DashboardComponent
               v-if="chat.chartRender"

@@ -8,6 +8,7 @@ import { useAuthStore } from "../../store/authStore";
 import { useContentStore } from "../../store/contentStore";
 import { useDialogStore } from "../../store/dialogStore";
 import { useMapStore } from "../../store/mapStore";
+import { useChatStore } from "../../store/chatStore";
 
 import AddViewPoint from "../dialogs/AddViewPoint.vue";
 import MobileLayers from "../dialogs/MobileLayers.vue";
@@ -19,6 +20,7 @@ const authStore = useAuthStore();
 const mapStore = useMapStore();
 const dialogStore = useDialogStore();
 const contentStore = useContentStore();
+const chatStore = useChatStore();
 const route = useRoute();
 
 const districtLayer = ref(false);
@@ -72,6 +74,12 @@ watch(
 			: mapStore.updateMapViewForCity('default');
 	}
 );
+
+function copyLocationToChat() {
+	const { lng, lat } = mapStore.contextMenuInfo;
+	chatStore.pendingInputMessage = `經緯度 ${lng.toFixed(6)}, ${lat.toFixed(6)}`;
+	mapStore.contextMenuInfo = null;
+}
 
 onMounted(() => {
 	mapStore.initializeMapBox();
@@ -147,6 +155,16 @@ onMounted(() => {
       <MobileLayers :key="contentStore.currentDashboard.index" />
       <IncidentReport />
       <FindClosestPoint />
+      <div
+        v-if="mapStore.contextMenuInfo && route.name === 'ai-tour'"
+        class="mapcontainer-contextmenu"
+        :style="{ left: mapStore.contextMenuInfo.x + 'px', top: mapStore.contextMenuInfo.y + 'px' }"
+        @mouseleave="mapStore.contextMenuInfo = null"
+      >
+        <button @click="copyLocationToChat">
+          將位置複製到聊天室
+        </button>
+      </div>
     </div>
 
     <div class="mapcontainer-controls hide-if-mobile">
@@ -290,6 +308,33 @@ onMounted(() => {
 
 			&:focus {
 				width: 5.4rem;
+			}
+		}
+	}
+
+	&-contextmenu {
+		position: absolute;
+		z-index: 10;
+		background-color: var(--color-component-background);
+		border: 1px solid var(--color-border);
+		border-radius: 5px;
+		padding: 4px 0;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+
+		button {
+			display: block;
+			width: 100%;
+			padding: 6px 14px;
+			text-align: left;
+			white-space: nowrap;
+			color: var(--color-complement-text);
+			font-size: var(--font-s);
+			background: transparent;
+			cursor: pointer;
+
+			&:hover {
+				background-color: var(--color-highlight);
+				color: white;
 			}
 		}
 	}

@@ -14,7 +14,7 @@ import http from "../router/axios";
 import router from "../router/index";
 import { useDialogStore } from "./dialogStore";
 import { useAuthStore } from "./authStore";
-import { getComponentDataTimeframe } from "../assets/utilityFunctions/dataTimeframe";
+import { fetchChartData, fetchHistoryData, fetchComponentData } from "../assets/utilityFunctions/componentDataFetcher";
 import { CityManager } from "../dashboardComponent/utilities/cityManager";
 
 export const useContentStore = defineStore("content", {
@@ -281,42 +281,13 @@ export const useContentStore = defineStore("content", {
 				) {
 					const component = this.cityDashboard.components[index];
 					try {
-						// 4-2. Get chart data
-						const response = await http.get(
-							`/component/${component.id}/chart`,
-							{
-								params: {
-									city: component.city,
-									...(!["static", "current", "demo"].includes(
-										component.time_from,
-									)
-										? getComponentDataTimeframe(
-												component.time_from,
-												component.time_to,
-												true,
-											)
-										: {}),
-								},
-							},
-						);
-
-						this.cityDashboard.components[index].chart_data =
-							response.data.data;
-
-						if (response.data.categories) {
-							this.cityDashboard.components[
-								index
-							].chart_config.categories =
-								response.data.categories;
-						}
+						await fetchChartData(this.cityDashboard.components[index]);
 					} catch (error) {
 						console.error(
 							`Failed to fetch chart data for component ${component.id}:`,
 							error,
 						);
-						// Set empty chart data to avoid errors in subsequent operations
 						this.cityDashboard.components[index].chart_data = [];
-
 						this.loading = false;
 					}
 				}
@@ -326,48 +297,15 @@ export const useContentStore = defineStore("content", {
 					index++
 				) {
 					const component = this.cityDashboard.components[index];
-					// Get history data if applicable
-					if (
-						component.history_config &&
-						component.history_config.range
-					) {
-						for (let i in component.history_config.range) {
-							try {
-								const response = await http.get(
-									`/component/${component.id}/history`,
-									{
-										params: {
-											city: component.city,
-											...getComponentDataTimeframe(
-												component.history_config.range[
-													i
-												],
-												"now",
-												true,
-											),
-										},
-									},
-								);
-
-								if (i === "0") {
-									this.cityDashboard.components[
-										index
-									].history_data = [];
-								}
-								this.cityDashboard.components[
-									index
-								].history_data.push(response.data.data);
-							} catch (error) {
-								console.error(
-									`Failed to fetch history data for component ${component.id} (range ${i}):`,
-									error,
-								);
-								// Add empty data to maintain data structure consistency
-								this.cityDashboard.components[
-									index
-								].history_data.push([]);
-							}
-						}
+					try {
+						await fetchHistoryData(component);
+					} catch (error) {
+						console.error(
+							`Failed to fetch history data for component ${component.id}:`,
+							error,
+						);
+						if (!component.history_data) component.history_data = [];
+						component.history_data.push([]);
 					}
 				}
 			} catch (error) {
@@ -395,42 +333,13 @@ export const useContentStore = defineStore("content", {
 						continue;
 					}
 					try {
-						// 4-2. Get chart data
-						const response = await http.get(
-							`/component/${component.id}/chart`,
-							{
-								params: {
-									city: component.city,
-									...(!["static", "current", "demo"].includes(
-										component.time_from,
-									)
-										? getComponentDataTimeframe(
-												component.time_from,
-												component.time_to,
-												true,
-											)
-										: {}),
-								},
-							},
-						);
-
-						this.cityDashboard.components[index].chart_data =
-							response.data.data;
-
-						if (response.data.categories) {
-							this.cityDashboard.components[
-								index
-							].chart_config.categories =
-								response.data.categories;
-						}
+						await fetchChartData(this.cityDashboard.components[index]);
 					} catch (error) {
 						console.error(
 							`Failed to fetch chart data for component ${component.id}:`,
 							error,
 						);
-						// Set empty chart data to avoid errors in subsequent operations
 						this.cityDashboard.components[index].chart_data = [];
-
 						this.loading = false;
 					}
 				}
@@ -447,48 +356,15 @@ export const useContentStore = defineStore("content", {
 					) {
 						continue;
 					}
-					// Get history data if applicable
-					if (
-						component.history_config &&
-						component.history_config.range
-					) {
-						for (let i in component.history_config.range) {
-							try {
-								const response = await http.get(
-									`/component/${component.id}/history`,
-									{
-										params: {
-											city: component.city,
-											...getComponentDataTimeframe(
-												component.history_config.range[
-													i
-												],
-												"now",
-												true,
-											),
-										},
-									},
-								);
-
-								if (i === "0") {
-									this.cityDashboard.components[
-										index
-									].history_data = [];
-								}
-								this.cityDashboard.components[
-									index
-								].history_data.push(response.data.data);
-							} catch (error) {
-								console.error(
-									`Failed to fetch history data for component ${component.id} (range ${i}):`,
-									error,
-								);
-								// Add empty data to maintain data structure consistency
-								this.cityDashboard.components[
-									index
-								].history_data.push([]);
-							}
-						}
+					try {
+						await fetchHistoryData(component);
+					} catch (error) {
+						console.error(
+							`Failed to fetch history data for component ${component.id}:`,
+							error,
+						);
+						if (!component.history_data) component.history_data = [];
+						component.history_data.push([]);
 					}
 				}
 			} catch (error) {
@@ -515,42 +391,13 @@ export const useContentStore = defineStore("content", {
 						continue;
 					}
 					try {
-						// 4-2. Get chart data
-						const response = await http.get(
-							`/component/${component.id}/chart`,
-							{
-								params: {
-									city: component.city,
-									...(!["static", "current", "demo"].includes(
-										component.time_from,
-									)
-										? getComponentDataTimeframe(
-												component.time_from,
-												component.time_to,
-												true,
-											)
-										: {}),
-								},
-							},
-						);
-
-						this.cityDashboard.components[index].chart_data =
-							response.data.data;
-
-						if (response.data.categories) {
-							this.cityDashboard.components[
-								index
-							].chart_config.categories =
-								response.data.categories;
-						}
+						await fetchChartData(this.cityDashboard.components[index]);
 					} catch (error) {
 						console.error(
 							`Failed to fetch chart data for component ${component.id}:`,
 							error,
 						);
-						// Set empty chart data to avoid errors in subsequent operations
 						this.cityDashboard.components[index].chart_data = [];
-
 						this.loading = false;
 					}
 				}
@@ -567,48 +414,15 @@ export const useContentStore = defineStore("content", {
 					) {
 						continue;
 					}
-					// Get history data if applicable
-					if (
-						component.history_config &&
-						component.history_config.range
-					) {
-						for (let i in component.history_config.range) {
-							try {
-								const response = await http.get(
-									`/component/${component.id}/history`,
-									{
-										params: {
-											city: component.city,
-											...getComponentDataTimeframe(
-												component.history_config.range[
-													i
-												],
-												"now",
-												true,
-											),
-										},
-									},
-								);
-
-								if (i === "0") {
-									this.cityDashboard.components[
-										index
-									].history_data = [];
-								}
-								this.cityDashboard.components[
-									index
-								].history_data.push(response.data.data);
-							} catch (error) {
-								console.error(
-									`Failed to fetch history data for component ${component.id} (range ${i}):`,
-									error,
-								);
-								// Add empty data to maintain data structure consistency
-								this.cityDashboard.components[
-									index
-								].history_data.push([]);
-							}
-						}
+					try {
+						await fetchHistoryData(component);
+					} catch (error) {
+						console.error(
+							`Failed to fetch history data for component ${component.id}:`,
+							error,
+						);
+						if (!component.history_data) component.history_data = [];
+						component.history_data.push([]);
 					}
 				}
 			} catch (error) {
@@ -893,63 +707,8 @@ export const useContentStore = defineStore("content", {
 				index < dialogStore.moreInfoContent.length;
 				index++
 			) {
-				const response_2 = await http.get(
-					`/component/${dialogStore.moreInfoContent[index].id}/chart`,
-					{
-						params: {
-							city: dialogStore.moreInfoContent[index].city,
-							...(!["static", "current", "demo"].includes(
-								dialogStore.moreInfoContent[index].time_from,
-							)
-								? getComponentDataTimeframe(
-										dialogStore.moreInfoContent[index]
-											.time_from,
-										dialogStore.moreInfoContent[index]
-											.time_to,
-										true,
-									)
-								: {}),
-						},
-					},
-				);
-
-				dialogStore.moreInfoContent[index].chart_data =
-					response_2.data.data;
-
-				if (response_2.data.categories) {
-					dialogStore.moreInfoContent[index].chart_config.categories =
-						response_2.data.categories;
-				}
-
-				// 2-3. Get the component history data if applicable
-				if (dialogStore.moreInfoContent[index].history_config) {
-					for (let i in dialogStore.moreInfoContent[index]
-						.history_config.range) {
-						const response = await http.get(
-							`/component/${dialogStore.moreInfoContent[index].id}/history`,
-							{
-								params: {
-									city: dialogStore.moreInfoContent[index]
-										.city,
-									...getComponentDataTimeframe(
-										dialogStore.moreInfoContent[index]
-											.history_config.range[i],
-										"now",
-										true,
-									),
-								},
-							},
-						);
-
-						if (i === "0") {
-							dialogStore.moreInfoContent[index].history_data =
-								[];
-						}
-						dialogStore.moreInfoContent[index].history_data.push(
-							response.data.data,
-						);
-					}
-				}
+				await fetchChartData(dialogStore.moreInfoContent[index]);
+				await fetchHistoryData(dialogStore.moreInfoContent[index]);
 				this.loading = false;
 			}
 		},
@@ -1095,31 +854,13 @@ export const useContentStore = defineStore("content", {
 			}
 		},
 
-		addAISearchedComponent(toolCalls) {
-			const ts = Date.now();
-			const newComponents = toolCalls.map((toolCall, index) => ({
-				id: -(ts + index),
-				index: `ai-${index}-${ts}`,
-				name: toolCall.title ?? 'AI 查詢',
-				chart_config: {
-					color: toolCall.config?.color ?? ['#4fc1e9'],
-					types: [toolCall.chartType ?? 'BarChart'],
-					unit: toolCall.config?.unit ?? null,
-					categories: toolCall.config?.categories ?? null,
-				},
-				chart_data: toolCall.data ?? [],
-				map_config: toolCall.map_config ?? [null],
-				map_filter: null,
-				history_config: null,
-				time_from: 'current',
-				time_to: null,
-				update_freq: null,
-				update_freq_unit: null,
-				source: 'AI 查詢',
-				short_desc: '',
-			}));
+		async addAiSearchedComponent(component) {
+			const componentData = await fetchComponentData(component);
+			this.aiSearchedComponents.push(componentData);
+		},
 
-			this.aiSearchedComponents.push(...newComponents);
+		setAiSearchedComponentData(index, component) {
+			this.aiSearchedComponents[index] = component;
 		},
 
 		/*

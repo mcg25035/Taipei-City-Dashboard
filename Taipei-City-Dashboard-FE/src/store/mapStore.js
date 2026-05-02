@@ -82,6 +82,7 @@ export const useMapStore = defineStore("map", {
 		viewPoints: [],
 		marker: null,
 		tempMarkerCoordinates: null,
+		contextMenuInfo: null,
 		// Store the user's current location,
 		userLocation: { latitude: null, longitude: null },
 		// 3D Mrt Map 相關參數
@@ -141,6 +142,15 @@ export const useMapStore = defineStore("map", {
 					let coordinates = event.lngLat;
 					this.tempMarkerCoordinates = coordinates;
 					this.marker.setLngLat(coordinates).addTo(this.map);
+				})
+				.on("contextmenu", (event) => {
+					event.preventDefault();
+					this.contextMenuInfo = {
+						x: event.point.x,
+						y: event.point.y,
+						lng: event.lngLat.lng,
+						lat: event.lngLat.lat,
+					};
 				})
 				.on("idle", () => {
 					this.loadingLayers = this.loadingLayers.filter(

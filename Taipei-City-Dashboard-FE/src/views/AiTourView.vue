@@ -3,11 +3,12 @@
 
 <script setup>
 /* global gtag */
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import DashboardComponent from "../dashboardComponent/DashboardComponent.vue";
 import { useContentStore } from "../store/contentStore";
 import { useDialogStore } from "../store/dialogStore";
 import { useMapStore } from "../store/mapStore";
+import { useAgentEvent } from "../composables/useAgentEvent";
 import MapContainer from "../components/map/MapContainer.vue";
 import MoreInfo from "../components/dialogs/MoreInfo.vue";
 import ReportIssue from "../components/dialogs/ReportIssue.vue";
@@ -16,6 +17,11 @@ import ChatBox from "../components/dialogs/ChatBox.vue";
 const contentStore = useContentStore();
 const dialogStore = useDialogStore();
 const mapStore = useMapStore();
+const { onEvent } = useAgentEvent();
+
+onEvent('show_component', (component) => {
+  contentStore.addAiSearchedComponent(component);
+});
 
 const toggleOn = ref({
 	hasMap: [],
@@ -101,29 +107,12 @@ function popularBasicLayerGA(map_config) {
             :active-city="item.city"
             :select-btn="true"
             :select-btn-disabled="
-              contentStore.cityManager.getSelectList(
-                contentStore.currentDashboard?.city,
-              ).length === 1 ||
-                contentStore.currentDashboardExcluded.components.filter(
-                  (data) => data.index === item.index,
-                ).length === 0
+              contentStore.cityManager.getSelectList(item.city).length === 1
             "
             :select-btn-list="
-              contentStore.currentDashboard?.city
-                ? contentStore.cityManager.getSelectList(
-                  contentStore.currentDashboard?.city,
-                )
-                : contentStore.cityManager.getCities(
-                  contentStore.cityManager.activeCities,
-                )
+              contentStore.cityManager.getSelectList(item.city)
             "
-            :city-tag="
-              contentStore.currentDashboard?.city
-                ? contentStore.cityManager.getTagList(
-                  contentStore.currentDashboard?.city,
-                )
-                : contentStore.cityManager.getTagList(item.city)
-            "
+            :city-tag="contentStore.cityManager.getTagList(item.city)"
             :toggle-disable="shouldDisable(item.map_config)"
             :toggle-on="toggleOn.hasMap[arrayIdx]"
             @info="(item) => dialogStore.showMoreInfo(item)"
@@ -150,81 +139,18 @@ function popularBasicLayerGA(map_config) {
             @fly="(location) => mapStore.flyToLocation(location)"
             @change-city="
               (city) => {
-                const selectedData = contentStore.cityDashboard.components.find(
+                const selectedData = contentStore.aiSearchedComponents.find(
                   (data) => data.index === item.index && data.city === city,
                 );
                 const componentIndex =
-                  contentStore.currentDashboard.components.findIndex(
-                    (item) => item.id === selectedData.id,
+                  contentStore.aiSearchedComponents.findIndex(
+                    (data) => data.index === item.index && data.city === item.city,
                   );
-                if (selectedData) {
+                if (selectedData && componentIndex !== -1) {
                   mapStore.clearByParamFilter(item.map_config);
                   mapStore.turnOffMapLayerVisibility(item.map_config);
                   mapStore.addToMapLayerList(selectedData.map_config);
-                  contentStore.setComponentData(componentIndex, selectedData);
-                }
-              }
-            "
-          />
-          <h2 v-if="contentStore.mapLayers.length > 0">
-            基本圖層
-          </h2>
-          <DashboardComponent
-            v-for="(item, arrayIdx) in contentStore.mapLayers"
-            :key="`map-layer-${item.index}-${item.city}`"
-            :config="item"
-            mode="halfmap"
-            :info-btn="true"
-            :active-city="item.city"
-            :select-btn="true"
-            :select-btn-disabled="
-              contentStore.cityManager.getSelectList(
-                contentStore.currentDashboard?.city,
-              ).length === 1
-            "
-            :select-btn-list="
-              contentStore.cityManager.getSelectList(
-                contentStore.currentDashboard?.city,
-              )
-            "
-            :city-tag="
-              contentStore.cityManager.getTagList(
-                contentStore.currentDashboard?.city,
-              )
-            "
-            :toggle-disable="shouldDisable(item.map_config)"
-            :toggle-on="toggleOn.basicLayer[arrayIdx]"
-            @info="(item) => dialogStore.showMoreInfo(item)"
-            @toggle="
-              (value, map_config) => {
-                handleToggle(value, map_config);
-                toggleSwitchBtn(value, 'basicLayer', arrayIdx);
-                popularBasicLayerGA(map_config);
-              }
-            "
-            @filter-by-param="
-              (map_filter, map_config, x, y) =>
-                mapStore.filterByParam(map_filter, map_config, x, y)
-            "
-            @filter-by-layer="
-              (map_config, layer) => mapStore.filterByLayer(map_config, layer)
-            "
-            @clear-by-param-filter="
-              (map_config) => mapStore.clearByParamFilter(map_config)
-            "
-            @clear-by-layer-filter="
-              (map_config) => mapStore.clearByLayerFilter(map_config)
-            "
-            @change-city="
-              (city) => {
-                const selectedData = contentStore.allMapLayers.find(
-                  (data) => data.index === item.index && data.city === city,
-                );
-                if (selectedData) {
-                  mapStore.clearByParamFilter(item.map_config);
-                  mapStore.turnOffMapLayerVisibility(item.map_config);
-                  mapStore.addToMapLayerList(selectedData.map_config);
-                  contentStore.setMapLayerData(arrayIdx, selectedData);
+                  contentStore.setAiSearchedComponentData(componentIndex, selectedData);
                 }
               }
             "
@@ -241,29 +167,12 @@ function popularBasicLayerGA(map_config) {
             :active-city="item.city"
             :select-btn="true"
             :select-btn-disabled="
-              contentStore.cityManager.getSelectList(
-                contentStore.currentDashboard?.city,
-              ).length === 1 ||
-                contentStore.currentDashboardExcluded.components.filter(
-                  (data) => data.index === item.index,
-                ).length === 0
+              contentStore.cityManager.getSelectList(item.city).length === 1
             "
             :select-btn-list="
-              contentStore.currentDashboard?.city
-                ? contentStore.cityManager.getSelectList(
-                  contentStore.currentDashboard?.city,
-                )
-                : contentStore.cityManager.getCities(
-                  contentStore.cityManager.activeCities,
-                )
+              contentStore.cityManager.getSelectList(item.city)
             "
-            :city-tag="
-              contentStore.currentDashboard?.city
-                ? contentStore.cityManager.getTagList(
-                  contentStore.currentDashboard?.city,
-                )
-                : contentStore.cityManager.getTagList(item.city)
-            "
+            :city-tag="contentStore.cityManager.getTagList(item.city)"
             :toggle-on="toggleOn.noMap[arrayIdx]"
             @info="(item) => dialogStore.showMoreInfo(item)"
             @toggle="
@@ -274,15 +183,15 @@ function popularBasicLayerGA(map_config) {
             "
             @change-city="
               (city) => {
-                const selectedData = contentStore.cityDashboard.components.find(
+                const selectedData = contentStore.aiSearchedComponents.find(
                   (data) => data.index === item.index && data.city === city,
                 );
                 const componentIndex =
-                  contentStore.currentDashboard.components.findIndex(
+                  contentStore.aiSearchedComponents.findIndex(
                     (data) => data.index === item.index && data.city === item.city,
                   );
                 if (selectedData && componentIndex !== -1) {
-                  contentStore.setComponentData(componentIndex, selectedData);
+                  contentStore.setAiSearchedComponentData(componentIndex, selectedData);
                 }
               }
             "

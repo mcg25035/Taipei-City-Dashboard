@@ -1,8 +1,9 @@
 import { ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { emitAgentEvent } from '../composables/useAgentEvent'
+import { fetchComponentData } from '../assets/utilityFunctions/componentDataFetcher'
 
-const USE_MOCK = import.meta.env.VITE_MOCK_CHAT === 'true';
+const USE_MOCK = import.meta.env.VITE_MOCK_CHAT === 'false';
 
 const MOCK_RESPONSES = [
 	{ event: 'session', data: { session_id: 'mock-session-001', is_new: true, requested: null } },
@@ -10,6 +11,98 @@ const MOCK_RESPONSES = [
 	{ event: 'text', data: { delta: '這是一個 ' } },
 	{ event: 'text', data: { delta: 'SSE 串流回覆測試。' } },
 	{ event: 'tool_used', data: { name: 'get_district_stats', args: { district: '信義區' } } },
+	{
+		event: 'frontend_action',
+		data: {
+			action: 'add_component', args: {
+				"id": 214,
+				"index": "dependency_aging",
+				"name": "扶養比及老化指數",
+				"chart_config": {
+					"index": "dependency_aging",
+					"color": [
+						"#67baca",
+						"#fbf3ac"
+					],
+					"types": [
+						"ColumnLineChart",
+						"TimelineSeparateChart"
+					],
+					"unit": "%"
+				},
+				"history_config": null,
+				"map_config": [
+					null
+				],
+				"map_filter": null,
+				"time_from": "static",
+				"time_to": null,
+				"update_freq": null,
+				"update_freq_unit": "",
+				"source": "主計處",
+				"short_desc": "顯示雙北扶養比及老化指數時間數列統計資料",
+				"long_desc": "顯示雙北扶養比及老化指數時間數列統計資料。雙北政府主計處提供了扶養比和老化指數資料，詳細記錄了各年齡段人口比例的變化情況。這些資料有助於分析雙北人口結構的演變，評估青壯年人口對幼年和老年人口的扶養負擔，以及社會老化程度。透過這些統計資料，政策制定者和研究人員可以深入了解人口趨勢，為未來的社會福利和經濟發展規劃提供參考。",
+				"use_case": "使用於人口結構分析、社會福利規劃與經濟發展評估，雙北的扶養比與老化指數數據提供決策參考。政府機構可透過這些統計資料評估勞動力供給與社會扶養負擔，進而調整退休政策與醫療資源配置。企業可運用數據研判市場趨勢，規劃銀髮族產品與服務。學術研究則可透過時間序列分析，探討人口老化對經濟與社會的影響，為未來城市發展與人口政策提供科學依據。\r\n",
+				"links": [
+					"https://data.taipei/dataset/detail?id=aafb15dc-5508-4091-bd48-a708e60f6698",
+					"https://data.ntpc.gov.tw/datasets/8308ab58-62d1-424e-8314-24b65b7ab492"
+				],
+				"contributors": [
+					"doit",
+					"ntpc"
+				],
+				"updated_at": "2024-12-10T02:59:39.341Z",
+				"query_type": "time",
+				"city": "metrotaipei"
+			}
+		}
+	},
+	{
+		event: 'frontend_action',
+		data: {
+			action: 'show_component', args: {
+				"id": 214,
+				"index": "dependency_aging",
+				"name": "扶養比及老化指數",
+				"chart_config": {
+					"index": "dependency_aging",
+					"color": [
+						"#67baca",
+						"#fbf3ac"
+					],
+					"types": [
+						"ColumnLineChart",
+						"TimelineSeparateChart"
+					],
+					"unit": "%"
+				},
+				"history_config": null,
+				"map_config": [
+					null
+				],
+				"map_filter": null,
+				"time_from": "static",
+				"time_to": null,
+				"update_freq": null,
+				"update_freq_unit": "",
+				"source": "主計處",
+				"short_desc": "顯示雙北扶養比及老化指數時間數列統計資料",
+				"long_desc": "顯示雙北扶養比及老化指數時間數列統計資料。雙北政府主計處提供了扶養比和老化指數資料，詳細記錄了各年齡段人口比例的變化情況。這些資料有助於分析雙北人口結構的演變，評估青壯年人口對幼年和老年人口的扶養負擔，以及社會老化程度。透過這些統計資料，政策制定者和研究人員可以深入了解人口趨勢，為未來的社會福利和經濟發展規劃提供參考。",
+				"use_case": "使用於人口結構分析、社會福利規劃與經濟發展評估，雙北的扶養比與老化指數數據提供決策參考。政府機構可透過這些統計資料評估勞動力供給與社會扶養負擔，進而調整退休政策與醫療資源配置。企業可運用數據研判市場趨勢，規劃銀髮族產品與服務。學術研究則可透過時間序列分析，探討人口老化對經濟與社會的影響，為未來城市發展與人口政策提供科學依據。\r\n",
+				"links": [
+					"https://data.taipei/dataset/detail?id=aafb15dc-5508-4091-bd48-a708e60f6698",
+					"https://data.ntpc.gov.tw/datasets/8308ab58-62d1-424e-8314-24b65b7ab492"
+				],
+				"contributors": [
+					"doit",
+					"ntpc"
+				],
+				"updated_at": "2024-12-10T02:59:39.341Z",
+				"query_type": "time",
+				"city": "metrotaipei"
+			}
+		}
+	},
 	{ event: 'text', data: { delta: '\n\n如有問題請繼續詢問！' } },
 	{ event: 'done', data: { session_id: 'mock-session-001', message_count: 1 } },
 ];
@@ -92,6 +185,7 @@ export const useChatStore = defineStore('chat', () => {
 	const chatData = ref([...defaultChatData]);
 	const messageHistory = ref([]);
 	const sessionId = ref(null);
+	const pendingInputMessage = ref('');
 
 	// frontend_action queue — components watch and dispatch
 	const frontendActions = ref([]);
@@ -169,7 +263,17 @@ export const useChatStore = defineStore('chat', () => {
 
 					case 'frontend_action':
 						console.log(`[chat] frontend_action: ${data.action}, args: ${JSON.stringify(data.args)}`);
-						emitAgentEvent(data.action, data);
+						
+						switch (data.action) {
+							case 'add_component':
+								botMsg.loading = false;
+								const componentData = await fetchComponentData(data.args);
+								addChatData({ role: 'bot', componentData });
+								break;
+							default:
+								emitAgentEvent(data.action, data.args);
+								break;
+						}
 						break;
 
 					case 'done':
@@ -248,6 +352,7 @@ export const useChatStore = defineStore('chat', () => {
 		chatData,
 		messageHistory,
 		frontendActions,
+		pendingInputMessage,
 		addChatData,
 		addQueryData,
 		clearSession,
