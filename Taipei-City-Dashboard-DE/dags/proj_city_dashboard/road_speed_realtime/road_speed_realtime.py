@@ -122,6 +122,15 @@ def _road_speed_realtime(**kwargs):
     os.replace(tmp_path, final_path)
     print(f"Exported {len(export_features)} features to {final_path}")
 
+    # Mirror for road_travel_speed_realtime component (heatmap on travel_speed).
+    # Same payload, distinct map_config.index → distinct static file path.
+    mirror_path = os.path.join(export_dir, "traffic_road_travel_speed_realtime.geojson")
+    mirror_tmp = mirror_path + ".tmp"
+    with open(mirror_tmp, "w", encoding="utf-8") as fh:
+        json.dump(payload, fh, ensure_ascii=False, separators=(",", ":"))
+    os.replace(mirror_tmp, mirror_path)
+    print(f"Mirrored {len(export_features)} features to {mirror_path}")
+
 
 dag = CommonDag(proj_folder="proj_city_dashboard", dag_folder="road_speed_realtime")
 dag.create_dag(etl_func=_road_speed_realtime)

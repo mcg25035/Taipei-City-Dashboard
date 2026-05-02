@@ -19,6 +19,7 @@ export const chartTypes = {
 	IndicatorChart: "指標圖",
 	MapLegend: "地圖圖例",
 	TextUnitChart: "文字單位圖",
+	SpeedDensityChart: "速度分布密度圖",
 };
 
 export const chartsPerDataType = {

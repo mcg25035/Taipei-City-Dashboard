@@ -58,6 +58,59 @@ import {
 	mrtLineColor,
 } from "../assets/utilityFunctions/getThematicColor.js";
 
+// Per-feature color injection for layers whose paint reads ["get","..._color"].
+// Keeps gradient logic in code instead of a hard-coded interpolate stop list.
+const TRAVEL_SPEED_STOPS = [
+	{ speed: 10, rgb: [0x66, 0x00, 0x80] }, // 慢
+	{ speed: 30, rgb: [0x82, 0x9c, 0xf5] }, // 中
+	{ speed: 50, rgb: [0xc5, 0xd4, 0xfa] }, // 快
+];
+const FEATURE_COLOR_DECORATORS = {
+	// 即時道路速度: piecewise-linear RGB ramp by travel_speed (km/h)
+	traffic_road_travel_speed_realtime: (props) => {
+		const raw = props?.travel_speed;
+		const speed = typeof raw === "number" ? raw : parseFloat(raw);
+		if (!Number.isFinite(speed)) {
+			return { travel_speed_color: "#888888" };
+		}
+		const stops = TRAVEL_SPEED_STOPS;
+		let lo = stops[0];
+		let hi = stops[stops.length - 1];
+		if (speed <= lo.speed) hi = lo;
+		else if (speed >= hi.speed) lo = hi;
+		else {
+			for (let i = 0; i < stops.length - 1; i++) {
+				if (speed >= stops[i].speed && speed <= stops[i + 1].speed) {
+					lo = stops[i];
+					hi = stops[i + 1];
+					break;
+				}
+			}
+		}
+		const span = hi.speed - lo.speed;
+		const t = span === 0 ? 0 : (speed - lo.speed) / span;
+		const mix = (a, b) => Math.round(a + (b - a) * t);
+		const [r, g, b] = [
+			mix(lo.rgb[0], hi.rgb[0]),
+			mix(lo.rgb[1], hi.rgb[1]),
+			mix(lo.rgb[2], hi.rgb[2]),
+		];
+		return { travel_speed_color: `rgb(${r},${g},${b})` };
+	},
+};
+
+function decorateGeoJson(map_config, data) {
+	const decorate = FEATURE_COLOR_DECORATORS[map_config?.index];
+	if (!decorate || !data?.features) return data;
+	return {
+		...data,
+		features: data.features.map((f) => ({
+			...f,
+			properties: { ...(f.properties || {}), ...decorate(f.properties || {}) },
+		})),
+	};
+}
+
 export const useMapStore = defineStore("map", {
 	state: () => ({
 		// Array of layer IDs that are in the map
@@ -78,6 +131,10 @@ export const useMapStore = defineStore("map", {
 		popup: null,
 		// Store currently loading layers,
 		loadingLayers: [],
+		// Cache of decorated GeoJSON features keyed by map_config.index.
+		// Used by analytic charts (e.g. SpeedDensityChart) that need access to
+		// raw feature property values, not just the rendered map layer.
+		featureCache: {},
 		// Store all view points
 		viewPoints: [],
 		marker: null,
@@ -466,7 +523,14 @@ export const useMapStore = defineStore("map", {
 			axios
 				.get(`/mapData/${map_config.index}.geojson`)
 				.then((rs) => {
-					this.addGeojsonSource(map_config, rs.data);
+					const data = decorateGeoJson(map_config, rs.data);
+					if (data?.features) {
+						this.featureCache = {
+							...this.featureCache,
+							[map_config.index]: data.features,
+						};
+					}
+					this.addGeojsonSource(map_config, data);
 				})
 				.catch((e) => console.error(e));
 		},
