@@ -77,3 +77,9 @@ Taipei-City-Dashboard-DE/docker/prod/.env
 
 *.env
 .claude
+
+# B1 deviation runtime artifacts (DAG-generated, not source)
+# See docs/road_speed_realtime_b1_deviation.md
+Taipei-City-Dashboard-FE/public/mapData/traffic_road_speed_realtime.geojson
+Taipei-City-Dashboard-FE/public/mapData/parking_realtime.geojson
+Taipei-City-Dashboard-FE/public/mapData/parking_realtime_ntpc.geojson

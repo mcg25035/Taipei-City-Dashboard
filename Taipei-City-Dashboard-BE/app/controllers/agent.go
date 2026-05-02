@@ -155,3 +155,58 @@ func AgentGetComponentData(c *gin.Context) {
 
 	c.JSON(http.StatusOK, resp)
 }
+
+type agentParkingBBoxRequest struct {
+	LatMin float64 `json:"lat_min" form:"lat_min"`
+	LatMax float64 `json:"lat_max" form:"lat_max"`
+	LngMin float64 `json:"lng_min" form:"lng_min"`
+	LngMax float64 `json:"lng_max" form:"lng_max"`
+}
+
+/*
+AgentParkingByBBox returns parking lot count + average occupancy inside a
+lng/lat bounding box across both Taipei and NewTaipei realtime tables.
+Lots reporting no realtime data (occupied_rate = -99) are counted as fully
+occupied (1.0) for the average — explicit agent contract.
+
+POST /api/v1/agent/parking-bbox
+Body or query string:
+
+	{"lat_min": 25.01, "lat_max": 25.10, "lng_min": 121.50, "lng_max": 121.60}
+
+Response:
+
+	{
+	  "status": "success",
+	  "bbox": {...echoed input...},
+	  "data": {
+	    "total_lots": N,
+	    "with_realtime": M,
+	    "occupied_rate_avg": 0.78,
+	    "by_city": [
+	      {"city": "taipei",    "lots": ..., "with_realtime": ..., "occupied_rate_avg": ...},
+	      {"city": "newtaipei", "lots": ..., "with_realtime": ..., "occupied_rate_avg": ...}
+	    ]
+	  }
+	}
+*/
+func AgentParkingByBBox(c *gin.Context) {
+	var req agentParkingBBoxRequest
+	// Accept either JSON body or query-string params.
+	_ = c.ShouldBindJSON(&req)
+	if req.LngMin == 0 && req.LngMax == 0 && req.LatMin == 0 && req.LatMax == 0 {
+		_ = c.ShouldBindQuery(&req)
+	}
+
+	res, err := models.GetParkingByBBox(req.LngMin, req.LatMin, req.LngMax, req.LatMax)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status": "success",
+		"bbox":   req,
+		"data":   res,
+	})
+}

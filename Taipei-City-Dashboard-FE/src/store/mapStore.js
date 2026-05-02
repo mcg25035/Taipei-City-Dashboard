@@ -444,10 +444,10 @@ export const useMapStore = defineStore("map", {
 				appendLayer.layerId = mapLayerId;
 				// 1-2. If the layer doesn't exist, call an API to get the layer data
 				this.loadingLayers.push(appendLayer.layerId);
-				if (element.source === "raster") {
-					this.addRasterSource(appendLayer);
-				} else {
+				if (element.source === "geojson") {
 					this.fetchLocalGeoJson(appendLayer);
+				} else if (element.source === "raster") {
+					this.addRasterSource(appendLayer);
 				}
 			});
 		},
