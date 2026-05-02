@@ -354,10 +354,7 @@ export const useChatStore = defineStore("chat", () => {
 								);
 								break;
 							default:
-								emitAgentEvent(
-									data.action,
-									data.params.data.component,
-								);
+								emitAgentEvent(data.action, data.params);
 								break;
 						}
 						break;
