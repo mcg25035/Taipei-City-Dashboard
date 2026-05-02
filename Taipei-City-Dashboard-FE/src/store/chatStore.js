@@ -106,6 +106,12 @@ export const useChatStore = defineStore("chat", () => {
 		messageHistory.value.push(newMessageHistory);
 	};
 
+	const resetSession = () => {
+		sessionId.value = null;
+		messageHistory.value = [];
+		chatData.value = [...defaultChatData];
+	};
+
 	const addQueryData = async (newChatData) => {
 		addChatData(newChatData);
 		addMessageHistory(newChatData);
@@ -126,8 +132,8 @@ export const useChatStore = defineStore("chat", () => {
 				.map((a, index) => {
 					if (a.type === "location")
 						return `[位置${index + 1}: ${a.lng.toFixed(6)}, ${a.lat.toFixed(6)}]`;
-					if (a.type === "current-location")
-						return `[用戶當前位置: ${a.lng.toFixed(6)}, ${a.lat.toFixed(6)}]`;
+					if (a.type === "current_location")
+						return `[當前位置: ${a.lng.toFixed(6)}, ${a.lat.toFixed(6)}]`;
 					return "";
 				})
 				.filter(Boolean)
@@ -264,5 +270,6 @@ export const useChatStore = defineStore("chat", () => {
 		attachments,
 		addChatData,
 		addQueryData,
+		resetSession,
 	};
 });

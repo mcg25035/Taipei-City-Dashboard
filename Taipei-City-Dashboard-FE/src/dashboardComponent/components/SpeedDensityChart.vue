@@ -74,18 +74,36 @@ const CURVE_H = 96;
 const BAR_TOP = CURVE_H + 14;
 const BAR_H = 18;
 
+const curveScales = computed(() => {
+	const innerW = VIEW_W - PAD_X * 2;
+	const max = density.value.max;
+	return {
+		sx: (x) =>
+			PAD_X + (1 - (x - SPEED_MIN) / (SPEED_MAX - SPEED_MIN)) * innerW,
+		sy: (y) => PAD_TOP + CURVE_H - (max > 0 ? y / max : 0) * CURVE_H,
+	};
+});
+
 const curvePath = computed(() => {
 	const { xs, ys, max } = density.value;
 	if (!xs.length || max <= 0) return "";
-	const innerW = VIEW_W - PAD_X * 2;
-	const sx = (x) =>
-		PAD_X + (1 - (x - SPEED_MIN) / (SPEED_MAX - SPEED_MIN)) * innerW;
-	const sy = (y) => PAD_TOP + CURVE_H - (y / max) * CURVE_H;
+	const { sx, sy } = curveScales.value;
 	let d = `M ${sx(xs[0]).toFixed(2)} ${(PAD_TOP + CURVE_H).toFixed(2)}`;
 	for (let i = 0; i < xs.length; i++) {
 		d += ` L ${sx(xs[i]).toFixed(2)} ${sy(ys[i]).toFixed(2)}`;
 	}
 	d += ` L ${sx(xs[xs.length - 1]).toFixed(2)} ${(PAD_TOP + CURVE_H).toFixed(2)} Z`;
+	return d;
+});
+
+const strokePath = computed(() => {
+	const { xs, ys, max } = density.value;
+	if (!xs.length || max <= 0) return "";
+	const { sx, sy } = curveScales.value;
+	let d = `M ${sx(xs[0]).toFixed(2)} ${sy(ys[0]).toFixed(2)}`;
+	for (let i = 1; i < xs.length; i++) {
+		d += ` L ${sx(xs[i]).toFixed(2)} ${sy(ys[i]).toFixed(2)}`;
+	}
 	return d;
 });
 
@@ -125,14 +143,49 @@ const meanSpeed = computed(() => {
 						:stop-color="s.color"
 					/>
 				</linearGradient>
+				<linearGradient
+					id="speeddensity-vmask"
+					x1="0"
+					:y1="PAD_TOP"
+					x2="0"
+					:y2="PAD_TOP + CURVE_H"
+					gradientUnits="userSpaceOnUse"
+				>
+					<stop offset="0%" stop-color="#e6e6e6" />
+					<stop offset="100%" stop-color="#4d4d4d" />
+				</linearGradient>
+				<mask
+					id="speeddensity-mask"
+					maskUnits="userSpaceOnUse"
+					:x="0"
+					:y="PAD_TOP"
+					:width="VIEW_W"
+					:height="CURVE_H"
+				>
+					<rect
+						:x="0"
+						:y="PAD_TOP"
+						:width="VIEW_W"
+						:height="CURVE_H"
+						fill="url(#speeddensity-vmask)"
+					/>
+				</mask>
 			</defs>
 			<path
 				v-if="curvePath"
 				:d="curvePath"
 				fill="url(#speeddensity-grad)"
-				fill-opacity="0.85"
-				stroke="#a98ce0"
-				stroke-width="1.2"
+				stroke="none"
+				mask="url(#speeddensity-mask)"
+			/>
+			<path
+				v-if="strokePath"
+				:d="strokePath"
+				fill="none"
+				stroke="url(#speeddensity-grad)"
+				stroke-width="1.5"
+				stroke-linejoin="round"
+				stroke-linecap="round"
 			/>
 			<rect
 				:x="PAD_X"
