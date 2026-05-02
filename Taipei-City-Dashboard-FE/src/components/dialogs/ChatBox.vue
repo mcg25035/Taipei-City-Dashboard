@@ -81,6 +81,7 @@ const toggleSticky = () => {
 };
 
 const startNewChat = () => {
+	contentStore.clearAiSearchedComponents();
 	clearAllAttachmentMarkers();
 	attachments.value = [];
 	resetSession();

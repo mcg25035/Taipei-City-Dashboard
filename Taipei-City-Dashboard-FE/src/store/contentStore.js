@@ -867,6 +867,10 @@ export const useContentStore = defineStore("content", {
 			}
 		},
 
+		clearAiSearchedComponents() {
+			this.aiSearchedComponents = [];
+		},
+
 		async addAiSearchedComponent(component) {
 			const componentData = await fetchComponentData(component);
 			this.aiSearchedComponents.push(componentData);
