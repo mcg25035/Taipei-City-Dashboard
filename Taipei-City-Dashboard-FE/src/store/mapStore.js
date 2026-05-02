@@ -556,9 +556,10 @@ export const useMapStore = defineStore("map", {
 		// whitelisted against component_maps so map_config.index is safe to
 		// pass through verbatim.
 		fetchBeGeoJson(map_config) {
-			const apiBase = import.meta.env.VITE_API_URL || "/api/dev";
 			axios
-				.get(`${apiBase}/geojson/${map_config.index}`)
+				.get(
+					`${import.meta.env.VITE_API_URL}/geojson/${map_config.index}`,
+				)
 				.then((rs) => {
 					const data = decorateGeoJson(map_config, rs.data);
 					if (data?.features) {
@@ -2418,8 +2419,7 @@ export const useMapStore = defineStore("map", {
 		zoomToCoordinate(lng, lat, radiusM = 150) {
 			if (!this.map) return;
 			const dLat = radiusM / 111320;
-			const dLng =
-				radiusM / (111320 * Math.cos((lat * Math.PI) / 180));
+			const dLng = radiusM / (111320 * Math.cos((lat * Math.PI) / 180));
 			this.map.fitBounds(
 				[
 					[lng - dLng, lat - dLat],

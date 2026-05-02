@@ -4,165 +4,13 @@ import { emitAgentEvent } from "../composables/useAgentEvent";
 import { fetchComponentData } from "../assets/utilityFunctions/componentDataFetcher";
 import { useMapStore } from "./mapStore";
 
-const USE_MOCK = import.meta.env.VITE_MOCK_CHAT === "true";
-
-const MOCK_RESPONSES = [
-	{
-		event: "session",
-		data: { session_id: "mock-session-001", is_new: true, requested: null },
-	},
-	{ event: "text", data: { delta: "您好！" } },
-	{ event: "text", data: { delta: "這是一個 " } },
-	{ event: "text", data: { delta: "SSE 串流回覆測試。" } },
-	{
-		event: "tool_used",
-		data: { name: "get_district_stats", args: { district: "信義區" } },
-	},
-	{
-		event: "frontend_action",
-		data: {
-			action: "add_component",
-			params: {
-				id: 214,
-				index: "dependency_aging",
-				name: "扶養比及老化指數",
-				chart_config: {
-					index: "dependency_aging",
-					color: ["#67baca", "#fbf3ac"],
-					types: ["ColumnLineChart", "TimelineSeparateChart"],
-					unit: "%",
-				},
-				history_config: null,
-				map_config: [null],
-				map_filter: null,
-				time_from: "static",
-				time_to: null,
-				update_freq: null,
-				update_freq_unit: "",
-				source: "主計處",
-				short_desc: "顯示雙北扶養比及老化指數時間數列統計資料",
-				long_desc:
-					"顯示雙北扶養比及老化指數時間數列統計資料。雙北政府主計處提供了扶養比和老化指數資料，詳細記錄了各年齡段人口比例的變化情況。這些資料有助於分析雙北人口結構的演變，評估青壯年人口對幼年和老年人口的扶養負擔，以及社會老化程度。透過這些統計資料，政策制定者和研究人員可以深入了解人口趨勢，為未來的社會福利和經濟發展規劃提供參考。",
-				use_case:
-					"使用於人口結構分析、社會福利規劃與經濟發展評估，雙北的扶養比與老化指數數據提供決策參考。政府機構可透過這些統計資料評估勞動力供給與社會扶養負擔，進而調整退休政策與醫療資源配置。企業可運用數據研判市場趨勢，規劃銀髮族產品與服務。學術研究則可透過時間序列分析，探討人口老化對經濟與社會的影響，為未來城市發展與人口政策提供科學依據。\r\n",
-				links: [
-					"https://data.taipei/dataset/detail?id=aafb15dc-5508-4091-bd48-a708e60f6698",
-					"https://data.ntpc.gov.tw/datasets/8308ab58-62d1-424e-8314-24b65b7ab492",
-				],
-				contributors: ["doit", "ntpc"],
-				updated_at: "2024-12-10T02:59:39.341Z",
-				query_type: "time",
-				city: "metrotaipei",
-			},
-		},
-	},
-	{
-		event: "frontend_action",
-		data: {
-			action: "add_card_in_chat",
-			params: {
-				component_id: 214,
-				data: {
-					chart: [
-						{
-							name: "扶養比",
-							data: [
-								{ x: "2013-01-01T08:00:00+08:00", y: 38 },
-								{ x: "2014-01-01T08:00:00+08:00", y: 39 },
-								{ x: "2015-01-01T08:00:00+08:00", y: 40 },
-								{ x: "2016-01-01T08:00:00+08:00", y: 42 },
-								{ x: "2017-01-01T08:00:00+08:00", y: 43 },
-								{ x: "2018-01-01T08:00:00+08:00", y: 45 },
-								{ x: "2019-01-01T08:00:00+08:00", y: 46 },
-								{ x: "2020-01-01T08:00:00+08:00", y: 48 },
-								{ x: "2021-01-01T08:00:00+08:00", y: 49 },
-								{ x: "2022-01-01T08:00:00+08:00", y: 50 },
-							],
-						},
-						{
-							name: "老化指數",
-							data: [
-								{ x: "2013-01-01T08:00:00+08:00", y: 95 },
-								{ x: "2014-01-01T08:00:00+08:00", y: 99 },
-								{ x: "2015-01-01T08:00:00+08:00", y: 106 },
-								{ x: "2016-01-01T08:00:00+08:00", y: 112 },
-								{ x: "2017-01-01T08:00:00+08:00", y: 119 },
-								{ x: "2018-01-01T08:00:00+08:00", y: 126 },
-								{ x: "2019-01-01T08:00:00+08:00", y: 134 },
-								{ x: "2020-01-01T08:00:00+08:00", y: 144 },
-								{ x: "2021-01-01T08:00:00+08:00", y: 154 },
-								{ x: "2022-01-01T08:00:00+08:00", y: 166 },
-							],
-						},
-					],
-					component: {
-						id: 214,
-						index: "dependency_aging",
-						name: "扶養比及老化指數",
-						chart_config: {
-							index: "dependency_aging",
-							color: ["#67baca", "#fbf3ac"],
-							types: ["ColumnLineChart", "TimelineSeparateChart"],
-							unit: "%",
-						},
-						history_config: null,
-						map_config: [null],
-						map_filter: null,
-						time_from: "static",
-						time_to: null,
-						update_freq: null,
-						update_freq_unit: "",
-						source: "主計處",
-						short_desc:
-							"顯示臺北市扶養比及老化指數時間數列統計資料",
-						long_desc:
-							"顯示臺北市扶養比及老化指數時間數列統計資料。臺北市政府主計處提供了扶養比和老化指數資料，詳細記錄了各年齡段人口比例的變化情況。這些資料有助於分析臺北市人口結構的演變，評估青壯年人口對幼年和老年人口的扶養負擔，以及社會老化程度。透過這些統計資料，政策制定者和研究人員可以深入了解人口趨勢，為未來的社會福利和經濟發展規劃提供參考。",
-						use_case:
-							"使用於人口結構分析、社會福利規劃與經濟發展評估，臺北市的扶養比與老化指數數據提供決策參考。政府機構可透過這些統計資料評估勞動力供給與社會扶養負擔，進而調整退休政策與醫療資源配置。企業可運用數據研判市場趨勢，規劃銀髮族產品與服務。學術研究則可透過時間序列分析，探討人口老化對經濟與社會的影響，為未來城市發展與人口政策提供科學依據。\r\n",
-						links: [
-							"https://data.taipei/dataset/detail?id=aafb15dc-5508-4091-bd48-a708e60f6698",
-						],
-						contributors: ["doit"],
-						updated_at: "2025-02-25T01:43:21.031142Z",
-						query_type: "time",
-						city: "taipei",
-					},
-					query_type: "time",
-					status: "success",
-				},
-			},
-		},
-	},
-	{ event: "text", data: { delta: "\n\n如有問題請繼續詢問！" } },
-	{
-		event: "done",
-		data: { session_id: "mock-session-001", message_count: 1 },
-	},
-];
-
-async function* mockSSEGenerator() {
-	for (const item of MOCK_RESPONSES) {
-		await new Promise((r) => setTimeout(r, 250));
-		yield item;
-	}
-}
-
-/**
- * 使用 fetch 發出 POST 請求並以 async generator 方式逐一 yield SSE 事件。
- * SSE 行格式：
- *   event: <type>
- *   data: <json>
- *   (空行觸發 dispatch)
- */
-async function* fetchSSE(body, token) {
-	const baseURL = import.meta.env.VITE_CHAT_API_URL;
-	const response = await fetch(`${baseURL}/chat`, {
+async function* fetchSSE(body) {
+	const response = await fetch(`${import.meta.env.VITE_API_URL}/chat`, {
 		method: "POST",
+		body: JSON.stringify(body),
 		headers: {
 			"Content-Type": "application/json",
-			...(token ? { Authorization: `Bearer ${token}` } : {}),
 		},
-		body: JSON.stringify(body),
 	});
 
 	if (!response.ok) {
@@ -291,9 +139,7 @@ export const useChatStore = defineStore("chat", () => {
 			const requestBody = { prompt };
 			if (sessionId.value) requestBody.session_id = sessionId.value;
 
-			const sseSource = USE_MOCK
-				? mockSSEGenerator()
-				: fetchSSE(requestBody, null);
+			const sseSource = fetchSSE(requestBody);
 
 			const botMsg = chatData.value.find((m) => m.id === botMsgId);
 			let accumulatedText = "";
@@ -361,8 +207,7 @@ export const useChatStore = defineStore("chat", () => {
 										bbox.ne.lat,
 									);
 								} else {
-									const c =
-										data.params.center ?? data.params;
+									const c = data.params.center ?? data.params;
 									useMapStore().zoomToCoordinate(
 										c.lng,
 										c.lat,
@@ -410,40 +255,6 @@ export const useChatStore = defineStore("chat", () => {
 		}
 	};
 
-	const consumeFrontendAction = (id) => {
-		frontendActions.value = frontendActions.value.filter(
-			(a) => a.id !== id,
-		);
-	};
-
-	const resetSession = () => {
-		sessionId.value = null;
-		messageHistory.value = [];
-		chatData.value = [...defaultChatData];
-	};
-
-	const saveChatLog = async (question, answer) => {
-		try {
-			const formData = new FormData();
-			const d = new Date();
-			const todayId =
-				d.getFullYear() +
-				String(d.getMonth() + 1).padStart(2, "0") +
-				String(d.getDate()).padStart(2, "0");
-
-			formData.append("session", "session_" + todayId);
-			formData.append("question", question);
-			formData.append("answer", JSON.stringify(answer));
-
-			const http = (await import("../router/axios")).default;
-			await http.post("/chatlog/", formData, {
-				headers: { "Content-Type": "multipart/form-data" },
-			});
-		} catch (error) {
-			console.error("saveChatLog error:", error);
-		}
-	};
-
 	return {
 		chatData,
 		messageHistory,
@@ -451,8 +262,5 @@ export const useChatStore = defineStore("chat", () => {
 		attachments,
 		addChatData,
 		addQueryData,
-		saveChatLog,
-		consumeFrontendAction,
-		resetSession,
 	};
 });

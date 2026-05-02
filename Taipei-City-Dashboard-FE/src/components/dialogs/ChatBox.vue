@@ -8,17 +8,11 @@ import DashboardComponent from "../../dashboardComponent/DashboardComponent.vue"
 
 import { useChatStore } from "../../store/chatStore";
 import { useContentStore } from "../../store/contentStore";
-import { useAuthStore } from "../../store/authStore";
-import http from "../../router/axios";
 
 const chatStore = useChatStore();
 const contentStore = useContentStore();
-const authStore = useAuthStore();
-const { addChatData, addQueryData, saveChatLog, resetSession } = chatStore;
-const { createDashboard } = contentStore;
+const { addQueryData } = chatStore;
 const { chatData, attachments } = storeToRefs(chatStore);
-const { editDashboard } = storeToRefs(contentStore);
-const { user } = storeToRefs(authStore);
 
 function removeAttachment(idx) {
 	const item = attachments.value[idx];
@@ -33,45 +27,6 @@ function clearAllAttachmentMarkers() {
 const userMessage = ref("");
 const chatAreaRef = ref(null);
 const isStickyOpen = ref(false);
-const dashboardCreationLoading = ref(false);
-
-const qaBtnHandler = async (text, relations) => {
-	if (text === "建立儀表板") {
-		if (dashboardCreationLoading.value === true) return;
-		dashboardCreationLoading.value = true;
-		// 確認個人儀表板是否超過20個
-		const response = await http.get(`/dashboard/`);
-		if (response.data?.data?.personal?.length > 20) {
-			addChatData({
-				role: "bot",
-				content:
-					"您的個人儀表板已超出限制 20 個，請先移除既有儀表板後，重新執行本功能！",
-			});
-			dashboardCreationLoading.value = false;
-			return;
-		}
-		const components = Array.from(new Set(relations.map((r) => r.id))).map(
-			(id) => ({ id }),
-		);
-
-		if (user.value.user_id) {
-			editDashboard.value = {
-				index: "",
-				name: "推薦儀表板",
-				icon: "star",
-				components: components,
-			};
-			await createDashboard();
-			saveChatLog("建立儀表板", "使用者成功建立儀表板!");
-		} else {
-			addChatData({
-				role: "bot",
-				content: "請先登入會員以使用此功能喔！",
-			});
-		}
-		dashboardCreationLoading.value = false;
-	}
-};
 
 const sendBtnHandler = () => {
 	if (!userMessage.value.trim()) {
@@ -195,53 +150,6 @@ watch(
 								}
 							"
 						/>
-						<!-- 表格區 -->
-						<div
-							v-if="chat.relations"
-							v-horizontal-wheel
-							class="relation-area"
-						>
-							<table class="relation-table">
-								<thead>
-									<tr>
-										<th>排名</th>
-										<th>城市名</th>
-										<th>組件名</th>
-										<th>關聯性</th>
-									</tr>
-								</thead>
-								<tbody>
-									<tr
-										v-for="(item, index) in chat.relations"
-										:key="index"
-									>
-										<td>{{ index + 1 }}</td>
-										<td>
-											{{
-												item.city === "taipei"
-													? "臺北"
-													: "雙北"
-											}}
-										</td>
-										<td>{{ item.name }}</td>
-										<td>{{ item.score }}</td>
-									</tr>
-								</tbody>
-							</table>
-						</div>
-						<div
-							v-if="chat.button"
-							v-horizontal-wheel
-							class="message--button scrollbar-x-hide"
-						>
-							<button
-								v-for="btn in chat.button"
-								:key="btn.id"
-								@click="qaBtnHandler(btn.text, chat.relations)"
-							>
-								{{ btn.text }}
-							</button>
-						</div>
 					</div>
 				</div>
 				<!-- 使用者訊息 -->
@@ -295,10 +203,7 @@ watch(
 						{{ attachment.lat.toFixed(6) }}</span
 					>
 				</template>
-				<button
-					class="attachment-clear"
-					@click="removeAttachment(idx)"
-				>
+				<button class="attachment-clear" @click="removeAttachment(idx)">
 					×
 				</button>
 			</div>
