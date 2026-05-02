@@ -17,8 +17,7 @@ const contentStore = useContentStore();
 const authStore = useAuthStore();
 const router = useRouter();
 const route = useRoute();
-const { aiToolCalls } = storeToRefs(chatStore);
-const { addChatData, addQueryData, saveChatLog, clearAIToolCalls } = chatStore;
+const { addChatData, addQueryData, saveChatLog } = chatStore;
 const { createDashboard } = contentStore;
 const { chatData } = storeToRefs(chatStore);
 const { editDashboard } = storeToRefs(contentStore);
@@ -255,25 +254,6 @@ watch(
           </div>
         </div>
       </div>
-    </div>
-
-    <div
-      v-if="aiToolCalls.length > 0"
-      class="ai-dashboard-bar"
-    >
-      <button
-        class="ai-dashboard-btn"
-        @click="goToAIDashboard"
-      >
-        <span>dashboard</span>
-        查看儀表板 ({{ aiToolCalls.length }})
-      </button>
-      <button
-        class="ai-dashboard-clear"
-        @click="clearAIToolCalls"
-      >
-        <span>close</span>
-      </button>
     </div>
 
     <!-- 輸入區 -->

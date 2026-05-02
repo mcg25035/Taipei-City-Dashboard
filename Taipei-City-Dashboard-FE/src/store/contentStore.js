@@ -235,8 +235,6 @@ export const useContentStore = defineStore("content", {
 				(item) => item.index === this.currentDashboard.index,
 			);
 
-			console.log('currentDashboardInfo', currentDashboardInfo);
-
 			// If the current dashboard is not found, redirect to the first available dashboard
 			if (!currentDashboardInfo) {
 				// Find the first available dashboard

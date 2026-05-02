@@ -1,8 +1,7 @@
 import { ref, watch } from 'vue'
 import { defineStore } from 'pinia'
+import { emitAgentEvent } from '../composables/useAgentEvent'
 
-
-// ---- DEV MOCK ----
 const USE_MOCK = import.meta.env.VITE_MOCK_CHAT === 'true';
 
 const MOCK_RESPONSES = [
@@ -21,7 +20,6 @@ async function* mockSSEGenerator() {
 		yield item;
 	}
 }
-// ------------------
 
 /**
  * 使用 fetch 發出 POST 請求並以 async generator 方式逐一 yield SSE 事件。
@@ -103,12 +101,6 @@ export const useChatStore = defineStore('chat', () => {
 	// frontend_action queue — components watch and dispatch
 	const frontendActions = ref([]);
 
-	// AI tool call trace (localStorage, cross-session)
-	const _rawAIToolCalls = JSON.parse(localStorage.getItem('aiToolCalls'));
-	const aiToolCalls = ref(Array.isArray(_rawAIToolCalls) ? _rawAIToolCalls : []);
-
-	watch(aiToolCalls, (v) => localStorage.setItem('aiToolCalls', JSON.stringify(v)), { deep: true });
-
 	watch(sessionId, (v) => {
 		if (v) sessionStorage.setItem('chatSessionId', v);
 		else sessionStorage.removeItem('chatSessionId');
@@ -185,16 +177,12 @@ export const useChatStore = defineStore('chat', () => {
 						break;
 
 					case 'tool_used':
-						console.log('tool_used', data);
-						aiToolCalls.value.push(data);
+						console.log(`[chat] tool_used: ${data.name}`);
 						break;
 
 					case 'frontend_action':
-						console.log('frontend_action', data);
-						// Deduplicate by id before pushing
-						if (!frontendActions.value.some((a) => a.id === data.id)) {
-							frontendActions.value.push(data);
-						}
+						console.log(`[chat] frontend_action: ${data.action}, args: ${JSON.stringify(data.args)}`);
+						emitAgentEvent(data.action, data);
 						break;
 
 					case 'done':
@@ -240,14 +228,6 @@ export const useChatStore = defineStore('chat', () => {
 		}
 	};
 
-	const addAIToolCall = (toolCall) => {
-		aiToolCalls.value.push(toolCall);
-	};
-
-	const clearAIToolCalls = () => {
-		aiToolCalls.value = [];
-	};
-
 	const consumeFrontendAction = (id) => {
 		frontendActions.value = frontendActions.value.filter((a) => a.id !== id);
 	};
@@ -277,14 +257,11 @@ export const useChatStore = defineStore('chat', () => {
 	return {
 		chatData,
 		messageHistory,
-		aiToolCalls,
 		frontendActions,
 		addChatData,
 		addQueryData,
 		clearSession,
 		saveChatLog,
-		addAIToolCall,
-		clearAIToolCalls,
 		consumeFrontendAction,
 	};
 });
