@@ -59,7 +59,7 @@ const MOCK_RESPONSES = [
 	{
 		event: "frontend_action",
 		data: {
-			action: "show_component",
+			action: "add_card_in_chat",
 			params: {
 				component_id: 214,
 				data: {
@@ -332,13 +332,14 @@ export const useChatStore = defineStore("chat", () => {
 						);
 
 						switch (data.action) {
-							case "show_component":
+							case "add_card_in_chat": {
 								const componentData = await fetchComponentData(
 									data.params.data.component,
 								);
 								botMsg.loading = false;
 								botMsg.componentDatas.push(componentData);
 								break;
+							}
 							case "goto":
 							case "goto_coordinate": {
 								const c = data.params.center ?? data.params;

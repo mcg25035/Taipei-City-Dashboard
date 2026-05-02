@@ -19,7 +19,7 @@ const dialogStore = useDialogStore();
 const mapStore = useMapStore();
 const { onEvent } = useAgentEvent();
 
-onEvent("show_component", (component) => {
+onEvent("add_card_in_chat", (component) => {
 	contentStore.addAiSearchedComponent(component);
 });
 
