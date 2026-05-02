@@ -95,7 +95,7 @@ onMounted(() => {
         }}</span>
       </button>
     </div>
-    <template v-if="true">
+    <template v-if="authStore.token">
       <h1 @click="toggleCollapse(['favorites', 'personal'])">
         {{ isExpanded ? `私人儀表板 ` : `私人` }}
       </h1>
