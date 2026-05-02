@@ -131,7 +131,7 @@ watch(
 						</div>
 						<div
 							v-if="chat.loading || chat.content"
-							class="message--bubble bot"
+							class="message--bubble"
 						>
 							<div v-if="chat.loading" class="message--loading">
 								<span class="dot" />
@@ -235,7 +235,7 @@ watch(
 						v-if="chat.content || chat.attachments?.length"
 						class="content"
 					>
-						<div v-if="chat.content" class="message--bubble user">
+						<div v-if="chat.content" class="message--bubble">
 							<div
 								v-if="chat.attachments?.length"
 								class="message--attachments"
@@ -420,6 +420,10 @@ $radius-20: 20px;
 					flex-direction: row-reverse;
 				}
 
+				&.user .content {
+					align-items: flex-end;
+				}
+
 				.avatar {
 					width: 40px;
 					height: 40px;
@@ -555,14 +559,6 @@ $radius-20: 20px;
 							padding-right: 16px;
 							font-size: 16px;
 							word-break: break-word;
-						}
-
-						&.user {
-							align-self: flex-end;
-						}
-
-						&.bot {
-							align-self: flex-start;
 						}
 					}
 
