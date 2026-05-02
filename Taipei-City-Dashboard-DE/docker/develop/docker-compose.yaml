@@ -87,6 +87,9 @@ x-airflow-common:
     - ${AIRFLOW_PROJ_DIR:-../../}/data:/opt/airflow/data
     - ${AIRFLOW_PROJ_DIR:-.}/config:/opt/airflow/config
     - ${AIRFLOW_PROJ_DIR:-../../}/plugins:/opt/airflow/plugins
+    # B1 deviation: shared write target for FE static geojson exports.
+    # See docs/road_speed_realtime_b1_deviation.md
+    - ../../../Taipei-City-Dashboard-FE/public/mapData:/opt/airflow/fe_mapdata
   user: "${AIRFLOW_UID:-50000}:0"
 
 services:
