@@ -20,11 +20,49 @@ const emits = defineEmits([
 	"fly",
 ]);
 
+function hexToRgb(hex) {
+	const cleaned = String(hex).trim().replace(/^#/, "");
+	if (cleaned.length !== 6) return null;
+	const num = parseInt(cleaned, 16);
+	if (Number.isNaN(num)) return null;
+	return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+}
+
+function rgbToHex(r, g, b) {
+	const toHex = (v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0");
+	return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+function interpolateColor(c1, c2, t) {
+	const a = hexToRgb(c1);
+	const b = hexToRgb(c2);
+	if (!a || !b) return c1 ?? c2 ?? "#000000";
+	return rgbToHex(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t, a.b + (b.b - a.b) * t);
+}
+
+function isChromatic(hex) {
+	const rgb = hexToRgb(hex);
+	if (!rgb) return false;
+	return !(rgb.r === rgb.g && rgb.g === rgb.b);
+}
+
+function gradientColor(palette, ratio) {
+	if (palette.length === 0) return "#000000";
+	if (palette.length === 1) return palette[0];
+	const clamped = Math.max(0, Math.min(1, ratio));
+	const segment = clamped * (palette.length - 1);
+	const idx = Math.min(Math.floor(segment), palette.length - 2);
+	const t = segment - idx;
+	return interpolateColor(palette[idx], palette[idx + 1], t);
+}
+
 const proportionalColors = computed(() => {
-	const palette = props.chart_config.color ?? [];
+	const rawPalette = props.chart_config.color ?? [];
 	const data = props.series?.[0]?.data ?? [];
-	if (palette.length === 0 || data.length === 0) {
-		return [...palette];
+	const palette = rawPalette.filter(isChromatic);
+	const effectivePalette = palette.length > 0 ? palette : rawPalette;
+	if (effectivePalette.length === 0 || data.length === 0) {
+		return [...effectivePalette];
 	}
 	const numericValues = data.map((item) =>
 		typeof item === "object" && item !== null ? Number(item.y) : Number(item),
@@ -32,15 +70,12 @@ const proportionalColors = computed(() => {
 	const min = Math.min(...numericValues);
 	const max = Math.max(...numericValues);
 	const range = max - min;
-	const n = palette.length;
 	if (!isFinite(min) || !isFinite(max) || range === 0) {
-		return numericValues.map(() => palette[0]);
+		return numericValues.map(() => effectivePalette[0]);
 	}
-	return numericValues.map((value) => {
-		const ratio = (value - min) / range;
-		const idx = Math.min(Math.floor(ratio * n), n - 1);
-		return palette[idx];
-	});
+	return numericValues.map((value) =>
+		gradientColor(effectivePalette, (value - min) / range),
+	);
 });
 
 const chartOptions = computed(() => ({
