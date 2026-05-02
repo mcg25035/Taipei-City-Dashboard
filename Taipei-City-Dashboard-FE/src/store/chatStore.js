@@ -89,14 +89,9 @@ export const useChatStore = defineStore('chat', () => {
 		},
 	];
 
-	const savedChatData = JSON.parse(sessionStorage.getItem('chatData')) || [];
-	const savedMessageHistory = JSON.parse(sessionStorage.getItem('messageHistory')) || [];
-	// First call must omit session_id; server provides UUID via `session` event
-	const savedSessionId = sessionStorage.getItem('chatSessionId') || null;
-
-	const chatData = ref([...defaultChatData, ...savedChatData]);
-	const messageHistory = ref(savedMessageHistory);
-	const sessionId = ref(savedSessionId);
+	const chatData = ref([...defaultChatData]);
+	const messageHistory = ref([]);
+	const sessionId = ref(null);
 
 	// frontend_action queue — components watch and dispatch
 	const frontendActions = ref([]);
@@ -120,13 +115,6 @@ export const useChatStore = defineStore('chat', () => {
 		(v) => sessionStorage.setItem('messageHistory', JSON.stringify(v)),
 		{ deep: true }
 	);
-
-	const _clearLocalHistory = () => {
-		chatData.value = [...defaultChatData];
-		messageHistory.value = [];
-		sessionStorage.removeItem('chatData');
-		sessionStorage.removeItem('messageHistory');
-	};
 
 	const addChatData = (newChatData) => {
 		chatData.value.push({ id: chatData.value.length + 1, isDefault: false, ...newChatData });
@@ -163,7 +151,6 @@ export const useChatStore = defineStore('chat', () => {
 					case 'notice':
 						// Session was reset — clear local history so UI reflects fresh state
 						console.warn(`[chat] session notice: ${data.code} — ${data.message}`);
-						_clearLocalHistory();
 						break;
 
 					case 'session':
@@ -224,7 +211,10 @@ export const useChatStore = defineStore('chat', () => {
 			console.error('clearSession error:', error);
 		} finally {
 			sessionId.value = null;
-			_clearLocalHistory();
+			chatData.value = [...defaultChatData];
+			messageHistory.value = [];
+			sessionStorage.removeItem('chatData');
+			sessionStorage.removeItem('messageHistory');
 		}
 	};
 

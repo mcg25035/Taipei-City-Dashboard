@@ -315,7 +315,6 @@ function popularBasicLayerGA(map_config) {
 
 	&-map {
 		flex: 1;
-		height: 100%;
 		display: flex;
 		margin: var(--font-m) var(--font-m);
 		overflow: hidden;
