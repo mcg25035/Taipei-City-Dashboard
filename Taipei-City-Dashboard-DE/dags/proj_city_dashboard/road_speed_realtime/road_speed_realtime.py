@@ -84,44 +84,6 @@ def _road_speed_realtime(**kwargs):
     lasttime_in_data = ready_data["data_time"].max()
     update_lasttime_in_data_to_dataset_info(engine, dag_id, lasttime_in_data)
 
-    # ------------------------------------------------------------------
-    # B1 deviation: export GeoJSON to FE static dir.
-    # See docs/road_speed_realtime_b1_deviation.md for context + cleanup plan.
-    # ------------------------------------------------------------------
-    import json
-    import os
-    from shapely.geometry import mapping
-
-    export_dir = "/opt/airflow/fe_mapdata"
-    final_path = os.path.join(export_dir, "traffic_road_speed_realtime.geojson")
-    tmp_path = final_path + ".tmp"
-
-    # Reproject back to EPSG:4326 for the static GeoJSON consumed by Mapbox.
-    export_gdf = gdata.to_crs(epsg=4326)
-    export_features = []
-    for _, row in export_gdf.iterrows():
-        geom = row.get("geometry")
-        if geom is None:
-            continue
-        export_features.append({
-            "type": "Feature",
-            "geometry": mapping(geom),
-            "properties": {
-                "section_id": row["section_id"],
-                "section_name": row["section_name"],
-                "travel_speed": float(row["travel_speed"]) if pd.notna(row["travel_speed"]) else None,
-                "level_name": row["level_name"],
-                "level_color": row["level_color"],
-                "data_time": str(row["data_time"]) if pd.notna(row["data_time"]) else None,
-            },
-        })
-
-    payload = {"type": "FeatureCollection", "features": export_features}
-    with open(tmp_path, "w", encoding="utf-8") as fh:
-        json.dump(payload, fh, ensure_ascii=False, separators=(",", ":"))
-    os.replace(tmp_path, final_path)
-    print(f"Exported {len(export_features)} features to {final_path}")
-
     # Mirror for road_travel_speed_realtime component (heatmap on travel_speed).
     # Same payload, distinct map_config.index → distinct static file path.
     mirror_path = os.path.join(export_dir, "traffic_road_travel_speed_realtime.geojson")

@@ -42,6 +42,11 @@ func ConfigureRoutes() {
 	configureChatLogRoutes()
 	configureAIRoutes()
 	configureAgentRoutes()
+	configureGeojsonRoutes()
+	configureDynProxyRoutes()
+	// NoRoute fallback dispatches dynamically-registered proxies. Static
+	// Gin routes always win because they are matched first.
+	Router.NoRoute(controllers.DynProxyNoRoute)
 }
 
 func configureAuthRoutes() {
@@ -221,6 +226,39 @@ func configureAgentRoutes() {
 		agentRoutes.GET("/parking-bbox", controllers.AgentParkingByBBox)
 		agentRoutes.POST("/youbike-bbox", controllers.AgentYoubikeByBBox)
 		agentRoutes.GET("/youbike-bbox", controllers.AgentYoubikeByBBox)
+	}
+}
+
+// configureGeojsonRoutes serves on-demand GeoJSON FeatureCollections assembled
+// from ready_data PostGIS tables. Used by FE map_config rows whose `source`
+// is `be_geojson`. The path index is whitelisted against component_maps to
+// prevent arbitrary table reads.
+//
+//	GET /api/v1/geojson/:index
+func configureGeojsonRoutes() {
+	geojsonRoutes := RouterGroup.Group("/geojson")
+	geojsonRoutes.Use(middleware.LimitAPIRequests(global.ComponentLimitAPIRequestsTimes, global.LimitRequestsDuration))
+	geojsonRoutes.Use(middleware.LimitTotalRequests(global.ComponentLimitTotalRequestsTimes, global.LimitRequestsDuration))
+	{
+		geojsonRoutes.GET("/:index", controllers.GetGeojsonByIndex)
+	}
+}
+
+// configureDynProxyRoutes wires the generic runtime-registered reverse proxy
+// control endpoints. The proxy itself is dispatched from Router.NoRoute so
+// any statically-registered Gin route always takes priority on collision.
+//
+//	POST /api/v1/proxy/register  -> verify + register a downstream service
+//	POST /api/v1/proxy/detach    -> remove a registered entry by name
+//	GET  /api/v1/proxy/list      -> list registered entries
+func configureDynProxyRoutes() {
+	proxyRoutes := RouterGroup.Group("/proxy")
+	proxyRoutes.Use(middleware.LimitAPIRequests(global.ComponentLimitAPIRequestsTimes, global.LimitRequestsDuration))
+	proxyRoutes.Use(middleware.LimitTotalRequests(global.ComponentLimitTotalRequestsTimes, global.LimitRequestsDuration))
+	{
+		proxyRoutes.POST("/register", controllers.DynProxyRegister)
+		proxyRoutes.POST("/detach", controllers.DynProxyDetach)
+		proxyRoutes.GET("/list", controllers.DynProxyList)
 	}
 }
 
