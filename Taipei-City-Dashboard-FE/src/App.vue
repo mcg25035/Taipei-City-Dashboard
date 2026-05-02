@@ -347,7 +347,7 @@ onBeforeUnmount(() => {
 
 	.chatbox {
 		width: 400px;
-		height: 500px;
+		height: 800px;
 		margin-bottom: 35px;
 	}
 
