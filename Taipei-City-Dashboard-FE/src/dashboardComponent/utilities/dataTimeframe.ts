@@ -2,7 +2,7 @@
 export function getComponentDataTimeframe(
 	time_from: string,
 	time_to: string,
-	api: boolean
+	api: boolean,
 ): { timefrom: string; timeto: string } {
 	const tzoffset = new Date().getTimezoneOffset() * 60000;
 	const nowTimeFrom = new Date(Date.now());
@@ -20,7 +20,7 @@ export function getComponentDataTimeframe(
 			case "week":
 				nowTimeFrom.setHours(0, 0, 0, 0);
 				nowTimeFrom.setDate(
-					nowTimeFrom.getDate() - nowTimeFrom.getDay() + 1
+					nowTimeFrom.getDate() - nowTimeFrom.getDay() + 1,
 				);
 				break;
 			case "month":

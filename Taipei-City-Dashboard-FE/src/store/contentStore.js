@@ -14,7 +14,11 @@ import http from "../router/axios";
 import router from "../router/index";
 import { useDialogStore } from "./dialogStore";
 import { useAuthStore } from "./authStore";
-import { fetchChartData, fetchHistoryData, fetchComponentData } from "../assets/utilityFunctions/componentDataFetcher";
+import {
+	fetchChartData,
+	fetchHistoryData,
+	fetchComponentData,
+} from "../assets/utilityFunctions/componentDataFetcher";
 import { CityManager } from "../dashboardComponent/utilities/cityManager";
 
 export const useContentStore = defineStore("content", {
@@ -158,11 +162,11 @@ export const useContentStore = defineStore("content", {
 						this.dashboards.set(key, []);
 					}
 				}
-		});
+			});
 
-		if (onlyDashboard) return;
+			if (onlyDashboard) return;
 
-		// 2-1. If the current path is /dashboard or /mapview, redirect to the first dashboard
+			// 2-1. If the current path is /dashboard or /mapview, redirect to the first dashboard
 			if (!this.currentDashboard.index) {
 				// Find the first available dashboard
 				let firstCity = null;
@@ -281,7 +285,9 @@ export const useContentStore = defineStore("content", {
 				) {
 					const component = this.cityDashboard.components[index];
 					try {
-						await fetchChartData(this.cityDashboard.components[index]);
+						await fetchChartData(
+							this.cityDashboard.components[index],
+						);
 					} catch (error) {
 						console.error(
 							`Failed to fetch chart data for component ${component.id}:`,
@@ -304,7 +310,8 @@ export const useContentStore = defineStore("content", {
 							`Failed to fetch history data for component ${component.id}:`,
 							error,
 						);
-						if (!component.history_data) component.history_data = [];
+						if (!component.history_data)
+							component.history_data = [];
 						component.history_data.push([]);
 					}
 				}
@@ -333,7 +340,9 @@ export const useContentStore = defineStore("content", {
 						continue;
 					}
 					try {
-						await fetchChartData(this.cityDashboard.components[index]);
+						await fetchChartData(
+							this.cityDashboard.components[index],
+						);
 					} catch (error) {
 						console.error(
 							`Failed to fetch chart data for component ${component.id}:`,
@@ -363,7 +372,8 @@ export const useContentStore = defineStore("content", {
 							`Failed to fetch history data for component ${component.id}:`,
 							error,
 						);
-						if (!component.history_data) component.history_data = [];
+						if (!component.history_data)
+							component.history_data = [];
 						component.history_data.push([]);
 					}
 				}
@@ -391,7 +401,9 @@ export const useContentStore = defineStore("content", {
 						continue;
 					}
 					try {
-						await fetchChartData(this.cityDashboard.components[index]);
+						await fetchChartData(
+							this.cityDashboard.components[index],
+						);
 					} catch (error) {
 						console.error(
 							`Failed to fetch chart data for component ${component.id}:`,
@@ -421,7 +433,8 @@ export const useContentStore = defineStore("content", {
 							`Failed to fetch history data for component ${component.id}:`,
 							error,
 						);
-						if (!component.history_data) component.history_data = [];
+						if (!component.history_data)
+							component.history_data = [];
 						component.history_data.push([]);
 					}
 				}

@@ -1,5 +1,3 @@
- 
-
 // Developed by Taipei Urban Intelligence Center 2023-2024
 
 /* adminStore */
@@ -78,11 +76,12 @@ export const useAdminStore = defineStore("admin", {
 		// 2. Get current dashboard components
 		async getCurrentDashboardComponents() {
 			const response = await http.get(
-				`/dashboard/${this.currentDashboard.index}`, {
+				`/dashboard/${this.currentDashboard.index}`,
+				{
 					params: {
 						city: this.currentCity,
-					}
-				}
+					},
+				},
 			);
 			this.currentDashboard.components = response.data.data;
 			this.setLoading(false);
@@ -99,7 +98,7 @@ export const useAdminStore = defineStore("admin", {
 			await http.post(`/dashboard/public`, dashboard, {
 				params: {
 					city: this.currentCity,
-				}
+				},
 			});
 			this.getDashboards();
 			dialogStore.showNotification("success", "公開儀表板新增成功");
@@ -148,16 +147,17 @@ export const useAdminStore = defineStore("admin", {
 				{
 					params: {
 						city: component.city,
-						...(!["static", "current", "demo"].includes(component.time_from)
-							? getComponentDataTimeframe(
-								component.time_from,
-								component.time_to,
-								true
-							  )
-							: {}
+						...(!["static", "current", "demo"].includes(
+							component.time_from,
 						)
-					}
-				}
+							? getComponentDataTimeframe(
+									component.time_from,
+									component.time_to,
+									true,
+								)
+							: {}),
+					},
+				},
 			);
 			this.currentComponent.chart_data = response.data.data;
 			if (response.data.categories) {
@@ -176,10 +176,10 @@ export const useAdminStore = defineStore("admin", {
 								...getComponentDataTimeframe(
 									component.history_config.range[i],
 									"now",
-									true
-								)
+									true,
+								),
 							},
-						}
+						},
 					);
 					if (i === "0") {
 						this.currentComponent.history_data = [];
@@ -205,12 +205,12 @@ export const useAdminStore = defineStore("admin", {
 					map_config.paint = JSON.stringify(
 						map_config.paint,
 						undefined,
-						2
+						2,
 					);
 					map_config.property = JSON.stringify(
 						map_config.property,
 						undefined,
-						2
+						2,
 					);
 				});
 			}
@@ -218,7 +218,7 @@ export const useAdminStore = defineStore("admin", {
 				this.currentComponent.map_filter = JSON.stringify(
 					this.currentComponent.map_filter,
 					undefined,
-					2
+					2,
 				);
 			}
 			this.setLoading(false);
@@ -233,11 +233,11 @@ export const useAdminStore = defineStore("admin", {
 			delete this.currentComponent.chart_config.categories;
 
 			const chart_config = JSON.parse(
-				JSON.stringify(this.currentComponent.chart_config)
+				JSON.stringify(this.currentComponent.chart_config),
 			);
 			if (this.currentComponent.map_filter !== null) {
 				this.currentComponent.map_filter = JSON.parse(
-					this.currentComponent.map_filter
+					this.currentComponent.map_filter,
 				);
 			}
 
@@ -248,7 +248,7 @@ export const useAdminStore = defineStore("admin", {
 				});
 			}
 			const map_config = JSON.parse(
-				JSON.stringify(this.currentComponent.map_config)
+				JSON.stringify(this.currentComponent.map_config),
 			);
 
 			delete this.currentComponent.chart_config;
@@ -257,7 +257,7 @@ export const useAdminStore = defineStore("admin", {
 			const componentId = this.currentComponent.id;
 			const componentCity = this.currentComponent.city;
 			const component_config = JSON.parse(
-				JSON.stringify(this.currentComponent)
+				JSON.stringify(this.currentComponent),
 			);
 			// 3.2 Update component chart config
 			await http.patch(`/component/${componentId}/chart`, chart_config);
@@ -265,8 +265,8 @@ export const useAdminStore = defineStore("admin", {
 			// 3.3 Update component component config (incl. history config)
 			await http.patch(`/component/${componentId}`, component_config, {
 				params: {
-					city: componentCity
-				}
+					city: componentCity,
+				},
 			});
 
 			// 3.4 Update component map config
@@ -274,7 +274,7 @@ export const useAdminStore = defineStore("admin", {
 				for (let i = 0; i < map_config.length; i++) {
 					await http.patch(
 						`/component/${map_config[i].id}/map`,
-						map_config[i]
+						map_config[i],
 					);
 				}
 			}
@@ -393,12 +393,12 @@ export const useAdminStore = defineStore("admin", {
 			const dialogStore = useDialogStore();
 			const contentStore = useContentStore();
 			const editedContributor = JSON.parse(
-				JSON.stringify(this.currentContributor)
+				JSON.stringify(this.currentContributor),
 			);
 
 			await http.patch(
 				`/contributor/${this.currentContributor.id}`,
-				editedContributor
+				editedContributor,
 			);
 			dialogStore.showNotification("success", "貢獻者更新成功");
 			this.getContributors(params);
@@ -411,7 +411,7 @@ export const useAdminStore = defineStore("admin", {
 			const dialogStore = useDialogStore();
 			const contentStore = useContentStore();
 			const contributor = JSON.parse(
-				JSON.stringify(this.currentContributor)
+				JSON.stringify(this.currentContributor),
 			);
 
 			await http.post(`/contributor/`, contributor);

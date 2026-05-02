@@ -19,8 +19,8 @@ const dialogStore = useDialogStore();
 const mapStore = useMapStore();
 const { onEvent } = useAgentEvent();
 
-onEvent('show_component', (component) => {
-  contentStore.addAiSearchedComponent(component);
+onEvent("show_component", (component) => {
+	contentStore.addAiSearchedComponent(component);
 });
 
 const toggleOn = ref({
@@ -42,7 +42,10 @@ const parseMapLayers = computed(() => {
 function handleToggle(value, map_config) {
 	if (!map_config[0]) {
 		if (value) {
-			dialogStore.showNotification("info", "本組件沒有空間資料，不會渲染地圖");
+			dialogStore.showNotification(
+				"info",
+				"本組件沒有空間資料，不會渲染地圖",
+			);
 		}
 		return;
 	}
@@ -63,7 +66,10 @@ function shouldDisable(map_config) {
 		(el) => `${el.index}-${el.type}-${el.city}`,
 	);
 	if (mapStore.isPreloading === true) return true;
-	return mapStore.loadingLayers.filter((el) => allMapLayerIds.includes(el)).length > 0;
+	return (
+		mapStore.loadingLayers.filter((el) => allMapLayerIds.includes(el))
+			.length > 0
+	);
 }
 
 function popularThematicLayerGA(map_config) {
@@ -79,126 +85,159 @@ function popularThematicLayerGA(map_config) {
 </script>
 
 <template>
-  <div class="aitour">
-    <div class="aitour-map">
-      <div class="hide-if-mobile">
-        <!-- 1. AI searched components -->
-        <div
-          v-if="contentStore.aiSearchedComponents.length !== 0"
-          class="map-charts"
-        >
-          <DashboardComponent
-            v-for="(item, arrayIdx) in parseMapLayers.hasMap"
-            :key="`map-layer-${item.index}-${item.city}`"
-            :config="item"
-            mode="map"
-            :active-city="item.city"
-            :select-btn="true"
-            :select-btn-disabled="
-              contentStore.cityManager.getSelectList(item.city).length === 1
-            "
-            :select-btn-list="
-              contentStore.cityManager.getSelectList(item.city)
-            "
-            :city-tag="contentStore.cityManager.getTagList(item.city)"
-            :toggle-disable="shouldDisable(item.map_config)"
-            :toggle-on="toggleOn.hasMap[arrayIdx]"
-            @toggle="
-              (value, map_config) => {
-                handleToggle(value, map_config);
-                toggleSwitchBtn(value, 'hasMap', arrayIdx);
-                popularThematicLayerGA(map_config);
-              }
-            "
-            @filter-by-param="
-              (map_filter, map_config, x, y) =>
-                mapStore.filterByParam(map_filter, map_config, x, y)
-            "
-            @filter-by-layer="
-              (map_config, layer) => mapStore.filterByLayer(map_config, layer)
-            "
-            @clear-by-param-filter="
-              (map_config) => mapStore.clearByParamFilter(map_config)
-            "
-            @clear-by-layer-filter="
-              (map_config) => mapStore.clearByLayerFilter(map_config)
-            "
-            @fly="(location) => mapStore.flyToLocation(location)"
-            @change-city="
-              (city) => {
-                const selectedData = contentStore.aiSearchedComponents.find(
-                  (data) => data.index === item.index && data.city === city,
-                );
-                const componentIndex =
-                  contentStore.aiSearchedComponents.findIndex(
-                    (data) => data.index === item.index && data.city === item.city,
-                  );
-                if (selectedData && componentIndex !== -1) {
-                  mapStore.clearByParamFilter(item.map_config);
-                  mapStore.turnOffMapLayerVisibility(item.map_config);
-                  mapStore.addToMapLayerList(selectedData.map_config);
-                  contentStore.setAiSearchedComponentData(componentIndex, selectedData);
-                }
-              }
-            "
-          />
-          <h2 v-if="parseMapLayers.noMap?.length > 0">
-            無空間資料組件
-          </h2>
-          <DashboardComponent
-            v-for="(item, arrayIdx) in parseMapLayers.noMap"
-            :key="`map-layer-${item.index}-${item.city}`"
-            :config="item"
-            mode="map"
-            :active-city="item.city"
-            :select-btn="true"
-            :select-btn-disabled="
-              contentStore.cityManager.getSelectList(item.city).length === 1
-            "
-            :select-btn-list="
-              contentStore.cityManager.getSelectList(item.city)
-            "
-            :city-tag="contentStore.cityManager.getTagList(item.city)"
-            :toggle-on="toggleOn.noMap[arrayIdx]"
-            @toggle="
-              (value, map_config) => {
-                handleToggle(value, map_config);
-                toggleSwitchBtn(value, 'noMap', arrayIdx);
-              }
-            "
-            @change-city="
-              (city) => {
-                const selectedData = contentStore.aiSearchedComponents.find(
-                  (data) => data.index === item.index && data.city === city,
-                );
-                const componentIndex =
-                  contentStore.aiSearchedComponents.findIndex(
-                    (data) => data.index === item.index && data.city === item.city,
-                  );
-                if (selectedData && componentIndex !== -1) {
-                  contentStore.setAiSearchedComponentData(componentIndex, selectedData);
-                }
-              }
-            "
-          />
-        </div>
-        <!-- 2. Empty -->
-        <div
-          v-else
-          class="map-charts-nodashboard"
-        >
-          <span>smart_toy</span>
-          <h2>請透過 AI 查詢以顯示組件</h2>
-        </div>
-      </div>
-      <MapContainer />
-      <MoreInfo />
-      <ReportIssue />
-    </div>
-    <div class="aitour-chat">
-      <ChatBox />
-    </div>
-  </div>
+	<div class="aitour">
+		<div class="aitour-map">
+			<div class="hide-if-mobile">
+				<!-- 1. AI searched components -->
+				<div
+					v-if="contentStore.aiSearchedComponents.length !== 0"
+					class="map-charts"
+				>
+					<DashboardComponent
+						v-for="(item, arrayIdx) in parseMapLayers.hasMap"
+						:key="`map-layer-${item.index}-${item.city}`"
+						:config="item"
+						mode="map"
+						:active-city="item.city"
+						:select-btn="true"
+						:select-btn-disabled="
+							contentStore.cityManager.getSelectList(item.city)
+								.length === 1
+						"
+						:select-btn-list="
+							contentStore.cityManager.getSelectList(item.city)
+						"
+						:city-tag="
+							contentStore.cityManager.getTagList(item.city)
+						"
+						:toggle-disable="shouldDisable(item.map_config)"
+						:toggle-on="toggleOn.hasMap[arrayIdx]"
+						@toggle="
+							(value, map_config) => {
+								handleToggle(value, map_config);
+								toggleSwitchBtn(value, 'hasMap', arrayIdx);
+								popularThematicLayerGA(map_config);
+							}
+						"
+						@filter-by-param="
+							(map_filter, map_config, x, y) =>
+								mapStore.filterByParam(
+									map_filter,
+									map_config,
+									x,
+									y,
+								)
+						"
+						@filter-by-layer="
+							(map_config, layer) =>
+								mapStore.filterByLayer(map_config, layer)
+						"
+						@clear-by-param-filter="
+							(map_config) =>
+								mapStore.clearByParamFilter(map_config)
+						"
+						@clear-by-layer-filter="
+							(map_config) =>
+								mapStore.clearByLayerFilter(map_config)
+						"
+						@fly="(location) => mapStore.flyToLocation(location)"
+						@change-city="
+							(city) => {
+								const selectedData =
+									contentStore.aiSearchedComponents.find(
+										(data) =>
+											data.index === item.index &&
+											data.city === city,
+									);
+								const componentIndex =
+									contentStore.aiSearchedComponents.findIndex(
+										(data) =>
+											data.index === item.index &&
+											data.city === item.city,
+									);
+								if (selectedData && componentIndex !== -1) {
+									mapStore.clearByParamFilter(
+										item.map_config,
+									);
+									mapStore.turnOffMapLayerVisibility(
+										item.map_config,
+									);
+									mapStore.addToMapLayerList(
+										selectedData.map_config,
+									);
+									contentStore.setAiSearchedComponentData(
+										componentIndex,
+										selectedData,
+									);
+								}
+							}
+						"
+					/>
+					<h2 v-if="parseMapLayers.noMap?.length > 0">
+						無空間資料組件
+					</h2>
+					<DashboardComponent
+						v-for="(item, arrayIdx) in parseMapLayers.noMap"
+						:key="`map-layer-${item.index}-${item.city}`"
+						:config="item"
+						mode="map"
+						:active-city="item.city"
+						:select-btn="true"
+						:select-btn-disabled="
+							contentStore.cityManager.getSelectList(item.city)
+								.length === 1
+						"
+						:select-btn-list="
+							contentStore.cityManager.getSelectList(item.city)
+						"
+						:city-tag="
+							contentStore.cityManager.getTagList(item.city)
+						"
+						:toggle-on="toggleOn.noMap[arrayIdx]"
+						@toggle="
+							(value, map_config) => {
+								handleToggle(value, map_config);
+								toggleSwitchBtn(value, 'noMap', arrayIdx);
+							}
+						"
+						@change-city="
+							(city) => {
+								const selectedData =
+									contentStore.aiSearchedComponents.find(
+										(data) =>
+											data.index === item.index &&
+											data.city === city,
+									);
+								const componentIndex =
+									contentStore.aiSearchedComponents.findIndex(
+										(data) =>
+											data.index === item.index &&
+											data.city === item.city,
+									);
+								if (selectedData && componentIndex !== -1) {
+									contentStore.setAiSearchedComponentData(
+										componentIndex,
+										selectedData,
+									);
+								}
+							}
+						"
+					/>
+				</div>
+				<!-- 2. Empty -->
+				<div v-else class="map-charts-nodashboard">
+					<span>smart_toy</span>
+					<h2>請透過 AI 查詢以顯示組件</h2>
+				</div>
+			</div>
+			<MapContainer />
+			<MoreInfo />
+			<ReportIssue />
+		</div>
+		<div class="aitour-chat">
+			<ChatBox />
+		</div>
+	</div>
 </template>
 
 <style scoped lang="scss">

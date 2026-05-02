@@ -106,7 +106,10 @@ function decorateGeoJson(map_config, data) {
 		...data,
 		features: data.features.map((f) => ({
 			...f,
-			properties: { ...(f.properties || {}), ...decorate(f.properties || {}) },
+			properties: {
+				...(f.properties || {}),
+				...decorate(f.properties || {}),
+			},
 		})),
 	};
 }
@@ -870,15 +873,15 @@ export const useMapStore = defineStore("map", {
 			const layers = Object.keys(this.deckGlLayer).map((index) => {
 				const l = this.deckGlLayer[index];
 				switch (l.type) {
-				case "ArcLayer":
-					return new ArcLayer(l.config);
-				case "AnimatedArcLayer":
-					return new AnimatedArcLayer({
-						...l.config,
-						coef: this.step / 1000,
-					});
-				default:
-					break;
+					case "ArcLayer":
+						return new ArcLayer(l.config);
+					case "AnimatedArcLayer":
+						return new AnimatedArcLayer({
+							...l.config,
+							coef: this.step / 1000,
+						});
+					default:
+						break;
 				}
 			});
 			this.overlay.setProps({

@@ -31,19 +31,19 @@ function handleNewQuery() {
 	contentStore.getAllComponents(searchParams.value);
 }
 
-function toggleFavorite(id,name,city) {
+function toggleFavorite(id, name, city) {
 	if (contentStore.favorites.components.includes(id)) {
 		contentStore.unfavoriteComponent(id);
 	} else {
 		contentStore.favoriteComponent(id);
 		// 成功收藏組件時觸發GA自訂事件
 		if (city && name) {
-			gtag('event','popular_component', {
-				dashboard_city:city,
-				component_name:name,
-				city_component:`${city}-${name}`,
+			gtag("event", "popular_component", {
+				dashboard_city: city,
+				component_name: name,
+				city_component: `${city}-${name}`,
 				time: Date.now(),
-  			})
+			});
 		}
 	}
 }
@@ -54,101 +54,94 @@ onMounted(() => {
 </script>
 
 <template>
-  <!-- Search Bar that is always present -->
-  <div class="componentview-search">
-    <div>
-      <input
-        v-model="searchParams.searchbyname"
-        placeholder="以名稱搜尋"
-        @keypress.enter="handleNewQuery"
-      >
-      <span
-        v-if="searchParams.searchbyname !== ''"
-        @click="
-          () => {
-            searchParams.searchbyname = '';
-            handleNewQuery();
-          }
-        "
-      >cancel</span>
-    </div>
-    <button @click="handleNewQuery">
-      搜尋
-    </button>
-  </div>
-  <!-- 1. If the components are loaded -->
-  <div
-    v-if="contentStore.components.length !== 0"
-    class="componentview"
-  >
-    <DashboardComponent
-      v-for="item in contentStore.components"
-      :key="item.index"
-      :config="item"
-      mode="preview"
-      :info-btn="true"
-      :add-btn="
-        !contentStore.editDashboard.components
-          .map((item) => item.id)
-          .includes(item.id)
-      "
-      :city-tag="contentStore.cityManager.getTagList(item.city)"
-      :favorite-btn="true"
-      :is-favorite="contentStore.favorites?.components.includes(item.id)"
-      info-btn-text="資訊頁面"
-      @info="
-        (item) => {
-          router.push({
-            name: 'component-info',
-            params: { index: item.index },
-          });
-        }
-      "
-      @add="
-        (id, name) => {
-          contentStore.editDashboard.components.push({
-            id,
-            name,
-          });
-        }
-      "
-      @favorite="
-        (id) => {
-          toggleFavorite(id,item.name,item.city);
-        }
-      "
-    />
-  </div>
-  <!-- 2. If the components are still loading -->
-  <div
-    v-else-if="contentStore.loading"
-    class="componentview componentview-nodashboard"
-  >
-    <div class="componentview-nodashboard-content">
-      <div />
-    </div>
-  </div>
-  <!-- 3. If there is an error during loading -->
-  <div
-    v-else-if="contentStore.error"
-    class="componentview componentview-nodashboard"
-  >
-    <div class="componentview-nodashboard-content">
-      <span>sentiment_very_dissatisfied</span>
-      <h2>發生錯誤，無法載入</h2>
-    </div>
-  </div>
-  <!-- 4. If there are no components -->
-  <div
-    v-else
-    class="componentview componentview-nodashboard"
-  >
-    <div class="componentview-nodashboard-content">
-      <span>search_off</span>
-      <h2>查無組件</h2>
-      <p>請重新搜尋或更改篩選條件</p>
-    </div>
-  </div>
+	<!-- Search Bar that is always present -->
+	<div class="componentview-search">
+		<div>
+			<input
+				v-model="searchParams.searchbyname"
+				placeholder="以名稱搜尋"
+				@keypress.enter="handleNewQuery"
+			/>
+			<span
+				v-if="searchParams.searchbyname !== ''"
+				@click="
+					() => {
+						searchParams.searchbyname = '';
+						handleNewQuery();
+					}
+				"
+				>cancel</span
+			>
+		</div>
+		<button @click="handleNewQuery">搜尋</button>
+	</div>
+	<!-- 1. If the components are loaded -->
+	<div v-if="contentStore.components.length !== 0" class="componentview">
+		<DashboardComponent
+			v-for="item in contentStore.components"
+			:key="item.index"
+			:config="item"
+			mode="preview"
+			:info-btn="true"
+			:add-btn="
+				!contentStore.editDashboard.components
+					.map((item) => item.id)
+					.includes(item.id)
+			"
+			:city-tag="contentStore.cityManager.getTagList(item.city)"
+			:favorite-btn="true"
+			:is-favorite="contentStore.favorites?.components.includes(item.id)"
+			info-btn-text="資訊頁面"
+			@info="
+				(item) => {
+					router.push({
+						name: 'component-info',
+						params: { index: item.index },
+					});
+				}
+			"
+			@add="
+				(id, name) => {
+					contentStore.editDashboard.components.push({
+						id,
+						name,
+					});
+				}
+			"
+			@favorite="
+				(id) => {
+					toggleFavorite(id, item.name, item.city);
+				}
+			"
+		/>
+	</div>
+	<!-- 2. If the components are still loading -->
+	<div
+		v-else-if="contentStore.loading"
+		class="componentview componentview-nodashboard"
+	>
+		<div class="componentview-nodashboard-content">
+			<div />
+		</div>
+	</div>
+	<!-- 3. If there is an error during loading -->
+	<div
+		v-else-if="contentStore.error"
+		class="componentview componentview-nodashboard"
+	>
+		<div class="componentview-nodashboard-content">
+			<span>sentiment_very_dissatisfied</span>
+			<h2>發生錯誤，無法載入</h2>
+		</div>
+	</div>
+	<!-- 4. If there are no components -->
+	<div v-else class="componentview componentview-nodashboard">
+		<div class="componentview-nodashboard-content">
+			<span>search_off</span>
+			<h2>查無組件</h2>
+			<p>請重新搜尋或更改篩選條件</p>
+		</div>
+	</div>
 </template>
 
 <style scoped lang="scss">

@@ -127,9 +127,13 @@ router.beforeEach((to) => {
 	const authStore = useAuthStore();
 	if (authStore.isMobileDevice && authStore.isNarrowDevice) {
 		if (
-			!["dashboard", "component-info", "callback", "embed", "mapview"].includes(
-				to.name
-			)
+			![
+				"dashboard",
+				"component-info",
+				"callback",
+				"embed",
+				"mapview",
+			].includes(to.name)
 		) {
 			router.push("/dashboard");
 		}
@@ -202,9 +206,7 @@ router.beforeEach((to) => {
 // Handles admin related tasks (gets content for each route)
 router.beforeEach((to) => {
 	const adminStore = useAdminStore();
-	if (
-		to.path.toLowerCase() === "/admin/dashboard"
-	) {
+	if (to.path.toLowerCase() === "/admin/dashboard") {
 		adminStore.setRouteParams(to.query.city);
 	}
 });
