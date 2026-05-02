@@ -19,8 +19,8 @@ const dialogStore = useDialogStore();
 const mapStore = useMapStore();
 const { onEvent } = useAgentEvent();
 
-onEvent("add_card_in_chat", (component) => {
-	contentStore.addAiSearchedComponent(component);
+onEvent("add_component", (params) => {
+	contentStore.addAiSearchedComponent(params.data.component);
 });
 
 const toggleOn = ref({
