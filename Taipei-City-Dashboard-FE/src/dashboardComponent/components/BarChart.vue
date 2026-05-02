@@ -20,7 +20,27 @@ const emits = defineEmits([
 	"fly",
 ]);
 
-const chartOptions = ref({
+const proportionalColors = computed(() => {
+	const palette = props.chart_config.color ?? [];
+	const data = props.series?.[0]?.data ?? [];
+	if (palette.length === 0 || data.length === 0) {
+		return [...palette];
+	}
+	const min = Math.min(...data);
+	const max = Math.max(...data);
+	const range = max - min;
+	const n = palette.length;
+	if (range === 0) {
+		return data.map(() => palette[0]);
+	}
+	return data.map((value) => {
+		const ratio = (value - min) / range;
+		const idx = Math.min(Math.floor(ratio * n), n - 1);
+		return palette[idx];
+	});
+});
+
+const chartOptions = computed(() => ({
 	chart: {
 		offsetY: 15,
 		stacked: true,
@@ -28,7 +48,7 @@ const chartOptions = ref({
 			show: false,
 		},
 	},
-	colors: [...props.chart_config.color],
+	colors: proportionalColors.value,
 	dataLabels: {
 		offsetX: 20,
 		textAnchor: "start",
@@ -90,7 +110,7 @@ const chartOptions = ref({
 			},
 		},
 	},
-});
+}));
 
 const chartHeight = computed(() => {
 	return `${40 + props.series[0].data.length * 30}`;
