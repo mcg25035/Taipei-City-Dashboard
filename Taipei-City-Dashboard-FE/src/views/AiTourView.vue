@@ -76,17 +76,6 @@ function popularThematicLayerGA(map_config) {
 		});
 	}
 }
-
-function popularBasicLayerGA(map_config) {
-	if (map_config[0].city && map_config[0].title) {
-		gtag("event", "popular_basic_layer", {
-			dashboard_city: map_config[0].city,
-			layer_name: map_config[0].title,
-			city_layer: `${map_config[0].city}-${map_config[0].title}`,
-			time: Date.now(),
-		});
-	}
-}
 </script>
 
 <template>
@@ -103,7 +92,6 @@ function popularBasicLayerGA(map_config) {
             :key="`map-layer-${item.index}-${item.city}`"
             :config="item"
             mode="map"
-            :info-btn="true"
             :active-city="item.city"
             :select-btn="true"
             :select-btn-disabled="
@@ -115,7 +103,6 @@ function popularBasicLayerGA(map_config) {
             :city-tag="contentStore.cityManager.getTagList(item.city)"
             :toggle-disable="shouldDisable(item.map_config)"
             :toggle-on="toggleOn.hasMap[arrayIdx]"
-            @info="(item) => dialogStore.showMoreInfo(item)"
             @toggle="
               (value, map_config) => {
                 handleToggle(value, map_config);
@@ -163,7 +150,6 @@ function popularBasicLayerGA(map_config) {
             :key="`map-layer-${item.index}-${item.city}`"
             :config="item"
             mode="map"
-            :info-btn="true"
             :active-city="item.city"
             :select-btn="true"
             :select-btn-disabled="
@@ -174,7 +160,6 @@ function popularBasicLayerGA(map_config) {
             "
             :city-tag="contentStore.cityManager.getTagList(item.city)"
             :toggle-on="toggleOn.noMap[arrayIdx]"
-            @info="(item) => dialogStore.showMoreInfo(item)"
             @toggle="
               (value, map_config) => {
                 handleToggle(value, map_config);
@@ -290,7 +275,7 @@ function popularBasicLayerGA(map_config) {
 	}
 
 	&-chat {
-		width: 400px;
+		width: 450px;
 		height: 100%;
 		display: flex;
 		flex-direction: column;

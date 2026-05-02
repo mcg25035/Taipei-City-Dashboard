@@ -168,38 +168,26 @@ watch(
                 🔧 已使用工具分析
               </div>
             </div>
-            <!-- add_component 完整組件渲染 -->
-            <DashboardComponent
-              v-if="chat.componentData"
-              :config="chat.componentData"
-              mode="default"
-              :footer="false"
-            />
-            <!-- 圖表渲染區 -->
-            <DashboardComponent
-              v-if="chat.chartRender"
-              :config="{
-                name: '',
-                index: `chat-chart-${chat.id}`,
-                source: '',
-                time_from: 'static',
-                time_to: null,
-                update_freq: null,
-                update_freq_unit: null,
-                short_desc: '',
-                history_config: null,
-                map_config: null,
-                map_filter: null,
-                chart_config: {
-                  color: chat.chartRender.config?.color ?? ['#4fc1e9'],
-                  types: [chat.chartRender.chartType],
-                  unit: chat.chartRender.config?.unit ?? null,
-                  categories: chat.chartRender.config?.categories ?? null,
-                },
-                chart_data: chat.chartRender.data,
-              }"
-              mode="default"
-              :footer="false"
+			<DashboardComponent
+				v-if="chat.componentData"
+				:key="`component-${chat.componentData.index}-${chat.componentData.city}`"
+				:config="chat.componentData"
+				mode="default"
+				:active-city="chat.componentData.city"
+				:select-btn="true"
+				:select-btn-disabled="contentStore.cityManager.getSelectList(chat.componentData.city).length === 1"
+				:select-btn-list="contentStore.cityManager.getSelectList(chat.componentData.city)"
+				:city-tag="contentStore.cityManager.getTagList(chat.componentData.city)"
+				@change-city="
+				(city) => {
+					const selectedData = contentStore.aiSearchedComponents.find(
+					(data) => data.index === chat.componentData.index && data.city === city,
+					);
+					if (selectedData) {
+						chat.componentData = selectedData
+					}
+				}
+				"
             />
             <!-- 表格區 -->
             <div
@@ -325,7 +313,7 @@ $radius-20: 20px;
 
 /* === 主要樣式 === */
 .chat-widget {
-	width: 400px;
+	width: 100%;
 	border-radius: $radius-20;
 	overflow: hidden;
 	background: $bg-dark;
@@ -419,6 +407,7 @@ $radius-20: 20px;
 				}
 
 				.content {
+					flex: 1;
 					display: flex;
 					flex-direction: column;
 					gap: 0.5rem;
