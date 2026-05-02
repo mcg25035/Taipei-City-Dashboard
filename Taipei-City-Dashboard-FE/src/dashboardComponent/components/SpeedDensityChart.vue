@@ -13,9 +13,9 @@ const props = defineProps([
 const mapStore = useMapStore();
 
 const STOPS = [
-	{ speed: 10, color: "#660080" },
+	{ speed: 10, color: "#c5d4fa" },
 	{ speed: 30, color: "#829cf5" },
-	{ speed: 50, color: "#c5d4fa" },
+	{ speed: 50, color: "#660080" },
 ];
 const SPEED_MIN = 0;
 const SPEED_MAX = 60;
