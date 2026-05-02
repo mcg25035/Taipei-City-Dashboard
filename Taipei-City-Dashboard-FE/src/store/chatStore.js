@@ -392,22 +392,6 @@ export const useChatStore = defineStore("chat", () => {
 		}
 	};
 
-	const clearSession = async () => {
-		if (!sessionId.value) return;
-		try {
-			const http = (await import("../router/axios")).default;
-			await http.delete(`/api/dev/chat/session/${sessionId.value}`);
-		} catch (error) {
-			console.error("clearSession error:", error);
-		} finally {
-			sessionId.value = null;
-			chatData.value = [...defaultChatData];
-			messageHistory.value = [];
-			sessionStorage.removeItem("chatData");
-			sessionStorage.removeItem("messageHistory");
-		}
-	};
-
 	const consumeFrontendAction = (id) => {
 		frontendActions.value = frontendActions.value.filter(
 			(a) => a.id !== id,
@@ -443,7 +427,6 @@ export const useChatStore = defineStore("chat", () => {
 		attachments,
 		addChatData,
 		addQueryData,
-		clearSession,
 		saveChatLog,
 		consumeFrontendAction,
 	};
