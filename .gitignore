@@ -55,6 +55,9 @@ Taipei-City-Dashboard-FE/.env.development
 Taipei-City-Dashboard-FE/.env.production
 Taipei-City-Dashboard-FE/.env.test
 
+# lock files
+Taipei-City-Dashboard-FE/yarn.lock
+
 # docker-compose
 # db data
 docker/db-data
