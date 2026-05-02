@@ -75,28 +75,11 @@ watch(
 );
 
 onMounted(() => {
-	const geoLocate = mapStore.initializeMapBox();
+	mapStore.initializeMapBox();
 	mapStore.setCurrentLocation();
 	route.query.city
 		? mapStore.updateMapViewForCity(route.query.city)
 		: mapStore.updateMapViewForCity("taipei");
-
-	geoLocate.on("geolocate", (position) => {
-		if (route.name !== "ai-tour") return;
-		const { longitude: lng, latitude: lat } = position.coords;
-		const idx = chatStore.attachments.findIndex(
-			(a) => a.type === "current-location",
-		);
-		if (idx !== -1) chatStore.attachments.splice(idx, 1);
-		chatStore.attachments.push({ type: "current-location", lng, lat });
-	});
-
-	geoLocate.on("trackuserlocationend", () => {
-		const idx = chatStore.attachments.findIndex(
-			(a) => a.type === "current-location",
-		);
-		if (idx !== -1) chatStore.attachments.splice(idx, 1);
-	});
 
 	mapStore.map.on("dblclick", (event) => {
 		if (route.name === "ai-tour") {
