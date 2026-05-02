@@ -71,7 +71,7 @@ watch(
 	(newValue) => {
 		newValue
 			? mapStore.updateMapViewForCity(newValue)
-			: mapStore.updateMapViewForCity("default");
+			: mapStore.updateMapViewForCity("taipei");
 	},
 );
 
@@ -80,7 +80,7 @@ onMounted(() => {
 	mapStore.setCurrentLocation();
 	route.query.city
 		? mapStore.updateMapViewForCity(route.query.city)
-		: mapStore.updateMapViewForCity("default");
+		: mapStore.updateMapViewForCity("taipei");
 	mapStore.map.on("dblclick", (event) => {
 		if (route.name === "ai-tour") {
 			chatStore.attachments.push({
