@@ -2428,6 +2428,17 @@ export const useMapStore = defineStore("map", {
 				{ duration: 1000, padding: 40 },
 			);
 		},
+		// 2c. Fit map to bbox (agent tool: zoom_to with bbox)
+		fitBboxBounds(swLng, swLat, neLng, neLat) {
+			if (!this.map) return;
+			this.map.fitBounds(
+				[
+					[swLng, swLat],
+					[neLng, neLat],
+				],
+				{ duration: 1000, padding: 40 },
+			);
+		},
 		// 3. Force map to resize after sidebar collapses
 		resizeMap() {
 			if (this.map) {

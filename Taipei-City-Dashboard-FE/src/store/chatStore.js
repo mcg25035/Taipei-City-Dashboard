@@ -339,20 +339,37 @@ export const useChatStore = defineStore("chat", () => {
 								botMsg.loading = false;
 								botMsg.componentDatas.push(componentData);
 								break;
-							case "goto_coordinate":
+							case "goto":
+							case "goto_coordinate": {
+								const c = data.params.center ?? data.params;
 								useMapStore().gotoCoordinate(
-									data.params.lng,
-									data.params.lat,
+									c.lng,
+									c.lat,
 									data.params.zoom,
 								);
 								break;
-							case "zoom_to_coordinate":
-								useMapStore().zoomToCoordinate(
-									data.params.lng,
-									data.params.lat,
-									data.params.radius_m ?? 150,
-								);
+							}
+							case "zoom_to":
+							case "zoom_to_coordinate": {
+								const bbox = data.params.bbox;
+								if (bbox?.sw && bbox?.ne) {
+									useMapStore().fitBboxBounds(
+										bbox.sw.lng,
+										bbox.sw.lat,
+										bbox.ne.lng,
+										bbox.ne.lat,
+									);
+								} else {
+									const c =
+										data.params.center ?? data.params;
+									useMapStore().zoomToCoordinate(
+										c.lng,
+										c.lat,
+										data.params.radius_m ?? 150,
+									);
+								}
 								break;
+							}
 							default:
 								emitAgentEvent(data.action, data.params);
 								break;
