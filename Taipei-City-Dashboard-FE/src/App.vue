@@ -31,8 +31,6 @@ import NotificationBar from "./components/dialogs/NotificationBar.vue";
 import InitialWarning from "./components/dialogs/InitialWarning.vue";
 import ComponentSideBar from "./components/utilities/bars/ComponentSideBar.vue";
 import LogIn from "./components/dialogs/LogIn.vue";
-import ChatBox from "./components/dialogs/ChatBox.vue";
-import ChatBotIcon from "./components/icons/ChatBotIcon.vue";
 
 const authStore = useAuthStore();
 const dialogStore = useDialogStore();
@@ -47,9 +45,6 @@ const boardIndex = ref(null);
 const board = ref(null);
 const frequency = ref(600);
 const isMappedToUpdateBoards = ref(false);
-// Chatroom
-const isChatBtnShow = ref(true);
-const isChatBoxShow = ref(false);
 // Timers
 let chartTimer = null;
 let crowdingTimer = null;
@@ -159,16 +154,6 @@ function reload3DMRTMapData() {
 	});
 }
 
-// Chatroom 功能顯示隱藏
-function chatbotBtnHandler() {
-	isChatBoxShow.value = !isChatBoxShow.value;
-}
-
-function hideBtnClickHandler() {
-	isChatBtnShow.value = false;
-	isChatBoxShow.value = false;
-}
-
 (watch(
 	() => route.query,
 	(query) => {
@@ -256,6 +241,15 @@ onBeforeUnmount(() => {
         <RouterView />
       </div>
     </div>
+    <!-- /ai-tour layout (no sidebar) -->
+    <div
+      v-else-if="authStore.currentPath === 'ai-tour'"
+      class="app-content"
+    >
+      <div class="app-content-main">
+        <RouterView />
+      </div>
+    </div>
     <div v-else>
       <router-view />
     </div>
@@ -270,26 +264,6 @@ onBeforeUnmount(() => {
       class="app-update"
     >
       <p>下次更新：{{ formattedTimeToUpdate }}</p>
-    </div>
-    <div class="chatbot-container">
-      <ChatBox
-        v-if="isChatBoxShow"
-        class="chatbox"
-      />
-      <div
-        v-if="isChatBtnShow"
-        class="chatbot-btn-area"
-      >
-        <div class="hide-chat-btn">
-          <button @click="hideBtnClickHandler" />
-        </div>
-        <button
-          class="chatbot-btn"
-          @click="chatbotBtnHandler"
-        >
-          <ChatBotIcon />
-        </button>
-      </div>
     </div>
   </div>
 </template>

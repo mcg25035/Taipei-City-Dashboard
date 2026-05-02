@@ -80,6 +80,9 @@ const isLocalhost = computed(() => {
       >
         地圖交叉比對
       </router-link>
+      <router-link to="/ai-tour">
+        AI 導覽
+      </router-link>
     </div>
     <div class="navbar-user">
       <button
