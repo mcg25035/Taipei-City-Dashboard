@@ -1,0 +1,186 @@
+{
+    "components": [
+        {
+            "id": 60,
+            "name": "YouBike使用情況",
+            "base_name": "YouBike使用情況",
+            "variant": "default",
+            "categories": [
+                "transportation_mobility"
+            ],
+            "availability": {
+                "db": true,
+                "sql_seed": true,
+                "backup": true
+            },
+            "availability_status": "all_three",
+            "can_be_got": true,
+            "primary_available_source": "db",
+            "notes": null
+        },
+        {
+            "id": 213,
+            "name": "自行車道路統計資料",
+            "base_name": "自行車道路統計資料",
+            "variant": "default",
+            "categories": [
+                "transportation_mobility"
+            ],
+            "availability": {
+                "db": true,
+                "sql_seed": true,
+                "backup": false
+            },
+            "availability_status": "db_and_sql_seed_only",
+            "can_be_got": true,
+            "primary_available_source": "db",
+            "notes": null
+        },
+        {
+            "id": 212,
+            "name": "電動巴士比例",
+            "base_name": "電動巴士比例",
+            "variant": "default",
+            "categories": [
+                "uncategorized"
+            ],
+            "availability": {
+                "db": true,
+                "sql_seed": true,
+                "backup": false
+            },
+            "availability_status": "db_and_sql_seed_only",
+            "can_be_got": true,
+            "primary_available_source": "db",
+            "notes": null
+        },
+        {
+            "id": 4,
+            "name": "公共停車場",
+            "base_name": "公共停車場",
+            "variant": "default",
+            "categories": [
+                "transportation_mobility",
+                "parking"
+            ],
+            "availability": {
+                "db": true,
+                "sql_seed": false,
+                "backup": true
+            },
+            "availability_status": "db_and_backup_only",
+            "can_be_got": true,
+            "primary_available_source": "db",
+            "notes": null
+        },
+        {
+            "id": 6,
+            "name": "公共停車場使用率",
+            "base_name": "公共停車場使用率",
+            "variant": "default",
+            "categories": [
+                "transportation_mobility",
+                "parking"
+            ],
+            "availability": {
+                "db": true,
+                "sql_seed": false,
+                "backup": true
+            },
+            "availability_status": "db_and_backup_only",
+            "can_be_got": true,
+            "primary_available_source": "db",
+            "notes": null
+        },
+        {
+            "id": 3,
+            "name": "即時壅塞程度",
+            "base_name": "即時壅塞程度",
+            "variant": "default",
+            "categories": [
+                "transportation_mobility"
+            ],
+            "availability": {
+                "db": true,
+                "sql_seed": false,
+                "backup": true
+            },
+            "availability_status": "db_and_backup_only",
+            "can_be_got": true,
+            "primary_available_source": "db",
+            "notes": null
+        },
+        {
+            "id": 8,
+            "name": "路障",
+            "base_name": "路障",
+            "variant": "default",
+            "categories": [
+                "transportation_mobility"
+            ],
+            "availability": {
+                "db": true,
+                "sql_seed": false,
+                "backup": true
+            },
+            "availability_status": "db_and_backup_only",
+            "can_be_got": true,
+            "primary_available_source": "db",
+            "notes": null
+        },
+        {
+            "id": 10,
+            "name": "即時道路速度",
+            "base_name": "即時道路速度",
+            "variant": "default",
+            "categories": [
+                "transportation_mobility"
+            ],
+            "availability": {
+                "db": true,
+                "sql_seed": false,
+                "backup": true
+            },
+            "availability_status": "db_and_backup_only",
+            "can_be_got": true,
+            "primary_available_source": "db",
+            "notes": null
+        },
+        {
+            "id": 9,
+            "name": "人行道",
+            "base_name": "人行道",
+            "variant": "default",
+            "categories": [
+                "transportation_mobility"
+            ],
+            "availability": {
+                "db": true,
+                "sql_seed": false,
+                "backup": true
+            },
+            "availability_status": "only_backup",
+            "can_be_got": true,
+            "primary_available_source": "backup",
+            "notes": null
+        },
+        {
+            "id": 217,
+            "name": "自行車道路網圖資",
+            "base_name": "自行車道路網圖資",
+            "variant": "default",
+            "categories": [
+                "transportation_mobility"
+            ],
+            "availability": {
+                "db": true,
+                "sql_seed": false,
+                "backup": true
+            },
+            "availability_status": "only_backup",
+            "can_be_got": true,
+            "primary_available_source": "backup",
+            "notes": null
+        }
+    ]
+}

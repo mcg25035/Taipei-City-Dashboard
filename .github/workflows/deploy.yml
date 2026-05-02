@@ -17,6 +17,7 @@ jobs:
       be: ${{ steps.filter.outputs.be }}
       fe: ${{ steps.filter.outputs.fe }}
       de: ${{ steps.filter.outputs.de }}
+      ae: ${{ steps.filter.outputs.ae }}
       qd: ${{ steps.filter.outputs.qd }}
     steps:
       - uses: actions/checkout@v4
@@ -38,6 +39,9 @@ jobs:
             de:
               - 'Taipei-City-Dashboard-DE/**'
               - 'docker/scripts/restart_de.sh'
+            ae:
+              - 'Taipei-City-Dashboard-AE/**'
+              - 'docker/scripts/restart_ae.sh'
             qd:
               - 'docker/qdrant-upgrade/**'
               - 'docker/scripts/upgrade_qdrant.sh'
@@ -49,6 +53,7 @@ jobs:
       needs.changes.outputs.be == 'true' ||
       needs.changes.outputs.fe == 'true' ||
       needs.changes.outputs.de == 'true' ||
+      needs.changes.outputs.ae == 'true' ||
       needs.changes.outputs.qd == 'true' ||
       github.event_name == 'workflow_dispatch'
     steps:
@@ -82,6 +87,14 @@ jobs:
     steps:
       - name: Run restart_de.sh
         run: bash /root/Taipei-City-Dashboard/docker/scripts/restart_de.sh
+
+  restart-ae:
+    needs: [changes, pull]
+    if: needs.changes.outputs.ae == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: self-hosted
+    steps:
+      - name: Run restart_ae.sh
+        run: bash /root/Taipei-City-Dashboard/docker/scripts/restart_ae.sh
 
   upgrade-qdrant:
     needs: [changes, pull]

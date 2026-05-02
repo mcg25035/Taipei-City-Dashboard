@@ -69,13 +69,16 @@ func GetGeojsonByIndex(c *gin.Context) {
 
 	// Identifier is whitelisted by validIdentifier + component_maps lookup, so
 	// it is safe to interpolate into the table reference here.
+	// ST_AsGeoJSON precision 6 = ~11cm at the equator — well below visual
+	// resolution of the FE map. Default is 9, which inflates payload with
+	// digits that never affect rendering.
 	sql := fmt.Sprintf(`
 		SELECT json_build_object(
 			'type', 'FeatureCollection',
 			'features', COALESCE(json_agg(
 				json_build_object(
 					'type', 'Feature',
-					'geometry', ST_AsGeoJSON(wkb_geometry)::json,
+					'geometry', ST_AsGeoJSON(wkb_geometry, 6)::json,
 					'properties', %s
 				)
 			), '[]'::json)
