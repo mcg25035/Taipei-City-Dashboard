@@ -201,6 +201,7 @@ export const useMapStore = defineStore("map", {
 				.on("dblclick", (event) => {
 					let coordinates = event.lngLat;
 					this.tempMarkerCoordinates = coordinates;
+					if (window.location.pathname.includes("ai-tour")) return;
 					this.marker.setLngLat(coordinates).addTo(this.map);
 				})
 				.on("contextmenu", (event) => {

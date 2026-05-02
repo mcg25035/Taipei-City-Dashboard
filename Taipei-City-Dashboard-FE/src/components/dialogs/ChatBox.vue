@@ -15,6 +15,16 @@ import http from "../../router/axios";
 const chatStore = useChatStore();
 const contentStore = useContentStore();
 const authStore = useAuthStore();
+
+function removeAttachment(idx) {
+	const item = attachments.value[idx];
+	attachments.value.splice(idx, 1);
+	item?.marker?.remove();
+}
+
+function clearAllAttachmentMarkers() {
+	attachments.value.forEach((a) => a.marker?.remove());
+}
 const router = useRouter();
 const route = useRoute();
 const { addChatData, addQueryData, saveChatLog } = chatStore;
@@ -67,12 +77,14 @@ const qaBtnHandler = async (text, relations) => {
 };
 
 const sendBtnHandler = () => {
+	const sanitized = attachments.value.map(({ marker, ...rest }) => rest);
 	addQueryData({
 		role: "user",
 		content: userMessage.value,
-		attachments: attachments.value,
+		attachments: sanitized,
 	});
 	userMessage.value = "";
+	clearAllAttachmentMarkers();
 	attachments.value = [];
 };
 
@@ -277,7 +289,7 @@ watch(
 				</template>
 				<button
 					class="attachment-clear"
-					@click="attachments.splice(idx, 1)"
+					@click="removeAttachment(idx)"
 				>
 					×
 				</button>
@@ -476,15 +488,15 @@ $radius-20: 20px;
 						padding: 8px 16px 0 16px;
 
 						.attachment-chip--sent {
-							background: #1a2332;
-							border: 1px solid #4fc1e9;
-							border-radius: 20px;
+							background: #2a2a2a;
+							border: 1px solid #555;
+							border-radius: 6px;
 							display: flex;
 							align-items: center;
 							gap: 4px;
 							padding: 3px 10px 3px 8px;
 							font-size: 12px;
-							color: #4fc1e9;
+							color: #ccc;
 
 							.attachment-icon {
 								font-family: var(--font-icon);
@@ -646,12 +658,12 @@ $radius-20: 20px;
 			display: flex;
 			align-items: center;
 			gap: 4px;
-			background: #1a2332;
-			border: 1px solid #4fc1e9;
-			border-radius: 20px;
+			background: #2a2a2a;
+			border: 1px solid #555;
+			border-radius: 6px;
 			padding: 3px 10px 3px 8px;
 			font-size: 12px;
-			color: #4fc1e9;
+			color: #ccc;
 			width: max-content;
 
 			.attachment-text {
@@ -668,7 +680,7 @@ $radius-20: 20px;
 			.attachment-clear {
 				background: none;
 				border: none;
-				color: #4fc1e9;
+				color: #ccc;
 				cursor: pointer;
 				font-size: 14px;
 				line-height: 1;
@@ -694,7 +706,7 @@ $radius-20: 20px;
 			background: $white;
 			height: 35px;
 			width: 100%;
-			border-radius: 20px;
+			border-radius: 6px;
 			padding: 0 1rem;
 			border: none;
 			outline: none;

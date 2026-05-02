@@ -2,19 +2,18 @@
 
 <script setup>
 /* global gtag */
-import { onMounted, ref, computed, watch } from "vue";
+import { onMounted, ref, computed, watch, markRaw } from "vue";
 import { useRoute } from "vue-router";
+import mapboxGl from "mapbox-gl";
 import { useAuthStore } from "../../store/authStore";
 import { useContentStore } from "../../store/contentStore";
 import { useDialogStore } from "../../store/dialogStore";
 import { useMapStore } from "../../store/mapStore";
 import { useChatStore } from "../../store/chatStore";
 
-import AddViewPoint from "../dialogs/AddViewPoint.vue";
 import MobileLayers from "../dialogs/MobileLayers.vue";
 import IncidentReport from "../dialogs/IncidentReport.vue";
 import FindClosestPoint from "../dialogs/FindClosestPoint.vue";
-import { savedLocations } from "../../assets/configs/mapbox/savedLocations.js";
 
 const authStore = useAuthStore();
 const mapStore = useMapStore();
@@ -83,13 +82,36 @@ onMounted(() => {
 		: mapStore.updateMapViewForCity("default");
 	mapStore.map.on("dblclick", (event) => {
 		if (route.name === "ai-tour") {
+			const locationCount = chatStore.attachments.filter(
+				(a) => a.type === "location",
+			).length;
+			if (locationCount >= 6) return;
+			const el = document.createElement("div");
+			el.className = "ai-tour-marker";
+			el.textContent = String(locationCount + 1);
+			const m = new mapboxGl.Marker({ element: el, anchor: "bottom" })
+				.setLngLat(event.lngLat)
+				.addTo(mapStore.map);
 			chatStore.attachments.push({
 				type: "location",
 				lng: event.lngLat.lng,
 				lat: event.lngLat.lat,
+				marker: markRaw(m),
 			});
 		}
 	});
+
+	watch(
+		() => chatStore.attachments.length,
+		() => {
+			let n = 1;
+			chatStore.attachments.forEach((a) => {
+				if (a.type === "location" && a.marker) {
+					a.marker.getElement().textContent = String(n++);
+				}
+			});
+		},
+	);
 });
 </script>
 
@@ -163,53 +185,7 @@ onMounted(() => {
 			<FindClosestPoint />
 		</div>
 
-		<div class="mapcontainer-controls hide-if-mobile">
-			<button
-				@click="
-					mapStore.easeToLocation([
-						[121.536609, 25.044808],
-						12.5,
-						0,
-						0,
-					])
-				"
-			>
-				返回預設
-			</button>
-			<template v-if="!authStore.user?.user_id">
-				<div
-					v-for="(item, index) in savedLocations"
-					:key="`${item[4]}-${index}`"
-				>
-					<button @click="mapStore.easeToLocation(item)">
-						{{ item[4] }}
-					</button>
-				</div>
-			</template>
-			<div v-for="(item, index) in mapStore.viewPoints" :key="index">
-				<button
-					v-if="item.point_type === 'view'"
-					@click="mapStore.easeToLocation(item)"
-				>
-					{{ item["name"] }}
-				</button>
-				<div
-					v-if="authStore.user?.user_id"
-					class="mapcontainer-controls-delete"
-					@click="mapStore.removeViewPoint(item)"
-				>
-					<span>delete</span>
-				</div>
-			</div>
-			<button
-				v-if="authStore.user?.user_id"
-				@click="dialogStore.showDialog('addViewPoint')"
-			>
-				新增
-			</button>
-		</div>
 	</div>
-	<AddViewPoint name="addViewPoint" />
 </template>
 
 <style scoped lang="scss">
@@ -220,89 +196,7 @@ onMounted(() => {
 	flex: 1;
 
 	&-map {
-		height: calc(100% - 32px);
-
-		@media (max-width: 1000px) {
-			height: 100%;
-		}
-	}
-
-	&-controls {
-		display: flex;
-		margin-top: 8px;
-		overflow: visible;
-
-		button {
-			height: 1.5rem;
-			width: fit-content;
-			margin-right: 6px;
-			padding: 4px;
-			border-radius: 5px;
-			background-color: var(--color-component-background);
-			color: var(--color-complement-text);
-			cursor: pointer;
-
-			&:focus {
-				animation-name: colorfade;
-				animation-duration: 4s;
-			}
-		}
-
-		div {
-			position: relative;
-			overflow: visible;
-
-			div {
-				width: 1.2rem;
-				height: 1.2rem;
-				position: absolute;
-				top: -0.5rem;
-				right: -0.3rem;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				border-radius: 50%;
-				opacity: 0;
-				background-color: var(--color-border);
-				box-shadow: 0 0 3px black;
-				transition: opacity 0.2s;
-				z-index: 10;
-				pointer-events: none;
-				cursor: pointer;
-
-				span {
-					color: rgb(185, 185, 185);
-					font-family: var(--font-icon);
-					font-size: 0.8rem;
-					transition: color 0.2s;
-				}
-
-				&:hover span {
-					color: rgb(255, 65, 44);
-				}
-			}
-
-			&:hover div {
-				opacity: 1;
-				pointer-events: all;
-			}
-		}
-
-		input {
-			height: calc(1.5rem - 4px);
-			width: 1.7rem;
-			margin-right: 6px;
-			padding: 2px 4px;
-			border-radius: 5px;
-			border: none;
-			background-color: rgb(30, 30, 30);
-			color: var(--color-complement-text);
-			font-size: 0.82rem;
-
-			&:focus {
-				width: 5.4rem;
-			}
-		}
+		height: 100%;
 	}
 
 	&-layers {
@@ -381,17 +275,22 @@ onMounted(() => {
 	border-radius: 5px;
 }
 
-@keyframes colorfade {
-	0% {
-		color: var(--color-highlight);
-	}
+</style>
 
-	75% {
-		color: var(--color-highlight);
-	}
-
-	100% {
-		color: var(--color-complement-text);
-	}
+<style lang="scss">
+.ai-tour-marker {
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	background-color: #5a9cf8;
+	color: white;
+	font-size: 14px;
+	font-weight: bold;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: 2px solid white;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+	cursor: pointer;
 }
 </style>

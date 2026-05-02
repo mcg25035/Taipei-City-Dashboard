@@ -21,15 +21,15 @@ export const MapObjectConfig = {
 export const CityMapView = {
 	taipei: {
 		center: [121.536609, 25.044808],
-		zoom: 12,
+		zoom: 14,
 	},
 	metrotaipei: {
 		center: [121.64080359050314, 24.980598540245936],
-		zoom: 9,
+		zoom: 11,
 	},
 	default: {
-		center: [121.56376521148917, 25.086495621435404],
-		zoom: 10,
+		center: [121.530868, 25.042099],
+		zoom: 11,
 	},
 };
 
