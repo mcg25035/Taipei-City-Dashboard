@@ -5,10 +5,8 @@
 -- Prereq:
 --   1. DAG `proj_city_dashboard_parking_realtime` running and writing to
 --      ready_data PostGIS table `parking_realtime`.
---   2. (Convention) GeoServer workspace `taipei_vioc` exposes that table as
---      WFS layer `taipei_vioc:parking_realtime`.
---      Currently using `source = 'geojson'` (B1 deviation, see
---      docs/road_speed_realtime_b1_deviation.md) until local GeoServer exists.
+--   2. Served via BE `GET /api/v1/geojson/parking_realtime`
+--      (see docs/playbook_add_dynamic_data_layer.md). No GeoServer needed.
 --
 -- IDs are auto-assigned by the SERIAL PK. Re-running this script is safe:
 -- it deletes the prior rows by natural key (index) before inserting fresh ones.
@@ -33,7 +31,7 @@ BEGIN
         'parking_realtime',
         '公共停車場',
         'circle',
-        'geojson',  -- B1 deviation: see docs/road_speed_realtime_b1_deviation.md (would be 'raster' under the WFS convention)
+        'be_geojson',  -- BE-served PostGIS via /api/v1/geojson/:index (see docs/playbook_add_dynamic_data_layer.md)
         NULL,
         NULL,
         '{"circle-color": ["interpolate", ["linear"], ["to-number", ["get", "occupied_rate"]], -99, "#999", -98, "#999", 0.499, "#9bc874", 0.5, "#ff9800", 0.8, "#f44336", 1, "#f44336", 1.1, "#9c27b0"], "circle-radius": 5, "circle-stroke-color": "#222", "circle-stroke-width": 0.5}'::json,
