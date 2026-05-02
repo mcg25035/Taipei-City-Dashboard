@@ -98,7 +98,7 @@ async function handleConfirm() {
         </option>
         <option
           v-for="dashboard in contentStore.personalDashboards.filter(
-            (el) => el.index !== contentStore.favorites.index
+            (el) => el.index !== contentStore.favorites?.index && el.index !== 'ai-searched'
           )"
           :key="dashboard.index"
           :value="dashboard.index"

@@ -52,7 +52,7 @@ function handleOpenSettings() {
         "
         class="settingsbar-settings hide-if-mobile"
       >
-        <button @click="handleOpenSettings">
+        <button v-if="contentStore.currentDashboard.index !== 'ai-searched'" @click="handleOpenSettings">
           <span>settings</span>
           <p>設定</p>
         </button>

@@ -1,9 +1,11 @@
 <script setup>
 import { ref, watch, nextTick } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import { storeToRefs } from "pinia";
 import SendIcon from "../icons/SendIcon.vue";
 import BotLogo from "../icons/BotLogo.vue";
 import UserLogo from "../icons/UserLogo.vue";
+import DashboardComponent from "../../dashboardComponent/DashboardComponent.vue";
 
 import { useChatStore } from "../../store/chatStore";
 import { useContentStore } from "../../store/contentStore";
@@ -13,7 +15,10 @@ import http from "../../router/axios";
 const chatStore = useChatStore();
 const contentStore = useContentStore();
 const authStore = useAuthStore();
-const { addChatData, addQueryData, saveChatLog } = chatStore;
+const router = useRouter();
+const route = useRoute();
+const { aiToolCalls } = storeToRefs(chatStore);
+const { addChatData, addQueryData, saveChatLog, clearAIToolCalls } = chatStore;
 const { createDashboard } = contentStore;
 const { chatData } = storeToRefs(chatStore);
 const { editDashboard } = storeToRefs(contentStore);
@@ -75,6 +80,10 @@ const toggleSticky = () => {
 	isStickyOpen.value = !isStickyOpen.value;
 };
 
+const goToAIDashboard = () => {
+	router.push(`${route.path}?index=ai-searched`);
+};
+
 watch(
 	() => chatData.value.length,
 	async () => {
@@ -132,12 +141,53 @@ watch(
             <BotLogo />
           </div>
           <div class="content">
+            <!-- Loading 動畫 -->
+            <div
+              v-if="chat.loading"
+              class="message--bubble message--loading"
+            >
+              <span class="dot" />
+              <span class="dot" />
+              <span class="dot" />
+            </div>
             <div
               v-if="chat.content"
               class="message--bubble"
             >
               <p>{{ chat.content }}</p>
+              <div
+                v-if="chat.toolUsed"
+                class="tool-used-badge"
+              >
+                🔧 已使用工具分析
+              </div>
             </div>
+            <!-- 圖表渲染區 -->
+            <DashboardComponent
+              v-if="chat.chartRender"
+              :config="{
+                name: '',
+                index: `chat-chart-${chat.id}`,
+                source: '',
+                time_from: 'static',
+                time_to: null,
+                update_freq: null,
+                update_freq_unit: null,
+                short_desc: '',
+                history_config: null,
+                map_config: null,
+                map_filter: null,
+                chart_config: {
+                  color: chat.chartRender.config?.color ?? ['#4fc1e9'],
+                  types: [chat.chartRender.chartType],
+                  unit: chat.chartRender.config?.unit ?? null,
+                  categories: chat.chartRender.config?.categories ?? null,
+                },
+                chart_data: chat.chartRender.data,
+              }"
+              mode="default"
+              :footer="false"
+            />
             <!-- 表格區 -->
             <div
               v-if="chat.relations"
@@ -205,6 +255,25 @@ watch(
           </div>
         </div>
       </div>
+    </div>
+
+    <div
+      v-if="aiToolCalls.length > 0"
+      class="ai-dashboard-bar"
+    >
+      <button
+        class="ai-dashboard-btn"
+        @click="goToAIDashboard"
+      >
+        <span>dashboard</span>
+        查看儀表板 ({{ aiToolCalls.length }})
+      </button>
+      <button
+        class="ai-dashboard-clear"
+        @click="clearAIToolCalls"
+      >
+        <span>close</span>
+      </button>
     </div>
 
     <!-- 輸入區 -->
@@ -391,6 +460,29 @@ $radius-20: 20px;
 						}
 					}
 
+					.message--loading {
+						display: flex;
+						align-items: center;
+						gap: 6px;
+						padding: 12px 16px;
+
+						.dot {
+							width: 8px;
+							height: 8px;
+							border-radius: 50%;
+							background: $white;
+							animation: dot-blink 1.2s infinite;
+
+							&:nth-child(2) { animation-delay: 0.2s; }
+							&:nth-child(3) { animation-delay: 0.4s; }
+						}
+					}
+
+					@keyframes dot-blink {
+						0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+						40% { opacity: 1; transform: scale(1); }
+					}
+
 					.message--bubble {
 						border: 1px solid $white;
 						border-radius: $radius-10;
@@ -405,6 +497,12 @@ $radius-20: 20px;
 							padding-left: 16px;
 							padding-right: 16px;
 							font-size: 16px;
+						}
+
+						.tool-used-badge {
+							font-size: 11px;
+							color: #aaa;
+							padding: 0 16px 8px;
 						}
 					}
 
@@ -434,12 +532,68 @@ $radius-20: 20px;
 		}
 	}
 
+	.ai-dashboard-bar {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 1.5rem 1.125rem;
+		padding-bottom: 0.5rem;
+		background: $panel-bg;
+		border-top: 1px solid $border-color;
+
+		.ai-dashboard-btn {
+			flex: 1;
+			display: flex;
+			align-items: center;
+			gap: 0.4rem;
+			background: #0d1117;
+			color: #4fc1e9;
+			border: 1px solid #4fc1e9;
+			border-radius: 20px;
+			padding: 0.4rem 1rem;
+			font-size: 13px;
+			cursor: pointer;
+			transition: opacity 0.2s;
+
+			span {
+				font-family: var(--font-icon);
+				font-size: 16px;
+			}
+
+			&:hover {
+				opacity: 0.8;
+			}
+		}
+
+		.ai-dashboard-clear {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			background: transparent;
+			border: none;
+			color: $border-color;
+			cursor: pointer;
+			padding: 4px;
+			transition: color 0.2s;
+
+			span {
+				font-family: var(--font-icon);
+				font-size: 18px;
+			}
+
+			&:hover {
+				color: $white;
+			}
+		}
+	}
+
 	.input-area {
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		gap: 0.5rem;
 		padding: 1.5rem 1.125rem;
+		padding-top: 0.5rem;
 		background: $panel-bg;
 
 		input[type="text"] {

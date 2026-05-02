@@ -86,12 +86,12 @@ onMounted(() => {
               <div
                 v-if="
                   contentStore.personalDashboards.filter(
-                    (item) => item.icon !== 'favorite'
+                    (item) => item.icon !== 'favorite' && item.index !== 'ai-searched'
                   ).length === 0
                 "
                 class="mobilenavigation-sub-no"
               >
-                <p>尚無個人儀表板</p>
+                <!-- <p>尚無個人儀表板</p> -->
               </div>
               <transition name="collapse">
                 <div v-if="!collapsedStates.personal">

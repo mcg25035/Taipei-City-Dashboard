@@ -25,6 +25,8 @@ export const useContentStore = defineStore("content", {
 		dashboards: new Map(),
 		publicDashboards: [],
 		personalDashboards: [],
+		// stores AI search results, survives setDashboards() refresh
+		aiSearchedComponents: [],
 		// stores all components data. (used in /embed)
 		embedComponents: [],
 		// Stores all components data. (used in /component)
@@ -156,11 +158,21 @@ export const useContentStore = defineStore("content", {
 						this.dashboards.set(key, []);
 					}
 				}
+		});
+
+		// Always ensure ai-searched entry exists at the top of personalDashboards
+		if (!this.personalDashboards.find((d) => d.index === 'ai-searched')) {
+			this.personalDashboards.unshift({
+				index: 'ai-searched',
+				name: 'AI 查詢',
+				icon: 'smart_toy',
+				components: this.aiSearchedComponents,
 			});
+		}
 
-			if (onlyDashboard) return;
+		if (onlyDashboard) return;
 
-			// 2-1. If the current path is /dashboard or /mapview, redirect to the first dashboard
+		// 2-1. If the current path is /dashboard or /mapview, redirect to the first dashboard
 			if (!this.currentDashboard.index) {
 				// Find the first available dashboard
 				let firstCity = null;
@@ -223,6 +235,8 @@ export const useContentStore = defineStore("content", {
 				(item) => item.index === this.currentDashboard.index,
 			);
 
+			console.log('currentDashboardInfo', currentDashboardInfo);
+
 			// If the current dashboard is not found, redirect to the first available dashboard
 			if (!currentDashboardInfo) {
 				// Find the first available dashboard
@@ -253,15 +267,19 @@ export const useContentStore = defineStore("content", {
 			this.currentDashboard.icon = currentDashboardInfo.icon;
 
 			// Get the dashboard index data
-			try {
-				// 針對目前index 取得不分city的資料
-				const response = await http.get(
-					`/dashboard/${this.currentDashboard.index}`,
-				);
-				this.cityDashboard.components = response.data.data || [];
-				this.filterCurrentDashboardContent();
-			} catch (error) {
-				console.error("Error getting dashboard index data:", error);
+			if (this.currentDashboard.index === 'ai-searched') {
+				this.cityDashboard.components = this.aiSearchedComponents;
+			} else {
+				try {
+					// 針對目前index 取得不分city的資料
+					const response = await http.get(
+						`/dashboard/${this.currentDashboard.index}`,
+					);
+					this.cityDashboard.components = response.data.data || [];
+					this.filterCurrentDashboardContent();
+				} catch (error) {
+					console.error("Error getting dashboard index data:", error);
+				}
 			}
 
 			// Get the dashboard components data
@@ -1092,6 +1110,38 @@ export const useContentStore = defineStore("content", {
 				this.setDashboards();
 			}
 		},
+
+		addAISearchedComponent(toolCalls) {
+			const ts = Date.now();
+			const newComponents = toolCalls.map((toolCall, index) => ({
+				id: -(ts + index),
+				index: `ai-${index}-${ts}`,
+				name: toolCall.title ?? 'AI 查詢',
+				chart_config: {
+					color: toolCall.config?.color ?? ['#4fc1e9'],
+					types: [toolCall.chartType ?? 'BarChart'],
+					unit: toolCall.config?.unit ?? null,
+					categories: toolCall.config?.categories ?? null,
+				},
+				chart_data: toolCall.data ?? [],
+				map_config: toolCall.map_config ?? [null],
+				map_filter: null,
+				history_config: null,
+				time_from: 'current',
+				time_to: null,
+				update_freq: null,
+				update_freq_unit: null,
+				source: 'AI 查詢',
+				short_desc: '',
+			}));
+
+			this.aiSearchedComponents.push(...newComponents);
+
+			if (this.currentDashboard.index === 'ai-searched') {
+				this.currentDashboard.components = this.aiSearchedComponents;
+			}
+		},
+
 		/*
 		wsConnect() {
 			const dialogStore = useDialogStore();

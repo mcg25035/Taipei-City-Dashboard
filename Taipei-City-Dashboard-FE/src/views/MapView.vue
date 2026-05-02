@@ -561,13 +561,13 @@ function popularBasicLayerGA(map_config) {
         <span>addchart</span>
         <h2>尚未加入組件</h2>
         <button
-          v-if="contentStore.currentDashboard.icon !== 'favorite'"
+          v-if="contentStore.currentDashboard.index !== 'ai-searched' && contentStore.currentDashboard.icon !== 'favorite'"
           class="hide-if-mobile"
           @click="handleOpenSettings"
         >
           加入您的第一個組件
         </button>
-        <p v-else>
+        <p v-else-if="contentStore.currentDashboard.icon === 'favorite'">
           點擊其他儀表板組件之愛心以新增至收藏組件
         </p>
       </div>

@@ -95,7 +95,7 @@ onMounted(() => {
         }}</span>
       </button>
     </div>
-    <template v-if="authStore.token">
+    <template v-if="true">
       <h1 @click="toggleCollapse(['favorites', 'personal'])">
         {{ isExpanded ? `私人儀表板 ` : `私人` }}
       </h1>
@@ -126,12 +126,12 @@ onMounted(() => {
       <div
         v-if="
           contentStore.personalDashboards.filter(
-            (item) => item.icon !== 'favorite'
+            (item) => item.icon !== 'favorite' && item.index !== 'ai-searched'
           ).length === 0
         "
         class="sidebar-sub-no"
       >
-        <p>{{ isExpanded ? `尚無個人儀表板 ` : `尚無` }}</p>
+        <!-- <p>{{ isExpanded ? `尚無個人儀表板 ` : `尚無` }}</p> -->
       </div>
       <transition name="collapse">
         <div
