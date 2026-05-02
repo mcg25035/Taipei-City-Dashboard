@@ -11,8 +11,8 @@ export const MapObjectConfig = {
 		[121.2825, 24.6961], // Southwest coordinates
 		[122.0073, 25.2979], // Northeast coordinates
 	],
-	zoom: 9,
-	minZoom: 9,
+	zoom: 8,
+	minZoom: 6,
 	maxZoom: 22,
 	projection: "globe", // display the map as a 3D globe
 };
@@ -21,15 +21,15 @@ export const MapObjectConfig = {
 export const CityMapView = {
 	taipei: {
 		center: [121.536609, 25.044808],
-		zoom: 14,
+		zoom: 11,
 	},
 	metrotaipei: {
 		center: [121.64080359050314, 24.980598540245936],
-		zoom: 11,
+		zoom: 8,
 	},
 	default: {
 		center: [121.530868, 25.042099],
-		zoom: 11,
+		zoom: 8,
 	},
 };
 

@@ -2,6 +2,7 @@ import { ref, watch } from "vue";
 import { defineStore } from "pinia";
 import { emitAgentEvent } from "../composables/useAgentEvent";
 import { fetchComponentData } from "../assets/utilityFunctions/componentDataFetcher";
+import { useMapStore } from "./mapStore";
 
 const USE_MOCK = import.meta.env.VITE_MOCK_CHAT === "true";
 
@@ -337,6 +338,20 @@ export const useChatStore = defineStore("chat", () => {
 								);
 								botMsg.loading = false;
 								botMsg.componentDatas.push(componentData);
+								break;
+							case "goto_coordinate":
+								useMapStore().gotoCoordinate(
+									data.params.lng,
+									data.params.lat,
+									data.params.zoom,
+								);
+								break;
+							case "zoom_to_coordinate":
+								useMapStore().zoomToCoordinate(
+									data.params.lng,
+									data.params.lat,
+									data.params.radius_m ?? 150,
+								);
 								break;
 							default:
 								emitAgentEvent(

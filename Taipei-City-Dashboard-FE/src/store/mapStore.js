@@ -277,7 +277,7 @@ export const useMapStore = defineStore("map", {
 						.addLayer(metroTaipeiVillage);
 				});
 			// Taipei 3D Buildings
-			if (!authStore.isMobileDevice) {
+			if (!authStore.isMobileDevice && import.meta.env.VITE_MAPBOXTILE) {
 				this.map
 					.addSource("taipei_building_3d_source", {
 						type: "vector",
@@ -2406,6 +2406,27 @@ export const useMapStore = defineStore("map", {
 				center: location_array,
 				duration: 1000,
 			});
+		},
+		// 2a. Goto coordinate (agent tool: goto_coordinate)
+		gotoCoordinate(lng, lat, zoom) {
+			if (!this.map) return;
+			const opts = { center: [lng, lat], duration: 1000 };
+			if (zoom != null) opts.zoom = zoom;
+			this.map.flyTo(opts);
+		},
+		// 2b. Zoom to coordinate within radius (agent tool: zoom_to_coordinate)
+		zoomToCoordinate(lng, lat, radiusM = 150) {
+			if (!this.map) return;
+			const dLat = radiusM / 111320;
+			const dLng =
+				radiusM / (111320 * Math.cos((lat * Math.PI) / 180));
+			this.map.fitBounds(
+				[
+					[lng - dLng, lat - dLat],
+					[lng + dLng, lat + dLat],
+				],
+				{ duration: 1000, padding: 40 },
+			);
 		},
 		// 3. Force map to resize after sidebar collapses
 		resizeMap() {
