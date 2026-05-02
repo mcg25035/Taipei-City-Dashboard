@@ -65,11 +65,16 @@ const qaBtnHandler = async (text, relations) => {
 };
 
 const sendBtnHandler = () => {
+	if (!userMessage.value.trim()) {
+		return;
+	}
+
 	addQueryData({
 		role: "user",
 		content: userMessage.value,
 		attachments: attachments.value,
 	});
+
 	userMessage.value = "";
 	attachments.value = [];
 };
