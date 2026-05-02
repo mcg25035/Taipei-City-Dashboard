@@ -219,6 +219,8 @@ func configureAgentRoutes() {
 		agentRoutes.GET("/component/:id", controllers.AgentGetComponentData)
 		agentRoutes.POST("/parking-bbox", controllers.AgentParkingByBBox)
 		agentRoutes.GET("/parking-bbox", controllers.AgentParkingByBBox)
+		agentRoutes.POST("/youbike-bbox", controllers.AgentYoubikeByBBox)
+		agentRoutes.GET("/youbike-bbox", controllers.AgentYoubikeByBBox)
 	}
 }
 

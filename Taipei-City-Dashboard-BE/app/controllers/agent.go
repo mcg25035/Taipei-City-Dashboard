@@ -210,3 +210,66 @@ func AgentParkingByBBox(c *gin.Context) {
 		"data":   res,
 	})
 }
+
+type agentYoubikeBBoxRequest struct {
+	LatMin float64 `json:"lat_min" form:"lat_min"`
+	LatMax float64 `json:"lat_max" form:"lat_max"`
+	LngMin float64 `json:"lng_min" form:"lng_min"`
+	LngMax float64 `json:"lng_max" form:"lng_max"`
+}
+
+/*
+AgentYoubikeByBBox returns every YouBike station whose location falls inside
+the given lng/lat bounding box, joined to its latest realtime availability
+(tran_ubike_realtime for Taipei, tran_ubike_realtime_new_tpe for New Taipei).
+Stations with no realtime row come back with null availability fields.
+
+POST /api/v1/agent/youbike-bbox
+GET  /api/v1/agent/youbike-bbox?lat_min=...&lat_max=...&lng_min=...&lng_max=...
+
+Body or query string:
+
+	{"lat_min": 25.01, "lat_max": 25.10, "lng_min": 121.50, "lng_max": 121.60}
+
+Response:
+
+	{
+	  "status": "success",
+	  "bbox":   {...echoed input...},
+	  "count":  N,
+	  "data": [
+	    {
+	      "station_uid": "...", "station_id": "...",
+	      "name": "...", "addr": "...",
+	      "lng": 121.5, "lat": 25.05, "county": "Taipei",
+	      "service_type": "UBike2.0", "bike_capacity": 28,
+	      "service_status": "正常營運",
+	      "available_rent_general_bikes": 5,
+	      "available_rent_electric_bikes": 0,
+	      "available_return_bikes": 23,
+	      "data_time": "2025-02-19T03:19:14+00:00"
+	    }, ...
+	  ]
+	}
+*/
+func AgentYoubikeByBBox(c *gin.Context) {
+	var req agentYoubikeBBoxRequest
+	// Accept either JSON body or query-string params.
+	_ = c.ShouldBindJSON(&req)
+	if req.LngMin == 0 && req.LngMax == 0 && req.LatMin == 0 && req.LatMax == 0 {
+		_ = c.ShouldBindQuery(&req)
+	}
+
+	stations, err := models.GetYoubikeStationsByBBox(req.LngMin, req.LatMin, req.LngMax, req.LatMax)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status": "success",
+		"bbox":   req,
+		"count":  len(stations),
+		"data":   stations,
+	})
+}
