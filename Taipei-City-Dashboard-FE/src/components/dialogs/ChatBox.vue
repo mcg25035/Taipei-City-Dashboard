@@ -40,19 +40,33 @@ function toggleCurrentLocation() {
 		dialogStore?.showNotification?.("error", "瀏覽器不支援定位功能");
 		return;
 	}
-	navigator.geolocation.getCurrentPosition(
-		(position) => {
-			attachments.value.push({
-				type: "current_location",
-				lng: position.coords.longitude,
-				lat: position.coords.latitude,
-			});
-		},
-		(error) => {
+
+	const onSuccess = (position) => {
+		attachments.value.push({
+			type: "current_location",
+			lng: position.coords.longitude,
+			lat: position.coords.latitude,
+		});
+	};
+
+	const requestLocation = (retried) => {
+		navigator.geolocation.getCurrentPosition(onSuccess, (error) => {
 			console.error(error.message);
-			dialogStore?.showNotification?.("error", "無法取得定位授權");
-		},
-	);
+			// 使用者明確拒絕 → 不重試
+			if (error.code === error.PERMISSION_DENIED) {
+				dialogStore?.showNotification?.("error", "無法取得定位授權");
+				return;
+			}
+			// 剛授權後的首次呼叫常因定位服務尚未就緒而 POSITION_UNAVAILABLE / TIMEOUT，重試一次
+			if (!retried) {
+				setTimeout(() => requestLocation(true), 500);
+				return;
+			}
+			dialogStore?.showNotification?.("error", "定位失敗，請再試一次");
+		}, { enableHighAccuracy: false, timeout: 10000, maximumAge: 0 });
+	};
+
+	requestLocation(false);
 }
 
 const userMessage = ref("");
