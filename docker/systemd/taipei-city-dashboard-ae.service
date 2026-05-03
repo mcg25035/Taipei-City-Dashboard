@@ -1,0 +1,21 @@
+[Unit]
+Description=Taipei City Dashboard Agent Engine (AE)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/Taipei-City-Dashboard/Taipei-City-Dashboard-AE
+EnvironmentFile=/root/Taipei-City-Dashboard/Taipei-City-Dashboard-AE/.env
+Environment=PATH=/root/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/root/.local/bin/uv run --frozen python main.py
+Restart=on-failure
+RestartSec=3
+KillMode=mixed
+TimeoutStopSec=20
+StandardOutput=append:/root/Taipei-City-Dashboard/Taipei-City-Dashboard-AE/.run/ae.log
+StandardError=append:/root/Taipei-City-Dashboard/Taipei-City-Dashboard-AE/.run/ae.log
+
+[Install]
+WantedBy=multi-user.target

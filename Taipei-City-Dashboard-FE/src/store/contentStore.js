@@ -874,7 +874,7 @@ export const useContentStore = defineStore("content", {
 				.filter((item) => item.map_config[0])
 				.forEach((item) => {
 					mapStore.clearByParamFilter(item.map_config);
-					mapStore.turnOffMapLayerVisibility(item.map_config);
+					mapStore.removeMapLayer(item.map_config);
 				});
 			this.aiSearchedComponents = [];
 		},

@@ -2006,6 +2006,27 @@ export const useMapStore = defineStore("map", {
 				}
 			});
 		},
+		// 7. Fully remove a layer + source (not just hide). Used when the
+		// caller wants the next add to recreate the layer with fresh data —
+		// e.g. AI-pushed components like the navigate route, whose layerId is
+		// reused across sessions but whose data changes each time.
+		removeMapLayer(map_config) {
+			if (!this.map) return;
+			this.turnOffMapLayerVisibility(map_config);
+			map_config.forEach((element) => {
+				const mapLayerId = `${element.index}-${element.type}-${element.city}`;
+				if (this.map.getLayer(mapLayerId)) {
+					this.map.removeLayer(mapLayerId);
+				}
+				if (this.map.getSource(`${mapLayerId}-source`)) {
+					this.map.removeSource(`${mapLayerId}-source`);
+				}
+				this.currentLayers = this.currentLayers.filter(
+					(id) => id !== mapLayerId,
+				);
+				delete this.mapConfigs[mapLayerId];
+			});
+		},
 
 		/* Popup Related Functions */
 		// 1. Adds a popup when the user clicks on a item. The event will be passed in.

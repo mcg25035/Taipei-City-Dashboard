@@ -75,11 +75,15 @@ services:
       TWCC_TIMEOUT: ${TWCC_TIMEOUT}
       TWCC_MAX_RETRY: ${TWCC_MAX_RETRY}
       TWCC_MAX_CONCURRENT: ${TWCC_MAX_CONCURRENT}
+      NAVIGATE_BASE_URL: ${NAVIGATE_BASE_URL:-http://route-end:3000}
     volumes:
       - ../Taipei-City-Dashboard-BE:/opt/Taipei-City-Dashboard-BE
     working_dir: /opt/Taipei-City-Dashboard-BE
     ports:
       - "8088:${PORT:-8080}"
+    depends_on:
+      route-end:
+        condition: service_healthy
     command:
       - bash
       - -c
@@ -91,6 +95,37 @@ services:
         done
         echo "Postgres ready, starting air"
         exec air -c .air.toml
+
+  route-end:
+    image: dashboard-re-dev:latest
+    build:
+      context: ../Taipei-City-Dashboard-RE
+      dockerfile: Dockerfile
+      target: dev
+    container_name: route-end
+    restart: always
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+      OPENROUTESERVICE_API_KEY: ${OPENROUTESERVICE_API_KEY}
+    volumes:
+      - ../Taipei-City-Dashboard-RE:/app
+      - /app/node_modules
+      - /app/.next
+    ports:
+      - "11451:3000"
+    working_dir: /app
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "require('http').get('http://127.0.0.1:3000/',r=>process.exit(r.statusCode<500?0:1)).on('error',()=>process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
 
   vector-db-upgrade:
     build:
