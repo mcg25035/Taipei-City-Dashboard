@@ -20,7 +20,7 @@ from ._shared import ChatDeps, _emit_frontend_action, sse
 from .action_enum import ActionEnum
 
 
-TravelMode = Literal["biking", "driving", "walking", "public_transport"]
+TravelMode = Literal["biking", "driving", "walking"]
 
 
 mobility_toolset: FunctionToolset[ChatDeps] = FunctionToolset(
@@ -48,9 +48,8 @@ mobility_toolset: FunctionToolset[ChatDeps] = FunctionToolset(
 
 _NAVIGATE_API_MODE = {
     "driving": "car",
-    "biking": "biking",
+    "biking": "car",
     "walking": "pedestrian",
-    "public_transport": "public_transport",
 }
 
 # Synthesised id for the route layer. The frontend's add_component handler
@@ -59,15 +58,15 @@ _NAVIGATE_API_MODE = {
 _ROUTE_INDEX = "navigate_route"
 
 _MODE_LABEL_ZH = {
-    "car": "開車",
+    "driving": "開車",
     "biking": "騎乘",
-    "pedestrian": "步行",
-    "public_transport": "大眾運輸",
+    "walking": "步行",
 }
 
 
 def _build_route_component_envelope(
     route_fc: dict,
+    mode: str,
     api_mode: str,
     origin: tuple[float, float],
     destination: tuple[float, float],
@@ -87,7 +86,7 @@ def _build_route_component_envelope(
         if "kind" not in props:  # the overall route feature
             summary = props
             break
-    label = _MODE_LABEL_ZH.get(api_mode, api_mode)
+    label = _MODE_LABEL_ZH.get(mode, mode)
     olon, olat = origin
     dlon, dlat = destination
     short_desc = (
@@ -189,9 +188,9 @@ async def navigate(
 
     Mode defaults to "driving" when the user did not say how they are
     travelling. `avoid_obstacles=True` (default) routes around closed
-    roads via /api/navigate-avoid; that endpoint does not support
-    "public_transport", so this tool transparently falls back to
-    /api/navigate when mode="public_transport".
+    roads via /api/navigate-avoid. Note: `biking` currently routes
+    through the same car endpoint as `driving` — there is no separate
+    bike-network routing yet, so picking biking returns a driving route.
 
     Walking routes are sidewalk-aware: each line segment carries a
     `pavement_ratio` property (0..1, share of that road covered by
@@ -208,13 +207,11 @@ async def navigate(
         origin_lat: Origin latitude (WGS84). e.g. 25.0418.
         destination_lng: Destination longitude (WGS84).
         destination_lat: Destination latitude (WGS84).
-        mode: "driving" (default), "biking", "walking", or
-            "public_transport".
-        avoid_obstacles: Route around obstacles. Default True. Ignored
-            (forced False) when mode="public_transport".
+        mode: "driving" (default), "biking", or "walking". Biking
+            currently produces the same route as driving.
+        avoid_obstacles: Route around obstacles. Default True.
     """
-    use_avoid = avoid_obstacles and mode != "public_transport"
-    path = "/api/navigate-avoid" if use_avoid else "/api/navigate"
+    path = "/api/navigate-avoid" if avoid_obstacles else "/api/navigate"
     api_mode = _NAVIGATE_API_MODE[mode]
     params = {
         "origin": f"{origin_lng},{origin_lat}",
@@ -228,6 +225,7 @@ async def navigate(
 
     envelope = _build_route_component_envelope(
         data,
+        mode,
         api_mode,
         (origin_lng, origin_lat),
         (destination_lng, destination_lat),
