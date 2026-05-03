@@ -309,11 +309,11 @@ onBeforeUnmount(() => {
 // Chatroom 樣式
 .chatbot-container {
 	position: fixed;
-	bottom: 1.5rem; // Tailwind bottom-6 → 24px
+	bottom: 1.5rem; 
 	right: 1.5rem;
 	display: flex;
 	align-items: flex-end;
-	gap: 1rem; // Tailwind gap-4 → 16px
+	gap: 1rem; 
 	z-index: 10;
 
 	.chatbox {
@@ -344,7 +344,7 @@ onBeforeUnmount(() => {
 			align-items: center;
 			justify-content: center;
 			border-radius: 50%;
-			background-color: #3b82f6; // Tailwind bg-blue-500
+			background-color: #3b82f6;
 			filter: brightness(1.5);
 			transition: filter 0.2s;
 
