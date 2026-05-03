@@ -104,11 +104,12 @@ services:
       target: dev
     container_name: route-end
     restart: always
+    env_file:
+      - ../Taipei-City-Dashboard-RE/.env
     environment:
       NODE_ENV: ${NODE_ENV:-development}
       PORT: 3000
       HOSTNAME: 0.0.0.0
-      OPENROUTESERVICE_API_KEY: ${OPENROUTESERVICE_API_KEY}
     volumes:
       - ../Taipei-City-Dashboard-RE:/app
       - /app/node_modules
