@@ -1,18 +1,8 @@
-import type { NextRequest } from "next/server";
-import { findPedestrianRouteFeatureCollection } from "@/utils/walkRouter";
+import { promises as fs } from "node:fs";
+import path from "node:path";
+import { findPedestrianRouteFeatureCollection } from "../utils/walkRouter.mjs";
 
-export type TravelMode = "car" | "biking" | "pedestrian";
-
-type OrsMode = "car" | "biking";
-export type LngLat = [number, number];
-
-export interface NavigateAvoidRequest {
-  origin: LngLat;
-  destination: LngLat;
-  mode: TravelMode;
-}
-
-const ORS_PROFILE: Record<OrsMode, string> = {
+const ORS_PROFILE = {
   car: "driving-car",
   biking: "cycling-regular",
 };
@@ -22,47 +12,7 @@ const AVOID_RADIUS_M = 100;
 const CIRCLE_SEGMENTS = 24;
 const EARTH_RADIUS_M = 6_371_000;
 
-type LineString = { type: "LineString"; coordinates: LngLat[] };
-type Feature = {
-  type: "Feature";
-  geometry: LineString;
-  properties: Record<string, unknown>;
-};
-type FeatureCollection = {
-  type: "FeatureCollection";
-  features: Feature[];
-  metadata?: Record<string, unknown>;
-};
-
-interface OrsStep {
-  distance: number;
-  duration: number;
-  type: number;
-  instruction: string;
-  name: string;
-  way_points: [number, number];
-}
-
-interface OrsFeature {
-  type: "Feature";
-  geometry: LineString;
-  properties: {
-    summary: { distance: number; duration: number };
-    segments: { distance: number; duration: number; steps: OrsStep[] }[];
-  };
-}
-
-interface OrsResponse {
-  type: "FeatureCollection";
-  features: OrsFeature[];
-  error?: { code: number; message: string } | string;
-}
-
-type Ring = LngLat[];
-type Polygon = Ring[];
-type MultiPolygon = { type: "MultiPolygon"; coordinates: Polygon[] };
-
-function isLngLat(v: unknown): v is LngLat {
+function isLngLat(v) {
   return (
     Array.isArray(v) &&
     v.length >= 2 &&
@@ -75,17 +25,15 @@ function isLngLat(v: unknown): v is LngLat {
   );
 }
 
-function parseLngLat(raw: string | null): LngLat | null {
+function parseLngLat(raw) {
   if (!raw) return null;
   const parts = raw.split(",").map((s) => Number(s.trim()));
   if (parts.length !== 2 || parts.some((n) => !Number.isFinite(n))) return null;
-  const candidate: [number, number] = [parts[0], parts[1]];
+  const candidate = [parts[0], parts[1]];
   return isLngLat(candidate) ? candidate : null;
 }
 
-function parseSearchParams(
-  searchParams: URLSearchParams,
-): NavigateAvoidRequest | { error: string } {
+function parseSearchParams(searchParams) {
   const origin = parseLngLat(searchParams.get("origin"));
   const destination = parseLngLat(searchParams.get("destination"));
   const mode = searchParams.get("mode");
@@ -99,16 +47,12 @@ function parseSearchParams(
 
 // Spherical destination point: build a polygon ring approximating a circle of
 // radius_m metres around `center`. Returns a closed ring (last == first).
-function bufferPoint(
-  center: LngLat,
-  radius_m: number,
-  segments = CIRCLE_SEGMENTS,
-): Ring {
+function bufferPoint(center, radius_m, segments = CIRCLE_SEGMENTS) {
   const [lng, lat] = center;
   const latRad = (lat * Math.PI) / 180;
   const lngRad = (lng * Math.PI) / 180;
   const angular = radius_m / EARTH_RADIUS_M;
-  const ring: Ring = [];
+  const ring = [];
   for (let i = 0; i < segments; i++) {
     const bearing = (2 * Math.PI * i) / segments;
     const sinLat =
@@ -127,43 +71,22 @@ function bufferPoint(
   return ring;
 }
 
-interface SourceFeature {
-  type: "Feature";
-  geometry: {
-    type?: string;
-    coordinates?: unknown;
-    geometries?: unknown[];
-  } | null;
-  properties?: Record<string, unknown> | null;
-}
-
-interface SourceFeatureCollection {
-  type: "FeatureCollection";
-  features: SourceFeature[];
-}
-
-function isFeatureCollection(v: unknown): v is SourceFeatureCollection {
+function isFeatureCollection(v) {
   if (!v || typeof v !== "object") return false;
-  const o = v as { type?: unknown; features?: unknown };
-  return o.type === "FeatureCollection" && Array.isArray(o.features);
+  return v.type === "FeatureCollection" && Array.isArray(v.features);
 }
 
 // Recursively walk any geometry (including GeometryCollection) and call cb
 // on every coordinate pair. Used to buffer every vertex into an avoidance circle.
-function forEachVertex(geom: unknown, cb: (p: LngLat) => void): void {
+function forEachVertex(geom, cb) {
   if (!geom || typeof geom !== "object") return;
-  const g = geom as {
-    type?: string;
-    coordinates?: unknown;
-    geometries?: unknown[];
-  };
 
-  if (g.type === "GeometryCollection" && Array.isArray(g.geometries)) {
-    for (const sub of g.geometries) forEachVertex(sub, cb);
+  if (geom.type === "GeometryCollection" && Array.isArray(geom.geometries)) {
+    for (const sub of geom.geometries) forEachVertex(sub, cb);
     return;
   }
 
-  const visit = (coords: unknown): void => {
+  const visit = (coords) => {
     if (!Array.isArray(coords)) return;
     if (
       coords.length >= 2 &&
@@ -176,18 +99,14 @@ function forEachVertex(geom: unknown, cb: (p: LngLat) => void): void {
     for (const c of coords) visit(c);
   };
 
-  visit(g.coordinates);
+  visit(geom.coordinates);
 }
 
 // Build a MultiPolygon avoidance geometry. For Polygon/MultiPolygon source
 // features we keep the original geometry (so the interior is blocked) AND
 // buffer the boundary; for Point/Line geometries we buffer every vertex.
-function buildAvoidGeometry(fc: SourceFeatureCollection): {
-  geometry: MultiPolygon | null;
-  vertexCount: number;
-  featureCount: number;
-} {
-  const polys: Polygon[] = [];
+function buildAvoidGeometry(fc) {
+  const polys = [];
   let vertexCount = 0;
 
   for (const feature of fc.features) {
@@ -195,9 +114,9 @@ function buildAvoidGeometry(fc: SourceFeatureCollection): {
     if (!g || typeof g !== "object") continue;
 
     if (g.type === "Polygon" && Array.isArray(g.coordinates)) {
-      polys.push(g.coordinates as Polygon);
+      polys.push(g.coordinates);
     } else if (g.type === "MultiPolygon" && Array.isArray(g.coordinates)) {
-      for (const p of g.coordinates as Polygon[]) polys.push(p);
+      for (const p of g.coordinates) polys.push(p);
     }
 
     forEachVertex(g, (p) => {
@@ -215,15 +134,23 @@ function buildAvoidGeometry(fc: SourceFeatureCollection): {
   };
 }
 
-async function fetchAvoidSource(
-  request: NextRequest,
-): Promise<SourceFeatureCollection | null> {
-  const url = new URL(AVOID_SOURCE_PATH, request.nextUrl.origin);
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) return null;
-  const text = await res.text();
+async function loadAvoidSource() {
+  // The avoid source lives at public/geo_example.json. The previous Next.js
+  // version fetched it over HTTP from its own /public origin; here we just
+  // read it off the filesystem.
+  const filePath = path.join(
+    process.cwd(),
+    "public",
+    AVOID_SOURCE_PATH.replace(/^\/+/, ""),
+  );
+  let text;
+  try {
+    text = await fs.readFile(filePath, "utf8");
+  } catch {
+    return null;
+  }
   if (!text.trim()) return null;
-  let data: unknown;
+  let data;
   try {
     data = JSON.parse(text);
   } catch {
@@ -236,25 +163,20 @@ async function fetchAvoidSource(
 // way_points: [N, N]). Slicing those yields a single-point LineString, which
 // is invalid GeoJSON. Pad backward by one so the step still represents the
 // final approach segment.
-function stepCoords(coords: LngLat[], [a, b]: [number, number]): LngLat[] {
+function stepCoords(coords, [a, b]) {
   if (b > a) return coords.slice(a, b + 1);
   if (a > 0) return coords.slice(a - 1, b + 1);
   return [coords[a], coords[a]];
 }
 
-async function routeViaOrs(
-  origin: LngLat,
-  destination: LngLat,
-  mode: OrsMode,
-  avoid: MultiPolygon | null,
-): Promise<OrsFeature> {
+async function routeViaOrs(origin, destination, mode, avoid) {
   const apiKey = process.env.OPENROUTESERVICE_API_KEY;
   if (!apiKey) throw new Error("OPENROUTESERVICE_API_KEY is not set");
 
   const profile = ORS_PROFILE[mode];
   const url = `https://api.openrouteservice.org/v2/directions/${profile}/geojson`;
 
-  const body: Record<string, unknown> = { coordinates: [origin, destination] };
+  const body = { coordinates: [origin, destination] };
   if (avoid) body.options = { avoid_polygons: avoid };
 
   const res = await fetch(url, {
@@ -267,7 +189,7 @@ async function routeViaOrs(
     body: JSON.stringify(body),
   });
 
-  const data = (await res.json()) as OrsResponse;
+  const data = await res.json();
   if (!res.ok || !data.features?.length) {
     const msg =
       typeof data.error === "string"
@@ -278,15 +200,16 @@ async function routeViaOrs(
   return data.features[0];
 }
 
-export async function GET(request: NextRequest) {
-  const parsed = parseSearchParams(request.nextUrl.searchParams);
-  if ("error" in parsed)
-    return Response.json({ error: parsed.error }, { status: 400 });
+export async function handleNavigateAvoid(searchParams) {
+  const parsed = parseSearchParams(searchParams);
+  if ("error" in parsed) {
+    return { status: 400, body: { error: parsed.error } };
+  }
 
   const { origin, destination, mode } = parsed;
 
   try {
-    const source = await fetchAvoidSource(request);
+    const source = await loadAvoidSource();
     const avoid = source
       ? buildAvoidGeometry(source)
       : { geometry: null, vertexCount: 0, featureCount: 0 };
@@ -297,9 +220,9 @@ export async function GET(request: NextRequest) {
         destination,
         { avoid: avoid.geometry },
       );
-      const fc: FeatureCollection = {
+      const fc = {
         type: "FeatureCollection",
-        features: walkFc.features as Feature[],
+        features: walkFc.features,
         metadata: {
           ...walkFc.metadata,
           avoid_source: AVOID_SOURCE_PATH,
@@ -308,14 +231,14 @@ export async function GET(request: NextRequest) {
           avoid_vertex_count: avoid.vertexCount,
         },
       };
-      return Response.json(fc);
+      return { status: 200, body: fc };
     }
 
     const route = await routeViaOrs(origin, destination, mode, avoid.geometry);
     const coords = route.geometry.coordinates;
     const steps = route.properties.segments.flatMap((s) => s.steps);
 
-    const fc: FeatureCollection = {
+    const fc = {
       type: "FeatureCollection",
       features: [
         {
@@ -332,7 +255,7 @@ export async function GET(request: NextRequest) {
             avoid_vertex_count: avoid.vertexCount,
           },
         },
-        ...steps.map<Feature>((s, i) => ({
+        ...steps.map((s, i) => ({
           type: "Feature",
           geometry: {
             type: "LineString",
@@ -351,10 +274,10 @@ export async function GET(request: NextRequest) {
       ],
     };
 
-    return Response.json(fc);
+    return { status: 200, body: fc };
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Unknown routing error";
-    return Response.json({ error: message }, { status: 502 });
+    return { status: 502, body: { error: message } };
   }
 }

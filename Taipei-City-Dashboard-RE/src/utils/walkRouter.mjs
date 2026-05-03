@@ -1,36 +1,6 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
-export type LngLat = [number, number];
-
-type LineString = { type: "LineString"; coordinates: LngLat[] };
-type Feature = {
-  type: "Feature";
-  geometry: LineString;
-  properties: Record<string, unknown>;
-};
-export interface WalkRouteMetadata {
-  mode: "pedestrian";
-  distance_m: number;
-  duration_s: number;
-  sidewalk_distance_m: number;
-  // sidewalk_distance_m / distance_m, in [0, 1]. 0 when distance_m == 0.
-  sidewalk_ratio: number;
-}
-
-export type WalkFeatureCollection = {
-  type: "FeatureCollection";
-  features: Feature[];
-  metadata: WalkRouteMetadata;
-};
-
-type Ring = LngLat[];
-type Polygon = Ring[];
-export type AvoidMultiPolygon = {
-  type: "MultiPolygon";
-  coordinates: Polygon[];
-};
-
 // Per-meter cost multipliers. Lower = preferred. We route over sidewalks AND
 // regular roads in the same graph; sidewalks cost 1× and roads cost 5×, so the
 // algorithm prefers sidewalks but will fall back to roads where no sidewalk is
@@ -41,9 +11,7 @@ const SIDEWALK_COST_MULTIPLIER = 1;
 const ROAD_COST_MULTIPLIER = 5;
 const CONNECTOR_COST_MULTIPLIER = 1;
 
-export type EdgeKind = "sidewalk" | "road" | "connector";
-
-const COST_BY_KIND: Record<EdgeKind, number> = {
+const COST_BY_KIND = {
   sidewalk: SIDEWALK_COST_MULTIPLIER,
   road: ROAD_COST_MULTIPLIER,
   connector: CONNECTOR_COST_MULTIPLIER,
@@ -51,8 +19,7 @@ const COST_BY_KIND: Record<EdgeKind, number> = {
 
 const WALK_SPEED_MPS = 1.4; // ~5 km/h, matches OSRM/ORS foot-walking default
 
-type SourceKind = "sidewalk" | "road";
-const SOURCES: { file: string; kind: SourceKind }[] = [
+const SOURCES = [
   { file: "taipei.geojson", kind: "sidewalk" },
   { file: "ntpc.geojson", kind: "sidewalk" },
   { file: "taipei_road.geojson", kind: "road" },
@@ -87,45 +54,19 @@ const MERGE_RADIUS_M = 50;
 // matters. A budget of 6 is plenty in practice and adds <12 virtual edges.
 const SNAP_K = 6;
 
-interface Edge {
-  to: number;
-  distance_m: number;
-  cost: number;
-  kind: EdgeKind;
-  // Polyline geometry of this edge (always [from, to] for a simple segment).
-  coords: LngLat[];
-}
+let graphPromise = null;
 
-interface Segment {
-  fromId: number;
-  toId: number;
-  a: LngLat;
-  b: LngLat;
-  distance_m: number;
-  kind: SourceKind;
-}
-
-interface Graph {
-  nodes: LngLat[];
-  adj: Edge[][];
-  // segmentsByCell: cellKey -> array of segment indices that overlap that cell.
-  segments: Segment[];
-  segmentsByCell: Map<string, number[]>;
-}
-
-let graphPromise: Promise<Graph> | null = null;
-
-function nodeKey(lng: number, lat: number): string {
+function nodeKey(lng, lat) {
   return `${lng.toFixed(NODE_KEY_DECIMALS)},${lat.toFixed(NODE_KEY_DECIMALS)}`;
 }
 
-function cellKey(lng: number, lat: number): string {
+function cellKey(lng, lat) {
   return `${Math.floor(lng / CELL_DEG)}_${Math.floor(lat / CELL_DEG)}`;
 }
 
-function haversineM(a: LngLat, b: LngLat): number {
+function haversineM(a, b) {
   const R = 6_371_000;
-  const toRad = (d: number) => (d * Math.PI) / 180;
+  const toRad = (d) => (d * Math.PI) / 180;
   const dLat = toRad(b[1] - a[1]);
   const dLng = toRad(b[0] - a[0]);
   const lat1 = toRad(a[1]);
@@ -136,14 +77,14 @@ function haversineM(a: LngLat, b: LngLat): number {
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 
-async function loadGraph(): Promise<Graph> {
-  const nodes: LngLat[] = [];
-  const adj: Edge[][] = [];
-  const nodeIds = new Map<string, number>();
-  const segments: Segment[] = [];
-  const wayEndpoints = new Set<number>();
+async function loadGraph() {
+  const nodes = [];
+  const adj = [];
+  const nodeIds = new Map();
+  const segments = [];
+  const wayEndpoints = new Set();
 
-  const addNode = (lng: number, lat: number): number => {
+  const addNode = (lng, lat) => {
     const key = nodeKey(lng, lat);
     let id = nodeIds.get(key);
     if (id === undefined) {
@@ -155,13 +96,7 @@ async function loadGraph(): Promise<Graph> {
     return id;
   };
 
-  const addEdge = (
-    from: number,
-    to: number,
-    a: LngLat,
-    b: LngLat,
-    kind: SourceKind,
-  ) => {
+  const addEdge = (from, to, a, b, kind) => {
     if (from === to) return;
     const d = haversineM(a, b);
     if (d === 0) return;
@@ -174,12 +109,7 @@ async function loadGraph(): Promise<Graph> {
   for (const { file, kind } of SOURCES) {
     const filePath = path.join(process.cwd(), "public", file);
     const raw = await fs.readFile(filePath, "utf8");
-    const data = JSON.parse(raw) as {
-      features: {
-        geometry: { type: string; coordinates: unknown };
-        properties?: Record<string, unknown>;
-      }[];
-    };
+    const data = JSON.parse(raw);
     for (const feature of data.features) {
       const g = feature.geometry;
       if (!g || g.type !== "LineString") continue;
@@ -187,7 +117,7 @@ async function loadGraph(): Promise<Graph> {
       // tolerate every other access tag (use_sidepath, customers, …) since
       // foot routing on local Taipei roads is permissive in practice.
       if (kind === "road" && feature.properties?.foot === "no") continue;
-      const line = g.coordinates as LngLat[];
+      const line = g.coordinates;
       if (!Array.isArray(line) || line.length < 2) continue;
       let prevId = addNode(line[0][0], line[0][1]);
       wayEndpoints.add(prevId);
@@ -211,7 +141,7 @@ async function loadGraph(): Promise<Graph> {
   // mid-vertices of two parallel sidewalks. Since MERGE_RADIUS_M (20 m) is
   // far less than CELL_DEG ≈ 555 m, we only need to scan the 9 neighbouring
   // cells per source.
-  const nodesByCell = new Map<string, number[]>();
+  const nodesByCell = new Map();
   for (let id = 0; id < nodes.length; id++) {
     const [lng, lat] = nodes[id];
     const key = cellKey(lng, lat);
@@ -220,8 +150,8 @@ async function loadGraph(): Promise<Graph> {
     else nodesByCell.set(key, [id]);
   }
   // Track existing direct neighbors per source so we don't add duplicate edges.
-  const seenNeighbors = new Set<string>();
-  const pairKey = (a: number, b: number) => (a < b ? `${a}_${b}` : `${b}_${a}`);
+  const seenNeighbors = new Set();
+  const pairKey = (a, b) => (a < b ? `${a}_${b}` : `${b}_${a}`);
   for (const id of wayEndpoints) {
     for (const e of adj[id]) seenNeighbors.add(pairKey(id, e.to));
   }
@@ -261,7 +191,7 @@ async function loadGraph(): Promise<Graph> {
     }
   }
 
-  const segmentsByCell = new Map<string, number[]>();
+  const segmentsByCell = new Map();
   for (let i = 0; i < segments.length; i++) {
     const s = segments[i];
     const minLng = Math.min(s.a[0], s.b[0]);
@@ -285,18 +215,14 @@ async function loadGraph(): Promise<Graph> {
   return { nodes, adj, segments, segmentsByCell };
 }
 
-function getGraph(): Promise<Graph> {
+function getGraph() {
   if (!graphPromise) graphPromise = loadGraph();
   return graphPromise;
 }
 
 // Project point p onto segment a-b in lng/lat space, treating it locally as
 // planar. Returns the foot of perpendicular and t in [0, 1].
-function projectOnSegment(
-  p: LngLat,
-  a: LngLat,
-  b: LngLat,
-): { foot: LngLat; t: number } {
+function projectOnSegment(p, a, b) {
   const ax = a[0];
   const ay = a[1];
   const bx = b[0];
@@ -315,18 +241,11 @@ function projectOnSegment(
   return { foot: [ax + (bx - ax) * t, ay + (by - ay) * t], t };
 }
 
-interface Snap {
-  segmentIndex: number;
-  foot: LngLat;
-  t: number;
-  distance_m: number;
-}
-
-function nearestSegments(graph: Graph, point: LngLat, k: number): Snap[] {
+function nearestSegments(graph, point, k) {
   const cx = Math.floor(point[0] / CELL_DEG);
   const cy = Math.floor(point[1] / CELL_DEG);
-  const found: Snap[] = [];
-  const seenSegs = new Set<number>();
+  const found = [];
+  const seenSegs = new Set();
   // Grow the search outward; once we have ≥k candidates, do one extra ring to
   // catch any closer segment we'd otherwise miss at the boundary.
   let extraRingsAfterK = -1;
@@ -376,26 +295,28 @@ function nearestSegments(graph: Graph, point: LngLat, k: number): Snap[] {
 // Min-heap keyed by f-score. Stores (nodeId, f) pairs as a flat Float64Array
 // pair for speed; the array doubles as needed.
 class MinHeap {
-  private ids: number[] = [];
-  private fs: number[] = [];
+  constructor() {
+    this.ids = [];
+    this.fs = [];
+  }
 
-  get size(): number {
+  get size() {
     return this.ids.length;
   }
 
-  push(id: number, f: number): void {
+  push(id, f) {
     this.ids.push(id);
     this.fs.push(f);
     this.bubbleUp(this.ids.length - 1);
   }
 
-  pop(): { id: number; f: number } | undefined {
+  pop() {
     const n = this.ids.length;
     if (n === 0) return undefined;
     const id = this.ids[0];
     const f = this.fs[0];
-    const lastId = this.ids.pop()!;
-    const lastF = this.fs.pop()!;
+    const lastId = this.ids.pop();
+    const lastF = this.fs.pop();
     if (n > 1) {
       this.ids[0] = lastId;
       this.fs[0] = lastF;
@@ -404,7 +325,7 @@ class MinHeap {
     return { id, f };
   }
 
-  private bubbleUp(i: number): void {
+  bubbleUp(i) {
     while (i > 0) {
       const parent = (i - 1) >> 1;
       if (this.fs[i] >= this.fs[parent]) break;
@@ -414,7 +335,7 @@ class MinHeap {
     }
   }
 
-  private sinkDown(i: number): void {
+  sinkDown(i) {
     const n = this.ids.length;
     for (;;) {
       const l = 2 * i + 1;
@@ -439,21 +360,6 @@ const HEURISTIC_MULTIPLIER = Math.min(
   CONNECTOR_COST_MULTIPLIER,
 );
 
-interface PathEdge {
-  coords: LngLat[]; // always [from, to] for a single A* hop
-  kind: EdgeKind;
-  distance_m: number;
-}
-
-interface AStarResult {
-  // Edges in source → target order. Each consecutive pair shares a vertex
-  // (edge[i].coords[1] === edge[i+1].coords[0]). The caller can stitch them
-  // into a single polyline or group by kind to render mixed-style routes.
-  edges: PathEdge[];
-  distance_m: number;
-  sidewalk_distance_m: number;
-}
-
 // Standard A* over the combined sidewalk + road graph. The two synthetic
 // source/target nodes are wired in via virtualAdj — their outgoing edges land
 // on the real graph at connector cost (1×) plus the cost along the split
@@ -461,20 +367,20 @@ interface AStarResult {
 // `blockedNodes` (when present) is a Uint8Array indexed by node id; nodes
 // flagged are excluded from expansion (used for avoid-polygon support).
 function aStar(
-  graph: Graph,
-  sourceNode: number,
-  targetNode: number,
-  virtualNodes: LngLat[], // index 0 = source, 1 = target
-  virtualAdj: Map<number, Edge[]>,
-  goal: LngLat,
-  blockedNodes: Uint8Array | null,
-): AStarResult {
+  graph,
+  sourceNode,
+  targetNode,
+  virtualNodes,
+  virtualAdj,
+  goal,
+  blockedNodes,
+) {
   const totalNodes = graph.nodes.length;
   // Source/target are addressed as totalNodes + i, where i is their index in virtualNodes.
   const virtBase = totalNodes;
   const nodeCount = totalNodes + virtualNodes.length;
 
-  const coordOf = (id: number): LngLat =>
+  const coordOf = (id) =>
     id < virtBase ? graph.nodes[id] : virtualNodes[id - virtBase];
 
   const g = new Float64Array(nodeCount);
@@ -485,9 +391,9 @@ function aStar(
   cameFrom.fill(-1);
   // For path reconstruction, we also need the geometry of the edge that led
   // to each node, plus its kind so we can tally sidewalk vs road distance.
-  const edgeIn: (LngLat[] | null)[] = new Array(nodeCount).fill(null);
+  const edgeIn = new Array(nodeCount).fill(null);
   const edgeDist = new Float64Array(nodeCount);
-  const edgeKind: (EdgeKind | null)[] = new Array(nodeCount).fill(null);
+  const edgeKind = new Array(nodeCount).fill(null);
 
   const closed = new Uint8Array(nodeCount);
   const heap = new MinHeap();
@@ -496,13 +402,13 @@ function aStar(
     haversineM(coordOf(sourceNode), goal) * HEURISTIC_MULTIPLIER,
   );
 
-  const edgesFor = (id: number): Edge[] => {
+  const edgesFor = (id) => {
     if (id >= virtBase) return virtualAdj.get(id) ?? [];
     return graph.adj[id];
   };
 
   while (heap.size > 0) {
-    const top = heap.pop()!;
+    const top = heap.pop();
     const u = top.id;
     if (closed[u]) continue;
     closed[u] = 1;
@@ -531,7 +437,7 @@ function aStar(
   }
 
   // Reconstruct, walking backwards from target.
-  const edges: PathEdge[] = [];
+  const edges = [];
   let totalDist = 0;
   let sidewalkDist = 0;
   let cursor = targetNode;
@@ -550,40 +456,8 @@ function aStar(
   return { edges, distance_m: totalDist, sidewalk_distance_m: sidewalkDist };
 }
 
-export interface PedestrianRouteSegment {
-  // Polyline of this run, sharing endpoints with the neighbouring runs.
-  coordinates: LngLat[];
-  kind: EdgeKind;
-  distance_m: number;
-}
-
-export interface PedestrianRoute {
-  // Stitched whole-route polyline. Kept for callers that only need geometry
-  // (e.g. transit walkLeg). Use `segments` to render mixed sidewalk/road
-  // styling — this single polyline can't carry per-edge kind information.
-  coordinates: LngLat[];
-  // The route split into runs of consecutive same-kind edges, in order.
-  // Use this to colour sidewalk runs vs. road / connector runs separately.
-  segments: PedestrianRouteSegment[];
-  distance_m: number;
-  duration_s: number;
-  // Length of the route that lies on actual sidewalks (vs. regular roads).
-  sidewalk_distance_m: number;
-  // sidewalk_distance_m / distance_m, in [0, 1]. 0 when distance_m == 0.
-  sidewalk_ratio: number;
-}
-
-export interface FindPedestrianRouteOptions {
-  // Optional MultiPolygon describing areas that the route must avoid. We mark
-  // every graph node inside any polygon as blocked and skip expansion through
-  // them. (The check is per-node, not per-segment — same coarse approach the
-  // upstream avoid feature already uses by buffering 100 m circles around
-  // obstacles, so endpoint inclusion is a good proxy for segment intersection.)
-  avoid?: AvoidMultiPolygon | null;
-}
-
 // Standard ray-casting point-in-polygon. Treats the ring as closed.
-function pointInRing(p: LngLat, ring: Ring): boolean {
+function pointInRing(p, ring) {
   let inside = false;
   const x = p[0];
   const y = p[1];
@@ -599,7 +473,7 @@ function pointInRing(p: LngLat, ring: Ring): boolean {
   return inside;
 }
 
-function pointInMultiPolygon(p: LngLat, mp: AvoidMultiPolygon): boolean {
+function pointInMultiPolygon(p, mp) {
   for (const poly of mp.coordinates) {
     if (poly.length === 0) continue;
     // Outer ring + inner holes. A point is "in" the polygon iff it's in the
@@ -617,7 +491,7 @@ function pointInMultiPolygon(p: LngLat, mp: AvoidMultiPolygon): boolean {
   return false;
 }
 
-function buildBlockedNodes(graph: Graph, avoid: AvoidMultiPolygon): Uint8Array {
+function buildBlockedNodes(graph, avoid) {
   // Compute the avoid-area's overall bounding box so we can short-circuit the
   // (relatively expensive) point-in-polygon test for the vast majority of
   // nodes that are far from any obstacle.
@@ -652,20 +526,14 @@ function buildBlockedNodes(graph: Graph, avoid: AvoidMultiPolygon): Uint8Array {
 // tally use the correct multiplier. Returns the user-point virtual id and
 // the list of real graph nodes that gained back-edges (so the caller can
 // roll them back).
-function wireEndpoint(
-  graph: Graph,
-  point: LngLat,
-  snaps: Snap[],
-  virtualNodes: LngLat[],
-  virtualAdj: Map<number, Edge[]>,
-): { pointId: number; touchedNodes: number[] } {
+function wireEndpoint(graph, point, snaps, virtualNodes, virtualAdj) {
   const virtBase = graph.nodes.length;
 
   const userId = virtBase + virtualNodes.length;
   virtualNodes.push(point);
-  const userEdges: Edge[] = [];
+  const userEdges = [];
 
-  const touchedNodes: number[] = [];
+  const touchedNodes = [];
 
   for (const snap of snaps) {
     const seg = graph.segments[snap.segmentIndex];
@@ -689,7 +557,7 @@ function wireEndpoint(
     const distToB = segLen * (1 - snap.t);
     const segMul = COST_BY_KIND[seg.kind];
 
-    const footEdges: Edge[] = [
+    const footEdges = [
       {
         to: userId,
         distance_m: connectorDist,
@@ -740,24 +608,20 @@ function wireEndpoint(
 // Undo the temporary back-edges we appended to graph.adj during wireEndpoint.
 // Snapshotting the lengths beforehand and slicing them off is faster than
 // filtering for the snap-foot virtual ids.
-function snapshotAdj(graph: Graph, ids: number[]): number[] {
+function snapshotAdj(graph, ids) {
   return ids.map((id) => graph.adj[id].length);
 }
-function restoreAdj(graph: Graph, ids: number[], lengths: number[]): void {
+function restoreAdj(graph, ids, lengths) {
   for (let i = 0; i < ids.length; i++) {
     graph.adj[ids[i]].length = lengths[i];
   }
 }
 
-export async function findPedestrianRoute(
-  origin: LngLat,
-  destination: LngLat,
-  options: FindPedestrianRouteOptions = {},
-): Promise<PedestrianRoute> {
+export async function findPedestrianRoute(origin, destination, options = {}) {
   const graph = await getGraph();
 
-  const virtualNodes: LngLat[] = [];
-  const virtualAdj = new Map<number, Edge[]>();
+  const virtualNodes = [];
+  const virtualAdj = new Map();
 
   const originSnaps = nearestSegments(graph, origin, SNAP_K);
   const destSnaps = nearestSegments(graph, destination, SNAP_K);
@@ -808,7 +672,7 @@ export async function findPedestrianRoute(
 
     // Group consecutive same-kind edges into runs so the caller can render
     // each run with its own style (sidewalk green, road/connector black, …).
-    const segments: PedestrianRouteSegment[] = [];
+    const segments = [];
     for (const e of result.edges) {
       const last = segments[segments.length - 1];
       if (last && last.kind === e.kind) {
@@ -828,7 +692,7 @@ export async function findPedestrianRoute(
 
     // Stitch all runs into a single polyline for callers that only want
     // whole-route geometry (transit walkLeg, etc.).
-    const coordinates: LngLat[] = [];
+    const coordinates = [];
     for (let i = 0; i < segments.length; i++) {
       const s = segments[i].coordinates;
       if (i === 0) coordinates.push(...s);
@@ -854,7 +718,7 @@ export async function findPedestrianRoute(
 // Stroke colours per surface kind. Sidewalks render green; everything else
 // (road carriageway, snap connector, noding bridge) renders black so the
 // caller can show "user is currently not on a sidewalk" segments at a glance.
-const STROKE_BY_KIND: Record<EdgeKind, string> = {
+const STROKE_BY_KIND = {
   sidewalk: "#22C55E",
   road: "#000000",
   connector: "#000000",
@@ -866,15 +730,15 @@ const STROKE_BY_KIND: Record<EdgeKind, string> = {
 // LineString can't carry mixed styling. Aggregate route stats live on the
 // first feature's properties (matching the previous shape).
 export async function findPedestrianRouteFeatureCollection(
-  origin: LngLat,
-  destination: LngLat,
-  options: FindPedestrianRouteOptions = {},
-): Promise<WalkFeatureCollection> {
+  origin,
+  destination,
+  options = {},
+) {
   const route = await findPedestrianRoute(origin, destination, options);
   const features = route.segments.map((s, i) => ({
-    type: "Feature" as const,
+    type: "Feature",
     geometry: {
-      type: "LineString" as const,
+      type: "LineString",
       coordinates: s.coordinates,
     },
     properties: {

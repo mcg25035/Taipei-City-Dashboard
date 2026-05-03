@@ -1,14 +1,4 @@
-# ====== Builder ======
-FROM node:22-bookworm-slim AS builder
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm ci
-
-COPY . .
-RUN npm run build
-
-# ====== Runtime (prod, standalone) ======
+# ====== Runtime ======
 FROM node:22-bookworm-slim AS prod
 WORKDIR /app
 
@@ -16,19 +6,20 @@ ENV NODE_ENV=production \
     PORT=3000 \
     HOSTNAME=0.0.0.0
 
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
+COPY package.json ./
+COPY server.mjs ./
+COPY src ./src
+COPY public ./public
 
 EXPOSE 3000
 
 RUN useradd -r -u 10001 appuser
 USER 10001
 
-CMD ["node", "server.js"]
+CMD ["node", "server.mjs"]
 
 # ====== Dev ======
-# Volume-mount + next dev. Build: docker build --target dev
+# Volume-mount + node --watch. Build: docker build --target dev
 FROM node:22-bookworm-slim AS dev
 WORKDIR /app
 
@@ -38,4 +29,4 @@ ENV NODE_ENV=development \
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "npm install && npm run dev -- -H 0.0.0.0 -p 3000"]
+CMD ["node", "--watch", "server.mjs"]

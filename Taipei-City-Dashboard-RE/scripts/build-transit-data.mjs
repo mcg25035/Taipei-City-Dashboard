@@ -12,8 +12,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import url from "node:url";
-import iconv from "iconv-lite";
-import proj4 from "proj4";
+import { twd97ToWgs84 } from "../src/utils/proj.mjs";
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -25,8 +24,9 @@ const ROUTES_PATH = path.join(
 );
 const OUT_PATH = path.join(ROOT, "src", "data", "transit.json");
 
-const TWD97_TM2 =
-  "+proj=tmerc +lat_0=0 +lon_0=121 +k=0.9999 +x_0=250000 +y_0=0 +ellps=GRS80 +units=m +no_defs";
+// Big5 decoder using Node's built-in TextDecoder (requires Node ≥ 14 with
+// full ICU, which is the default in the official binaries).
+const BIG5_DECODER = new TextDecoder("big5");
 
 // Stations within this distance from a line segment are considered "on the line".
 const SNAP_THRESHOLD_M = 250;
@@ -34,7 +34,7 @@ const SNAP_THRESHOLD_M = 250;
 // ---------- helpers ----------
 
 function toLngLat([x, y]) {
-  return proj4(TWD97_TM2, "WGS84", [x, y]);
+  return twd97ToWgs84([x, y]);
 }
 
 // Equirectangular approximation, fine for short distances within Taipei.
@@ -137,7 +137,7 @@ function slicePolyline(line, fromAlong, toAlong) {
 // ---------- 1. parse entrances CSV ----------
 
 const csvBuf = fs.readFileSync(CSV_PATH);
-const csvText = iconv.decode(csvBuf, "Big5");
+const csvText = BIG5_DECODER.decode(csvBuf);
 const lines = csvText.split(/\r?\n/).filter((l) => l.trim());
 lines.shift(); // header
 

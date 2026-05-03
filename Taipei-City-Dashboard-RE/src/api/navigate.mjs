@@ -1,64 +1,48 @@
-import type { NextRequest } from "next/server";
-import transitData from "@/data/transit.json";
+import { promises as fs } from "node:fs";
+import path from "node:path";
 import {
   findPedestrianRoute,
   findPedestrianRouteFeatureCollection,
-} from "@/utils/walkRouter";
+} from "../utils/walkRouter.mjs";
 
-export type TravelMode = "car" | "biking" | "transit" | "pedestrian";
-
-type OrsMode = "car" | "biking";
-
-export type LngLat = [number, number];
-
-export interface NavigateRequest {
-  origin: LngLat;
-  destination: LngLat;
-  mode: TravelMode;
-}
-
-type LineString = { type: "LineString"; coordinates: LngLat[] };
-type Feature = {
-  type: "Feature";
-  geometry: LineString;
-  properties: Record<string, unknown>;
-};
-type FeatureCollection = {
-  type: "FeatureCollection";
-  features: Feature[];
-  metadata?: Record<string, unknown>;
-};
-
-interface OrsStep {
-  distance: number;
-  duration: number;
-  type: number;
-  instruction: string;
-  name: string;
-  way_points: [number, number];
-}
-
-interface OrsFeature {
-  type: "Feature";
-  geometry: LineString;
-  properties: {
-    summary: { distance: number; duration: number };
-    segments: { distance: number; duration: number; steps: OrsStep[] }[];
-  };
-}
-
-interface OrsResponse {
-  type: "FeatureCollection";
-  features: OrsFeature[];
-  error?: { code: number; message: string } | string;
-}
-
-const ORS_PROFILE: Record<OrsMode, string> = {
+const ORS_PROFILE = {
   car: "driving-car",
   biking: "cycling-regular",
 };
 
-function isLngLat(v: unknown): v is LngLat {
+let transitDataPromise = null;
+function loadTransitData() {
+  if (!transitDataPromise) {
+    const filePath = path.join(process.cwd(), "src", "data", "transit.json");
+    transitDataPromise = fs
+      .readFile(filePath, "utf8")
+      .then((raw) => JSON.parse(raw));
+  }
+  return transitDataPromise;
+}
+
+let transitIndex = null;
+async function getTransitIndex() {
+  if (transitIndex) return transitIndex;
+  const data = await loadTransitData();
+  const stationsByName = new Map(data.stations.map((s) => [s.name, s]));
+  const adj = new Map();
+  const push = (a, b, line, distance, coords) => {
+    if (!adj.has(a)) adj.set(a, []);
+    adj.get(a).push({ to: b, line, distance, coords });
+  };
+  for (const e of data.edges) {
+    push(e.from, e.to, e.line, e.distance_m, e.coordinates);
+    push(e.to, e.from, e.line, e.distance_m, [...e.coordinates].reverse());
+  }
+  transitIndex = { stations: data.stations, stationsByName, adj };
+  return transitIndex;
+}
+
+// Penalty (in meters) added when changing lines, so Dijkstra prefers fewer transfers.
+const TRANSFER_PENALTY_M = 1500;
+
+function isLngLat(v) {
   return (
     Array.isArray(v) &&
     v.length === 2 &&
@@ -71,17 +55,15 @@ function isLngLat(v: unknown): v is LngLat {
   );
 }
 
-function parseLngLat(raw: string | null): LngLat | null {
+function parseLngLat(raw) {
   if (!raw) return null;
   const parts = raw.split(",").map((s) => Number(s.trim()));
   if (parts.length !== 2 || parts.some((n) => !Number.isFinite(n))) return null;
-  const candidate: [number, number] = [parts[0], parts[1]];
+  const candidate = [parts[0], parts[1]];
   return isLngLat(candidate) ? candidate : null;
 }
 
-function parseSearchParams(
-  searchParams: URLSearchParams,
-): NavigateRequest | { error: string } {
+function parseSearchParams(searchParams) {
   const origin = parseLngLat(searchParams.get("origin"));
   const destination = parseLngLat(searchParams.get("destination"));
   const mode = searchParams.get("mode");
@@ -98,11 +80,7 @@ function parseSearchParams(
   return { origin, destination, mode };
 }
 
-async function routeViaOrs(
-  origin: LngLat,
-  destination: LngLat,
-  mode: OrsMode,
-): Promise<FeatureCollection> {
+async function routeViaOrs(origin, destination, mode) {
   const apiKey = process.env.OPENROUTESERVICE_API_KEY;
   if (!apiKey) {
     throw new Error("OPENROUTESERVICE_API_KEY is not set");
@@ -121,7 +99,7 @@ async function routeViaOrs(
     body: JSON.stringify({ coordinates: [origin, destination] }),
   });
 
-  const data = (await res.json()) as OrsResponse;
+  const data = await res.json();
   if (!res.ok || !data.features?.length) {
     const msg =
       typeof data.error === "string"
@@ -147,7 +125,7 @@ async function routeViaOrs(
           duration_s: feature.properties.summary.duration,
         },
       },
-      ...steps.map<Feature>((s, i) => ({
+      ...steps.map((s, i) => ({
         type: "Feature",
         geometry: {
           type: "LineString",
@@ -171,7 +149,7 @@ async function routeViaOrs(
 // way_points: [N, N]). Slicing those yields a single-point LineString, which
 // is invalid GeoJSON. Pad backward by one so the step still represents the
 // final approach segment.
-function stepCoords(coords: LngLat[], [a, b]: [number, number]): LngLat[] {
+function stepCoords(coords, [a, b]) {
   if (b > a) return coords.slice(a, b + 1);
   if (a > 0) return coords.slice(a - 1, b + 1);
   return [coords[a], coords[a]];
@@ -179,62 +157,9 @@ function stepCoords(coords: LngLat[], [a, b]: [number, number]): LngLat[] {
 
 // ---------- Transit (Taipei MRT) ----------
 
-interface TransitEntrance {
-  name: string;
-  code: string | null;
-  lng: number;
-  lat: number;
-  accessible: boolean;
-}
-interface TransitStation {
-  name: string;
-  center: [number, number];
-  entrances: TransitEntrance[];
-}
-interface TransitEdge {
-  line: string;
-  from: string;
-  to: string;
-  distance_m: number;
-  coordinates: [number, number][];
-}
-
-const TRANSIT = transitData as {
-  stations: TransitStation[];
-  edges: TransitEdge[];
-};
-
-const STATIONS_BY_NAME = new Map(TRANSIT.stations.map((s) => [s.name, s]));
-
-// Adjacency: station -> [{ neighbor, line, distance, coords }]
-const ADJ = (() => {
-  const map = new Map<
-    string,
-    { to: string; line: string; distance: number; coords: [number, number][] }[]
-  >();
-  const push = (
-    a: string,
-    b: string,
-    line: string,
-    distance: number,
-    coords: [number, number][],
-  ) => {
-    if (!map.has(a)) map.set(a, []);
-    map.get(a)!.push({ to: b, line, distance, coords });
-  };
-  for (const e of TRANSIT.edges) {
-    push(e.from, e.to, e.line, e.distance_m, e.coordinates);
-    push(e.to, e.from, e.line, e.distance_m, [...e.coordinates].reverse());
-  }
-  return map;
-})();
-
-// Penalty (in meters) added when changing lines, so Dijkstra prefers fewer transfers.
-const TRANSFER_PENALTY_M = 1500;
-
-function haversineM(a: LngLat, b: LngLat): number {
+function haversineM(a, b) {
   const R = 6_371_000;
-  const toRad = (d: number) => (d * Math.PI) / 180;
+  const toRad = (d) => (d * Math.PI) / 180;
   const dLat = toRad(b[1] - a[1]);
   const dLng = toRad(b[0] - a[0]);
   const lat1 = toRad(a[1]);
@@ -245,17 +170,9 @@ function haversineM(a: LngLat, b: LngLat): number {
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 
-function nearestEntrance(p: LngLat): {
-  station: TransitStation;
-  entrance: TransitEntrance;
-  distance_m: number;
-} {
-  let best: {
-    station: TransitStation;
-    entrance: TransitEntrance;
-    distance_m: number;
-  } | null = null;
-  for (const s of TRANSIT.stations) {
+function nearestEntrance(stations, p) {
+  let best = null;
+  for (const s of stations) {
     for (const e of s.entrances) {
       const d = haversineM(p, [e.lng, e.lat]);
       if (!best || d < best.distance_m)
@@ -266,40 +183,29 @@ function nearestEntrance(p: LngLat): {
   return best;
 }
 
-interface TransitLeg {
-  line: string;
-  from: string;
-  to: string;
-  distance_m: number;
-  coordinates: [number, number][];
-}
-
-function shortestTransitPath(fromName: string, toName: string): TransitLeg[] {
+function shortestTransitPath(adj, fromName, toName) {
   if (fromName === toName) return [];
-  if (!ADJ.has(fromName))
+  if (!adj.has(fromName))
     throw new Error(`Boarding station has no connections: ${fromName}`);
-  if (!ADJ.has(toName))
+  if (!adj.has(toName))
     throw new Error(`Alighting station has no connections: ${toName}`);
 
   // Dijkstra. State = station name; track previous edge (with line) for transfer penalty.
-  const dist = new Map<string, number>();
-  const prev = new Map<
-    string,
-    { from: string; line: string; distance: number; coords: [number, number][] }
-  >();
-  const prevLine = new Map<string, string>();
+  const dist = new Map();
+  const prev = new Map();
+  const prevLine = new Map();
   dist.set(fromName, 0);
 
   // Simple priority queue via sorted array (graph is ~120 nodes).
-  const queue: { name: string; cost: number }[] = [{ name: fromName, cost: 0 }];
+  const queue = [{ name: fromName, cost: 0 }];
 
   while (queue.length) {
     queue.sort((a, b) => a.cost - b.cost);
-    const { name, cost } = queue.shift()!;
+    const { name, cost } = queue.shift();
     if (name === toName) break;
     if (cost > (dist.get(name) ?? Infinity)) continue;
 
-    for (const edge of ADJ.get(name) ?? []) {
+    for (const edge of adj.get(name) ?? []) {
       const incomingLine = prevLine.get(name);
       const transfer =
         incomingLine && incomingLine !== edge.line ? TRANSFER_PENALTY_M : 0;
@@ -321,7 +227,7 @@ function shortestTransitPath(fromName: string, toName: string): TransitLeg[] {
   if (!dist.has(toName))
     throw new Error(`No transit path from ${fromName} to ${toName}`);
 
-  const legs: TransitLeg[] = [];
+  const legs = [];
   let cursor = toName;
   while (cursor !== fromName) {
     const p = prev.get(cursor);
@@ -338,7 +244,7 @@ function shortestTransitPath(fromName: string, toName: string): TransitLeg[] {
   legs.reverse();
 
   // Merge consecutive legs on the same line into one continuous segment.
-  const merged: TransitLeg[] = [];
+  const merged = [];
   for (const leg of legs) {
     const last = merged[merged.length - 1];
     if (last && last.line === leg.line && last.to === leg.from) {
@@ -352,11 +258,7 @@ function shortestTransitPath(fromName: string, toName: string): TransitLeg[] {
   return merged;
 }
 
-async function walkLeg(
-  from: LngLat,
-  to: LngLat,
-  label: string,
-): Promise<Feature> {
+async function walkLeg(from, to, label) {
   // Skip routing when the two points are essentially the same.
   if (haversineM(from, to) < 5) {
     return {
@@ -385,12 +287,10 @@ async function walkLeg(
   };
 }
 
-async function routeTransit(
-  origin: LngLat,
-  destination: LngLat,
-): Promise<FeatureCollection> {
-  const board = nearestEntrance(origin);
-  const alight = nearestEntrance(destination);
+async function routeTransit(origin, destination) {
+  const { stations, adj } = await getTransitIndex();
+  const board = nearestEntrance(stations, origin);
+  const alight = nearestEntrance(stations, destination);
 
   // If the closest entrance for both is the same station, just walk.
   if (board.station.name === alight.station.name) {
@@ -424,6 +324,7 @@ async function routeTransit(
   }
 
   const transitLegs = shortestTransitPath(
+    adj,
     board.station.name,
     alight.station.name,
   );
@@ -439,7 +340,7 @@ async function routeTransit(
     `walk from ${alight.entrance.name}`,
   );
 
-  const transitFeatures: Feature[] = transitLegs.map((leg, i) => ({
+  const transitFeatures = transitLegs.map((leg, i) => ({
     type: "Feature",
     geometry: { type: "LineString", coordinates: leg.coordinates },
     properties: {
@@ -459,14 +360,14 @@ async function routeTransit(
   const transitDistance = transitLegs.reduce((s, l) => s + l.distance_m, 0);
   const totalDistance = walkDistance + transitDistance;
 
-  const summary: Feature = {
+  const summary = {
     type: "Feature",
     geometry: {
       type: "LineString",
       coordinates: [
-        ...(walkToBoard.geometry.coordinates as LngLat[]),
+        ...walkToBoard.geometry.coordinates,
         ...transitLegs.flatMap((l) => l.coordinates),
-        ...(walkFromAlight.geometry.coordinates as LngLat[]),
+        ...walkFromAlight.geometry.coordinates,
       ],
     },
     properties: {
@@ -496,10 +397,11 @@ async function routeTransit(
   };
 }
 
-export async function GET(request: NextRequest) {
-  const parsed = parseSearchParams(request.nextUrl.searchParams);
-  if ("error" in parsed)
-    return Response.json({ error: parsed.error }, { status: 400 });
+export async function handleNavigate(searchParams) {
+  const parsed = parseSearchParams(searchParams);
+  if ("error" in parsed) {
+    return { status: 400, body: { error: parsed.error } };
+  }
 
   const { origin, destination, mode } = parsed;
 
@@ -509,11 +411,11 @@ export async function GET(request: NextRequest) {
         ? await routeTransit(origin, destination)
         : mode === "pedestrian"
           ? await findPedestrianRouteFeatureCollection(origin, destination)
-          : await routeViaOrs(origin, destination, mode as OrsMode);
-    return Response.json(geojson);
+          : await routeViaOrs(origin, destination, mode);
+    return { status: 200, body: geojson };
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Unknown routing error";
-    return Response.json({ error: message }, { status: 502 });
+    return { status: 502, body: { error: message } };
   }
 }
