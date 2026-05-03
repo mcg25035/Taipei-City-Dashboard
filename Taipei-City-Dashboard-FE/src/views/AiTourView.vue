@@ -20,7 +20,9 @@ const mapStore = useMapStore();
 const { onEvent } = useAgentEvent();
 
 onEvent("add_component", (params) => {
-	contentStore.addAiSearchedComponent(params.data.component);
+	const component = params.data.component;
+	component.chart_data = params.data.chart ?? [];
+	contentStore.addAiSearchedComponent(component);
 });
 
 const toggleOn = ref({
