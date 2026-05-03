@@ -15,7 +15,6 @@ import (
 	"TaipeiCityDashboardBE/app/middleware"
 	"TaipeiCityDashboardBE/global"
 
-	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 )
 
@@ -240,10 +239,6 @@ func configureGeojsonRoutes() {
 	geojsonRoutes := RouterGroup.Group("/geojson")
 	geojsonRoutes.Use(middleware.LimitAPIRequests(global.ComponentLimitAPIRequestsTimes, global.LimitRequestsDuration))
 	geojsonRoutes.Use(middleware.LimitTotalRequests(global.ComponentLimitTotalRequestsTimes, global.LimitRequestsDuration))
-	// gzip-compress GeoJSON responses. Browsers transparently decode based on
-	// Accept-Encoding, so the FE needs no change. Scoped to this group only to
-	// minimise blast radius on other endpoints.
-	geojsonRoutes.Use(gzip.Gzip(gzip.DefaultCompression))
 	{
 		geojsonRoutes.GET("/:index", controllers.GetGeojsonByIndex)
 	}

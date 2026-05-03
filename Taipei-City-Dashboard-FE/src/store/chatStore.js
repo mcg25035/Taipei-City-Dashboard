@@ -172,6 +172,7 @@ export const useChatStore = defineStore("chat", () => {
 						break;
 
 					case "tool_used":
+						// eslint-disable-next-line no-console
 						console.log(`[chat] tool_used: ${data.name}`);
 
 						addMessageHistory({
@@ -181,6 +182,7 @@ export const useChatStore = defineStore("chat", () => {
 						break;
 
 					case "frontend_action":
+						// eslint-disable-next-line no-console
 						console.log(
 							`[chat] frontend_action: ${data.action}, params: ${JSON.stringify(data.params)}`,
 						);

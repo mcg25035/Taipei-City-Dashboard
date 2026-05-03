@@ -13,34 +13,33 @@ services:
       - 443:443
 
   dashboard-fe:
-    image: node:${NODE_IMAGE_TAG:-latest}
+    image: dashboard-fe:latest
+    build:
+      context: ../Taipei-City-Dashboard-FE
+      dockerfile: Dockerfile
+      args:
+        NODE_ENV: ${NODE_ENV}
+        VITE_API_URL: ${VITE_API_URL}
+        VITE_APP_TITLE: ${VITE_APP_TITLE}
+        VITE_APP_VERSION: ${VITE_APP_VERSION}
+        VITE_MAPBOXTOKEN: ${VITE_MAPBOXTOKEN}
+        VITE_MAPBOXTILE: ${VITE_MAPBOXTILE}
+        VITE_TAIPEIPASS_URL: ${TAIPEIPASS_URL}
+        VITE_TAIPEIPASS_CLIENT_ID: ${ISSO_CLIENT_ID}
+        VITE_TAIPEIPASS_SCOPE: ${ISSO_CLIENT_SCOPE}
     container_name: dashboard-fe
     restart: always
-    environment:
-      DOCKER_COMPOSE: "true"
-      NODE_ENV: ${NODE_ENV}
-      VITE_API_URL: ${VITE_API_URL}
-      VITE_APP_TITLE: ${VITE_APP_TITLE}
-      VITE_APP_VERSION: ${VITE_APP_VERSION}
-      VITE_MAPBOXTOKEN: ${VITE_MAPBOXTOKEN}
-      VITE_MAPBOXTILE: ${VITE_MAPBOXTILE}
-      VITE_TAIPEIPASS_URL: ${TAIPEIPASS_URL}
-      VITE_TAIPEIPASS_CLIENT_ID: ${ISSO_CLIENT_ID}
-      VITE_TAIPEIPASS_SCOPE: ${ISSO_CLIENT_SCOPE}
-    volumes:
-      - ../Taipei-City-Dashboard-FE:/opt/Taipei-City-Dashboard-FE
     ports:
-      - "8080:80"
-    working_dir: /opt/Taipei-City-Dashboard-FE
-    command: ["npm", "run", "dev"]
+      - "8080:8081"
 
   dashboard-be:
     # image: golang:${GOLANG_IMAGE_TAG:-latest} #Go Lang Image Without Model and onnxruntime
-    image: dashboard-be-dev:latest #Local Development
-    # image: dashboard-be:latest #Test Prod Image
+    # image: dashboard-be-dev:latest #Local Development
+    image: dashboard-be:latest #Test Prod Image
     build:
       context: ../Taipei-City-Dashboard-BE
       dockerfile: Dockerfile
+      target: prod
     container_name: dashboard-be
     restart: always
     environment:
@@ -76,25 +75,11 @@ services:
       TWCC_MAX_RETRY: ${TWCC_MAX_RETRY}
       TWCC_MAX_CONCURRENT: ${TWCC_MAX_CONCURRENT}
       NAVIGATE_BASE_URL: ${NAVIGATE_BASE_URL:-http://route-end:3000}
-    volumes:
-      - ../Taipei-City-Dashboard-BE:/opt/Taipei-City-Dashboard-BE
-    working_dir: /opt/Taipei-City-Dashboard-BE
     ports:
       - "8088:${PORT:-8080}"
     depends_on:
       route-end:
         condition: service_healthy
-    command:
-      - bash
-      - -c
-      - |
-        echo "Waiting for postgres-manager + postgres-data..."
-        until pg_isready -h postgres-manager -U postgres -d dashboardmanager -q && \
-              pg_isready -h postgres-data -U postgres -d dashboard -q; do
-          sleep 2
-        done
-        echo "Postgres ready, starting air"
-        exec air -c .air.toml
 
   route-end:
     image: dashboard-re-dev:latest

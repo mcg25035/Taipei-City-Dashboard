@@ -80,6 +80,7 @@ const sendBtnHandler = () => {
 
 	contentStore.clearAiSearchedComponents();
 
+	// eslint-disable-next-line no-unused-vars
 	const sanitized = attachments.value.map(({ marker, ...rest }) => rest);
 	addQueryData({
 		role: "user",

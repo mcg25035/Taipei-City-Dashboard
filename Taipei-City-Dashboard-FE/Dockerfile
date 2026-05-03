@@ -14,6 +14,7 @@ COPY . .
 # 宣告所有 build args（要和 workflow build-args 名稱一致）
 ARG NODE_ENV
 ARG VITE_APP_TITLE
+ARG VITE_APP_VERSION
 ARG VITE_API_URL
 ARG VITE_MAPBOXTOKEN
 ARG VITE_MAPBOXTILE
@@ -23,6 +24,7 @@ ARG VITE_TAIPEIPASS_SCOPE
 
 ENV NODE_ENV=$NODE_ENV \
     VITE_APP_TITLE=$VITE_APP_TITLE \
+    VITE_APP_VERSION=$VITE_APP_VERSION \
     VITE_API_URL=$VITE_API_URL \
     VITE_MAPBOXTOKEN=$VITE_MAPBOXTOKEN \
     VITE_MAPBOXTILE=$VITE_MAPBOXTILE \
@@ -37,9 +39,7 @@ FROM nginx:alpine
 
 # Copy the built files from the builder stage to the nginx server
 COPY --from=builder /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 8081
-
-# Use custom entrypoint
-ENTRYPOINT ["/docker-entrypoint.sh"]
 
