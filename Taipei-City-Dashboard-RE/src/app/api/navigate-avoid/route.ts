@@ -1,7 +1,9 @@
 import type { NextRequest } from "next/server";
 import { findPedestrianRouteFeatureCollection } from "@/utils/walkRouter";
 
-export type TravelMode = "car" | "pedestrian";
+export type TravelMode = "car" | "biking" | "pedestrian";
+
+type OrsMode = "car" | "biking";
 export type LngLat = [number, number];
 
 export interface NavigateAvoidRequest {
@@ -10,8 +12,9 @@ export interface NavigateAvoidRequest {
   mode: TravelMode;
 }
 
-const ORS_PROFILE: Record<"car", string> = {
+const ORS_PROFILE: Record<OrsMode, string> = {
   car: "driving-car",
+  biking: "cycling-regular",
 };
 
 const AVOID_SOURCE_PATH = "/geo_example.json";
@@ -88,8 +91,8 @@ function parseSearchParams(
   const mode = searchParams.get("mode");
   if (!origin) return { error: "origin must be 'lng,lat'" };
   if (!destination) return { error: "destination must be 'lng,lat'" };
-  if (mode !== "car" && mode !== "pedestrian") {
-    return { error: "mode must be one of: car, pedestrian" };
+  if (mode !== "car" && mode !== "biking" && mode !== "pedestrian") {
+    return { error: "mode must be one of: car, biking, pedestrian" };
   }
   return { origin, destination, mode };
 }
@@ -242,7 +245,7 @@ function stepCoords(coords: LngLat[], [a, b]: [number, number]): LngLat[] {
 async function routeViaOrs(
   origin: LngLat,
   destination: LngLat,
-  mode: "car",
+  mode: OrsMode,
   avoid: MultiPolygon | null,
 ): Promise<OrsFeature> {
   const apiKey = process.env.OPENROUTESERVICE_API_KEY;

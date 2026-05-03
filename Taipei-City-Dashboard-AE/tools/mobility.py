@@ -50,7 +50,7 @@ _NAVIGATE_API_MODE = {
     "driving": "car",
     "biking": "biking",
     "walking": "pedestrian",
-    "public_transport": "public_transport",
+    "public_transport": "transit",
 }
 
 # Synthesised id for the route layer. The frontend's add_component handler
@@ -62,7 +62,7 @@ _MODE_LABEL_ZH = {
     "car": "開車",
     "biking": "騎乘",
     "pedestrian": "步行",
-    "public_transport": "大眾運輸",
+    "transit": "大眾運輸",
 }
 
 

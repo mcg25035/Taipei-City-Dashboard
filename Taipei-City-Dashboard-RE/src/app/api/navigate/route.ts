@@ -5,7 +5,9 @@ import {
   findPedestrianRouteFeatureCollection,
 } from "@/utils/walkRouter";
 
-export type TravelMode = "car" | "transit" | "pedestrian";
+export type TravelMode = "car" | "biking" | "transit" | "pedestrian";
+
+type OrsMode = "car" | "biking";
 
 export type LngLat = [number, number];
 
@@ -51,8 +53,9 @@ interface OrsResponse {
   error?: { code: number; message: string } | string;
 }
 
-const ORS_PROFILE: Record<"car", string> = {
+const ORS_PROFILE: Record<OrsMode, string> = {
   car: "driving-car",
+  biking: "cycling-regular",
 };
 
 function isLngLat(v: unknown): v is LngLat {
@@ -84,8 +87,13 @@ function parseSearchParams(
   const mode = searchParams.get("mode");
   if (!origin) return { error: "origin must be 'lng,lat'" };
   if (!destination) return { error: "destination must be 'lng,lat'" };
-  if (mode !== "car" && mode !== "transit" && mode !== "pedestrian") {
-    return { error: "mode must be one of: car, transit, pedestrian" };
+  if (
+    mode !== "car" &&
+    mode !== "biking" &&
+    mode !== "transit" &&
+    mode !== "pedestrian"
+  ) {
+    return { error: "mode must be one of: car, biking, transit, pedestrian" };
   }
   return { origin, destination, mode };
 }
@@ -93,7 +101,7 @@ function parseSearchParams(
 async function routeViaOrs(
   origin: LngLat,
   destination: LngLat,
-  mode: "car",
+  mode: OrsMode,
 ): Promise<FeatureCollection> {
   const apiKey = process.env.OPENROUTESERVICE_API_KEY;
   if (!apiKey) {
@@ -501,7 +509,7 @@ export async function GET(request: NextRequest) {
         ? await routeTransit(origin, destination)
         : mode === "pedestrian"
           ? await findPedestrianRouteFeatureCollection(origin, destination)
-          : await routeViaOrs(origin, destination, mode);
+          : await routeViaOrs(origin, destination, mode as OrsMode);
     return Response.json(geojson);
   } catch (err) {
     const message =
